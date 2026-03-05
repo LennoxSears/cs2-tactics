@@ -173,11 +173,13 @@
   position: absolute;
   z-index: 60;
   width: 280px;
+  max-height: 70vh;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .token-note-header {
@@ -236,6 +238,9 @@
 .token-note-body {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
 }
 
 .token-comments-toggle {

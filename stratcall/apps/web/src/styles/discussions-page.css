@@ -243,6 +243,11 @@
 
 .disc-thread-comments {
   flex: 1;
+  min-height: 0;
+}
+
+.disc-thread-comments .comment-list {
+  max-height: 50vh;
 }
 
 /* ===== MOBILE ===== */
