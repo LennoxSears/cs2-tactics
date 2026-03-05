@@ -59,7 +59,6 @@
 }
 
 .comment-delete {
-  margin-left: auto;
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -67,7 +66,7 @@
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 3px;
-  opacity: 0;
+  opacity: 0.4;
   transition: all 0.15s;
 }
 
@@ -125,7 +124,7 @@
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 3px;
-  opacity: 0;
+  opacity: 0.4;
   transition: all 0.15s;
   margin-left: auto;
 }
@@ -133,8 +132,6 @@
 .comment-item:hover .comment-action-btn { opacity: 1; }
 .comment-action-btn:hover { color: var(--accent-ct); background: rgba(74, 158, 255, 0.1); }
 
-/* Move delete to after reply btn — remove its margin-left since reply btn has it */
-.comment-item:hover .comment-delete { opacity: 1; }
 .comment-action-btn + .comment-delete { margin-left: 0; }
 
 .comment-reply-banner {
