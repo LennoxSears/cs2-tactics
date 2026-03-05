@@ -2,7 +2,9 @@
 .strategy-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .strategy-tabs {
@@ -241,4 +243,16 @@
 
 .disc-thread-comments {
   flex: 1;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 640px) {
+  .discussions-page { padding: 10px; }
+  .discussions-page-title { font-size: 0.9rem; }
+  .disc-new-btn { padding: 6px 12px; font-size: 0.75rem; }
+  .disc-item-title { font-size: 0.8rem; }
+  .disc-item-meta { gap: 6px; font-size: 0.6rem; }
+  .disc-thread-title { font-size: 1rem; }
+  .disc-new-form { padding: 10px; }
+  .disc-title-input { font-size: 0.8rem; padding: 6px 10px; }
 }
