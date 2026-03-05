@@ -1,0 +1,191 @@
+/* ===== ANIMATION PLAYER ===== */
+.anim-player {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.anim-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.anim-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.anim-phase-label {
+  font-size: 0.75rem;
+  color: var(--accent-ct);
+  background: rgba(74, 158, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.anim-close {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.anim-close:hover {
+  border-color: var(--accent-molotov);
+  color: var(--accent-molotov);
+}
+
+.anim-canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.anim-token {
+  transition: none !important; /* disable CSS transitions during animation */
+}
+
+/* Controls */
+.anim-controls {
+  padding: 10px 16px 14px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.anim-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.anim-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.anim-btn:hover {
+  border-color: var(--accent-ct);
+  background: var(--bg-hover);
+}
+
+.anim-btn.active {
+  border-color: var(--accent-ct);
+  color: var(--accent-ct);
+}
+
+.anim-btn.play-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1rem;
+  background: rgba(74, 158, 255, 0.15);
+  border-color: var(--accent-ct);
+  color: var(--accent-ct);
+}
+
+.anim-btn.play-btn:hover {
+  background: rgba(74, 158, 255, 0.25);
+}
+
+.speed-btn {
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: auto;
+  padding: 0 10px;
+}
+
+/* Scrubber */
+.anim-scrubber {
+  position: relative;
+  padding: 0 4px;
+}
+
+.anim-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.anim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-ct);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 4px rgba(74, 158, 255, 0.4);
+}
+
+.anim-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-ct);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+}
+
+.anim-phase-markers {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  right: 4px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.anim-phase-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 6px;
+  background: var(--accent-t);
+  opacity: 0.6;
+  transform: translateX(-1px);
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .anim-controls { padding: 8px 10px 10px; }
+  .anim-btn { width: 32px; height: 32px; font-size: 0.8rem; }
+  .anim-btn.play-btn { width: 40px; height: 40px; }
+}

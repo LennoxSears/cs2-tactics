@@ -1,0 +1,80 @@
+/* ===== CONFIRM DIALOG ===== */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+
+.confirm-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.confirm-dialog h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.confirm-dialog p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+
+.confirm-btn.danger {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: var(--accent-molotov);
+  color: var(--accent-molotov);
+}
+
+.confirm-btn.danger:hover {
+  background: rgba(255, 68, 68, 0.25);
+}
+
+.confirm-btn.cancel {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.confirm-btn.cancel:hover {
+  background: var(--bg-hover);
+}
+
+/* Animate button in header */
+.animate-btn {
+  background: rgba(74, 158, 255, 0.1) !important;
+  border-color: var(--accent-ct) !important;
+  color: var(--accent-ct) !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.animate-btn:hover {
+  background: rgba(74, 158, 255, 0.2) !important;
+}

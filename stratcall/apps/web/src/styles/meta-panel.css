@@ -1,0 +1,105 @@
+/* ===== META PANEL (tags, notes) ===== */
+.meta-panel {
+  display: flex;
+  gap: 16px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.meta-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.meta-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.tag-grid {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.tag-btn {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-btn:hover {
+  border-color: var(--accent-ct);
+  color: var(--text-primary);
+}
+
+.tag-btn.active {
+  background: rgba(74, 158, 255, 0.15);
+  border-color: var(--accent-ct);
+  color: var(--accent-ct);
+}
+
+.meta-textarea {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  min-width: 200px;
+}
+
+.meta-textarea:focus { border-color: var(--accent-ct); }
+
+.meta-axes {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.meta-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-axis select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.meta-axis select:focus { border-color: var(--accent-ct); }
+
+/* Header selects */
+.side-select, .situation-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.side-select:focus, .situation-select:focus { border-color: var(--accent-ct); }

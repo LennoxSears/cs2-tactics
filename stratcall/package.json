@@ -1,0 +1,16 @@
+{
+  "name": "stratcall",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:generate": "turbo db:generate --filter=@stratcall/db",
+    "db:migrate": "turbo db:migrate --filter=@stratcall/db"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "~5.9.3"
+  },
+  "packageManager": "pnpm@10.30.3"
+}

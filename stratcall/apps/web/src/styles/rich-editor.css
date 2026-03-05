@@ -1,0 +1,220 @@
+/* ===== RICH EDITOR ===== */
+.rich-editor {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.rich-editor:focus-within {
+  border-color: var(--accent-ct);
+}
+
+/* Toolbar */
+.re-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  flex-wrap: wrap;
+}
+
+.re-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  width: 26px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.re-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+.re-btn.active { color: var(--accent-ct); background: rgba(74, 158, 255, 0.1); }
+
+.re-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 3px;
+}
+
+/* Editor content area */
+.re-content .tiptap {
+  padding: 8px 10px;
+  min-height: 60px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.re-content .tiptap p { margin: 0 0 4px 0; }
+.re-content .tiptap p:last-child { margin-bottom: 0; }
+
+.re-content .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-secondary);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+.re-content .tiptap strong { font-weight: 600; }
+.re-content .tiptap em { font-style: italic; }
+.re-content .tiptap s { text-decoration: line-through; color: var(--text-secondary); }
+
+.re-content .tiptap ul,
+.re-content .tiptap ol {
+  padding-left: 20px;
+  margin: 4px 0;
+}
+
+.re-content .tiptap li { margin: 2px 0; }
+
+.re-content .tiptap blockquote {
+  border-left: 3px solid var(--accent-ct);
+  padding-left: 10px;
+  margin: 6px 0;
+  color: var(--text-secondary);
+}
+
+.re-content .tiptap pre {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  font-family: monospace;
+  font-size: 0.75rem;
+  overflow-x: auto;
+}
+
+.re-content .tiptap code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.re-content .tiptap a {
+  color: var(--accent-ct);
+  text-decoration: underline;
+}
+
+.re-content .tiptap img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+
+.re-content .tiptap iframe {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+
+.re-content .tiptap h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 8px 0 4px 0;
+}
+
+/* Compact variant (comments, token notes) */
+.rich-editor.compact .re-content .tiptap {
+  min-height: 36px;
+  max-height: 120px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+}
+
+.rich-editor.compact .re-toolbar {
+  padding: 2px 4px;
+}
+
+.rich-editor.compact .re-btn {
+  width: 22px;
+  height: 20px;
+  font-size: 0.6rem;
+}
+
+/* ===== RICH VIEWER (read-only) ===== */
+.rich-viewer .tiptap {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.rich-viewer .tiptap p { margin: 0 0 4px 0; }
+.rich-viewer .tiptap p:last-child { margin-bottom: 0; }
+.rich-viewer .tiptap strong { font-weight: 600; }
+.rich-viewer .tiptap em { font-style: italic; }
+.rich-viewer .tiptap s { text-decoration: line-through; color: var(--text-secondary); }
+.rich-viewer .tiptap ul, .rich-viewer .tiptap ol { padding-left: 20px; margin: 4px 0; }
+.rich-viewer .tiptap blockquote { border-left: 3px solid var(--accent-ct); padding-left: 10px; margin: 6px 0; color: var(--text-secondary); }
+.rich-viewer .tiptap pre { background: rgba(0, 0, 0, 0.3); border-radius: 4px; padding: 8px 10px; margin: 6px 0; font-family: monospace; font-size: 0.75rem; }
+.rich-viewer .tiptap code { background: rgba(0, 0, 0, 0.3); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.75rem; }
+.rich-viewer .tiptap a { color: var(--accent-ct); text-decoration: underline; }
+.rich-viewer .tiptap img { max-width: 100%; border-radius: 4px; margin: 6px 0; }
+.rich-viewer .tiptap iframe { max-width: 100%; border-radius: 4px; margin: 6px 0; }
+
+/* ===== TOKEN NOTE POPOVER ===== */
+.token-note-popover {
+  position: absolute;
+  z-index: 60;
+  width: 280px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.token-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.token-note-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.token-note-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* Yellow dot on tokens that have notes */
+.token-has-note {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: #facc15;
+  border-radius: 50%;
+  border: 1px solid var(--bg-primary);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Remove border inside popover */
+.token-note-popover .rich-editor { border: none; border-radius: 0; }
