@@ -1,19 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import RichEditor from './RichEditor';
 import CommentThread from './CommentThread';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   title: string;
   content: string;
   onChange: (content: string) => void;
   onClose: () => void;
+  onDelete: () => void;
   position: { x: number; y: number };
   containerSize: number;
   strategyId: string;
   tokenId: string;
 }
 
-export default function TokenNotePopover({ title, content, onChange, onClose, position, containerSize, strategyId, tokenId }: Props) {
+export default function TokenNotePopover({ title, content, onChange, onClose, onDelete, position, containerSize, strategyId, tokenId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [showComments, setShowComments] = useState(false);
 
@@ -51,6 +54,9 @@ export default function TokenNotePopover({ title, content, onChange, onClose, po
     >
       <div className="token-note-header">
         <span>{title}</span>
+        <button className="token-note-delete" onClick={() => { onDelete(); onClose(); }} title="Clear note">
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
         <button className="token-note-close" onClick={onClose}>✕</button>
       </div>
       <div className="token-note-body">

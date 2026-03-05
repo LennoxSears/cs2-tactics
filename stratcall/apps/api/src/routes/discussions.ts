@@ -1,13 +1,12 @@
 import { Hono } from 'hono';
 import { eq, and, desc } from 'drizzle-orm';
-import { discussions, comments, users } from '@stratcall/db';
+import { discussions, comments } from '@stratcall/db';
 import { db } from '../db';
 
 const app = new Hono();
 
-// ── Discussions (strategy-level threads) ──
+// ── Discussions ──
 
-// List discussions for a strategy
 app.get('/strategies/:strategyId/discussions', async (c) => {
   const { strategyId } = c.req.param();
   const rows = await db
@@ -18,7 +17,6 @@ app.get('/strategies/:strategyId/discussions', async (c) => {
   return c.json(rows);
 });
 
-// Create a discussion
 app.post('/strategies/:strategyId/discussions', async (c) => {
   const { strategyId } = c.req.param();
   const { title, body } = await c.req.json<{ title: string; body: string }>();
@@ -27,30 +25,29 @@ app.post('/strategies/:strategyId/discussions', async (c) => {
   const id = crypto.randomUUID();
 
   await db.insert(discussions).values({
-    id,
-    strategyId,
-    title,
-    body: body || '',
-    createdBy: userId,
-    createdAt: now,
-    updatedAt: now,
-    commentCount: 0,
+    id, strategyId, title, body: body || '',
+    createdBy: userId, createdAt: now, updatedAt: now, commentCount: 0,
   });
 
   const [row] = await db.select().from(discussions).where(eq(discussions.id, id));
   return c.json(row, 201);
 });
 
-// Delete a discussion (and its comments via cascade)
 app.delete('/discussions/:id', async (c) => {
   const { id } = c.req.param();
+  // Delete child comments first
+  const disc = await db.select().from(discussions).where(eq(discussions.id, id));
+  if (disc.length) {
+    await db.delete(comments).where(
+      and(eq(comments.targetType, 'discussion'), eq(comments.targetId, id))
+    );
+  }
   await db.delete(discussions).where(eq(discussions.id, id));
   return c.json({ ok: true });
 });
 
-// ── Comments (polymorphic: discussion / phase / token) ──
+// ── Comments ──
 
-// List comments for a target
 app.get('/comments', async (c) => {
   const strategyId = c.req.query('strategyId');
   const targetType = c.req.query('targetType');
@@ -75,7 +72,6 @@ app.get('/comments', async (c) => {
   return c.json(rows);
 });
 
-// Create a comment
 app.post('/comments', async (c) => {
   const { strategyId, targetType, targetId, parentId, body } = await c.req.json<{
     strategyId: string;
@@ -94,18 +90,11 @@ app.post('/comments', async (c) => {
   const id = crypto.randomUUID();
 
   await db.insert(comments).values({
-    id,
-    strategyId,
-    targetType,
-    targetId,
-    parentId: parentId || null,
-    body,
-    createdBy: userId,
-    createdAt: now,
-    updatedAt: now,
+    id, strategyId, targetType, targetId,
+    parentId: parentId || null, body,
+    createdBy: userId, createdAt: now, updatedAt: now,
   });
 
-  // If this is a discussion comment, increment the count
   if (targetType === 'discussion') {
     const [disc] = await db.select().from(discussions).where(eq(discussions.id, targetId));
     if (disc) {
@@ -119,39 +108,34 @@ app.post('/comments', async (c) => {
   return c.json(row, 201);
 });
 
-// Delete a comment and all its replies (recursive)
 app.delete('/comments/:id', async (c) => {
   const { id } = c.req.param();
 
-  // Find the comment to get its target info
   const [comment] = await db.select().from(comments).where(eq(comments.id, id));
   if (!comment) return c.json({ error: 'Not found' }, 404);
 
-  // Collect all descendant IDs
+  // Collect all descendants recursively
   const toDelete: string[] = [];
-  const collect = async (parentId: string) => {
-    toDelete.push(parentId);
+  const collect = async (pid: string) => {
+    toDelete.push(pid);
     const children = await db.select({ id: comments.id })
       .from(comments)
-      .where(eq(comments.parentId, parentId));
+      .where(eq(comments.parentId, pid));
     for (const child of children) {
       await collect(child.id);
     }
   };
   await collect(id);
 
-  // Delete all
   for (const delId of toDelete) {
     await db.delete(comments).where(eq(comments.id, delId));
   }
 
-  // Decrement discussion comment count
   if (comment.targetType === 'discussion') {
     const [disc] = await db.select().from(discussions).where(eq(discussions.id, comment.targetId));
     if (disc) {
-      const newCount = Math.max(0, disc.commentCount - toDelete.length);
       await db.update(discussions)
-        .set({ commentCount: newCount, updatedAt: new Date() })
+        .set({ commentCount: Math.max(0, disc.commentCount - toDelete.length), updatedAt: new Date() })
         .where(eq(discussions.id, comment.targetId));
     }
   }

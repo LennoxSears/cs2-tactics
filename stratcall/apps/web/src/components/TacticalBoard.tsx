@@ -673,6 +673,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                     title={`Player ${p.number} (${p.side.toUpperCase()})`}
                     content={p.label || ''}
                     onChange={html => setPlayers(prev => prev.map(t => t.id === p.id ? { ...t, label: html } : t))}
+                    onDelete={() => setPlayers(prev => prev.map(t => t.id === p.id ? { ...t, label: '' } : t))}
                     onClose={() => setNoteTarget(null)}
                     position={p.position}
                     containerSize={mapSquareSize}
@@ -688,6 +689,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                     title={`${u.type.charAt(0).toUpperCase() + u.type.slice(1)}${u.side ? ` (${u.side.toUpperCase()})` : ''}`}
                     content={u.label || ''}
                     onChange={html => setUtilities(prev => prev.map(t => t.id === u.id ? { ...t, label: html } : t))}
+                    onDelete={() => setUtilities(prev => prev.map(t => t.id === u.id ? { ...t, label: '' } : t))}
                     onClose={() => setNoteTarget(null)}
                     position={u.position}
                     containerSize={mapSquareSize}

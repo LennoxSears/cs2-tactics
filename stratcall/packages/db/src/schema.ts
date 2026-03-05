@@ -131,10 +131,10 @@ export const playbookEntries = sqliteTable('playbook_entries', {
 
 export const discussions = sqliteTable('discussions', {
   id: text('id').primaryKey(),
-  strategyId: text('strategy_id').notNull().references(() => strategies.id, { onDelete: 'cascade' }),
+  strategyId: text('strategy_id').notNull(),
   title: text('title').notNull(),
   body: text('body').notNull().default(''),
-  createdBy: text('created_by').notNull().references(() => users.id),
+  createdBy: text('created_by').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   commentCount: integer('comment_count').notNull().default(0),
@@ -142,12 +142,12 @@ export const discussions = sqliteTable('discussions', {
 
 export const comments = sqliteTable('comments', {
   id: text('id').primaryKey(),
-  strategyId: text('strategy_id').notNull().references(() => strategies.id, { onDelete: 'cascade' }),
+  strategyId: text('strategy_id').notNull(),
   targetType: text('target_type', { enum: ['discussion', 'phase', 'token'] }).notNull(),
-  targetId: text('target_id').notNull(), // discussion.id, phase.id, or token.id
-  parentId: text('parent_id'), // null = top-level, else reply-to comment.id
+  targetId: text('target_id').notNull(),
+  parentId: text('parent_id'),
   body: text('body').notNull(),
-  createdBy: text('created_by').notNull().references(() => users.id),
+  createdBy: text('created_by').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
