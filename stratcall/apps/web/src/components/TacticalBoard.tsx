@@ -17,7 +17,6 @@ import Toolbar from './Toolbar';
 import DrawingCanvas from './DrawingCanvas';
 import PhaseBar from './PhaseBar';
 import AnimationPlayer from './AnimationPlayer';
-import DiscussionPanel from './DiscussionPanel';
 import TokenNotePopover from './TokenNotePopover';
 import RichEditor from './RichEditor';
 import CommentThread from './CommentThread';
@@ -567,10 +566,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
           <div className="meta-section">
             <label className="meta-label">Phase Notes — {activePhase?.name}</label>
             <RichEditor content={phaseNotes} onChange={setPhaseNotes} placeholder="Notes for this phase..." compact />
-            <details className="phase-comments-toggle">
-              <summary>Phase Comments</summary>
-              <CommentThread strategyId={strategy.id} targetType="phase" targetId={activePhase.id} />
-            </details>
+
           </div>
         </div>
       )}
@@ -703,7 +699,10 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
         </div>
       </div>
 
-      <DiscussionPanel strategyId={strategy.id} />
+      <div className="phase-comments-section">
+        <h4 className="phase-comments-heading">Phase Comments — {activePhase?.name}</h4>
+        <CommentThread strategyId={strategy.id} targetType="phase" targetId={activePhase.id} />
+      </div>
 
       {showAnimation && (
         <AnimationPlayer

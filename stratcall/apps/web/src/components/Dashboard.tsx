@@ -9,7 +9,7 @@ import {
 import MyStrategies from './MyStrategies';
 import PlaybookList from './PlaybookList';
 import PlaybookView from './PlaybookView';
-import TacticalBoard from './TacticalBoard';
+import StrategyView from './StrategyView';
 import Community from './Community';
 import Profile from './Profile';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -185,7 +185,7 @@ export default function Dashboard({ session, onLogout }: Props) {
           />
         )}
         {view.screen === 'editor' && currentStrategy && (
-          <TacticalBoard
+          <StrategyView
             strategy={currentStrategy}
             onBack={() => setView({ screen: 'strategies' })}
             onSave={handleSaveStrategy}

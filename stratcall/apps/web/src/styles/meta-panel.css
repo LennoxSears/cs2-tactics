@@ -104,3 +104,17 @@
 
 .side-select:focus, .situation-select:focus { border-color: var(--accent-ct); }
 
+/* Phase comments section (below board) */
+.phase-comments-section {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+}
+
+.phase-comments-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+

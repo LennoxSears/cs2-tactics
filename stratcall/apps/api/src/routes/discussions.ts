@@ -1,9 +1,20 @@
 import { Hono } from 'hono';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { discussions, comments } from '@stratcall/db';
 import { db } from '../db';
 
 const app = new Hono();
+
+// Recount comments for a discussion from the DB
+async function syncDiscussionCount(discussionId: string) {
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(comments)
+    .where(and(eq(comments.targetType, 'discussion'), eq(comments.targetId, discussionId)));
+  await db.update(discussions)
+    .set({ commentCount: result?.count ?? 0, updatedAt: new Date() })
+    .where(eq(discussions.id, discussionId));
+}
 
 // ── Discussions ──
 
@@ -96,12 +107,7 @@ app.post('/comments', async (c) => {
   });
 
   if (targetType === 'discussion') {
-    const [disc] = await db.select().from(discussions).where(eq(discussions.id, targetId));
-    if (disc) {
-      await db.update(discussions)
-        .set({ commentCount: disc.commentCount + 1, updatedAt: now })
-        .where(eq(discussions.id, targetId));
-    }
+    await syncDiscussionCount(targetId);
   }
 
   const [row] = await db.select().from(comments).where(eq(comments.id, id));
@@ -132,12 +138,7 @@ app.delete('/comments/:id', async (c) => {
   }
 
   if (comment.targetType === 'discussion') {
-    const [disc] = await db.select().from(discussions).where(eq(discussions.id, comment.targetId));
-    if (disc) {
-      await db.update(discussions)
-        .set({ commentCount: Math.max(0, disc.commentCount - toDelete.length), updatedAt: new Date() })
-        .where(eq(discussions.id, comment.targetId));
-    }
+    await syncDiscussionCount(comment.targetId);
   }
 
   return c.json({ ok: true, deleted: toDelete.length });
