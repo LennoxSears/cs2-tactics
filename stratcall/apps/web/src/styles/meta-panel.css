@@ -109,7 +109,12 @@
   border-top: 1px solid var(--border);
   padding: 12px 16px;
   background: var(--bg-secondary);
+  max-height: 300px;
+  overflow-y: auto;
 }
+
+.phase-comments-section .comment-list { max-height: 140px; }
+.phase-comments-section .comment-compose .re-content { min-height: 36px; max-height: 60px; overflow-y: auto; }
 
 .phase-comments-heading {
   font-size: 0.8rem;
