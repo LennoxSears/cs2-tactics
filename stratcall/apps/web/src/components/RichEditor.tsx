@@ -42,7 +42,7 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
         heading: compact ? false : { levels: [3] },
       }),
       Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({ openOnClick: false, autolink: true }),
+      Link.configure({ openOnClick: false, autolink: true, defaultProtocol: 'https' }),
       Youtube.configure({ width: 480, height: 270 }),
       Placeholder.configure({ placeholder: placeholder || 'Write something...' }),
     ],
@@ -71,8 +71,10 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
 
   const addLink = useCallback(() => {
     if (!editor) return;
-    const url = prompt('Link URL:');
-    if (url) editor.chain().focus().setLink({ href: url }).run();
+    const raw = prompt('Link URL:');
+    if (!raw) return;
+    const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    editor.chain().focus().setLink({ href }).run();
   }, [editor]);
 
   const addVideo = useCallback(() => {
@@ -188,7 +190,7 @@ export function RichViewer({ content }: { content: string }) {
     extensions: [
       StarterKit.configure({ heading: { levels: [3] } }),
       Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({ openOnClick: true }),
+      Link.configure({ openOnClick: true, defaultProtocol: 'https' }),
       Youtube.configure({ width: 480, height: 270 }),
     ],
     content: parseContent(content),

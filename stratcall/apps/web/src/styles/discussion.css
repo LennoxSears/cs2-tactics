@@ -110,3 +110,56 @@
 
 .comment-send-btn:hover:not(:disabled) { background: rgba(74, 158, 255, 0.25); }
 .comment-send-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Reply threading */
+.comment-reply {
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+}
+
+.comment-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.comment-item:hover .comment-action-btn { opacity: 1; }
+.comment-action-btn:hover { color: var(--accent-ct); background: rgba(74, 158, 255, 0.1); }
+
+/* Move delete to after reply btn — remove its margin-left since reply btn has it */
+.comment-item:hover .comment-delete { opacity: 1; }
+.comment-action-btn + .comment-delete { margin-left: 0; }
+
+.comment-reply-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.comment-reply-banner strong { color: var(--accent-ct); }
+
+.comment-reply-cancel {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.comment-reply-cancel:hover { color: var(--text-primary); }

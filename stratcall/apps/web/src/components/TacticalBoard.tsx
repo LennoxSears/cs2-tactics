@@ -102,6 +102,8 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
 
   // Token note popover
   const [noteTarget, setNoteTarget] = useState<{ type: 'player' | 'utility'; id: string } | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
 
   // Utility drag-to-assign: tracks the dashed line from utility origin to cursor
   const [utilDragLink, setUtilDragLink] = useState<{ utilityId: string; originPos: Position; cursorPos: Position } | null>(null);
@@ -392,16 +394,6 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
     window.addEventListener('touchmove', onTM, { passive: false }); window.addEventListener('touchend', onTE);
   }, [pushUndo]);
 
-  // Clear thrower assignment (right-click on assigned utility)
-  const clearThrower = useCallback((utilityId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    pushUndo();
-    setUtilities(prev => prev.map(u =>
-      u.id === utilityId ? { ...u, thrownBy: null, side: null } : u
-    ));
-  }, [pushUndo]);
-
   // Save
   const handleSave = useCallback(() => {
     const updatedPhases = phases.map((p, i) =>
@@ -599,8 +591,17 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                 className={`player-token ${p.side}${dragTarget?.id === p.id ? ' dragging' : ''}${dragTarget?.id === p.id && dragOutOfBounds ? ' deleting' : ''}${utilDragLink ? ' link-target' : ''}`}
                 style={{ left: `${p.position.x * 100}%`, top: `${p.position.y * 100}%` }}
                 onMouseDown={e => startPlayerDrag(p.id, e)}
-                onTouchStart={e => startPlayerDrag(p.id, e)}
-                onDoubleClick={e => { e.stopPropagation(); setNoteTarget({ type: 'player', id: p.id }); }}
+                onTouchStart={e => {
+                  longPressFired.current = false;
+                  longPressTimer.current = setTimeout(() => {
+                    longPressFired.current = true;
+                    setNoteTarget({ type: 'player', id: p.id });
+                  }, 500);
+                  startPlayerDrag(p.id, e);
+                }}
+                onTouchMove={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                onTouchEnd={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                onContextMenu={e => { e.preventDefault(); setNoteTarget({ type: 'player', id: p.id }); }}
               >
                 {p.number}
                 {p.label && <span className="token-has-note" />}
@@ -612,9 +613,17 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                 className={`utility-marker ${u.type}${dragTarget?.id === u.id ? ' dragging' : ''}${dragTarget?.id === u.id && dragOutOfBounds ? ' deleting' : ''}${u.thrownBy != null ? ' assigned' : ''}`}
                 style={{ left: `${u.position.x * 100}%`, top: `${u.position.y * 100}%` }}
                 onMouseDown={e => startUtilityDrag(u.id, e)}
-                onTouchStart={e => startUtilityDrag(u.id, e)}
-                onContextMenu={e => { if (u.thrownBy != null) clearThrower(u.id, e); }}
-                onDoubleClick={e => { e.stopPropagation(); setNoteTarget({ type: 'utility', id: u.id }); }}
+                onTouchStart={e => {
+                  longPressFired.current = false;
+                  longPressTimer.current = setTimeout(() => {
+                    longPressFired.current = true;
+                    setNoteTarget({ type: 'utility', id: u.id });
+                  }, 500);
+                  startUtilityDrag(u.id, e);
+                }}
+                onTouchMove={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                onTouchEnd={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                onContextMenu={e => { e.preventDefault(); setNoteTarget({ type: 'utility', id: u.id }); }}
               >
                 <FontAwesomeIcon icon={utilityFA[u.type]} />
                 {u.thrownBy != null && (
