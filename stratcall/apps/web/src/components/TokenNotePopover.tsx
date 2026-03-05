@@ -1,17 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import RichEditor from './RichEditor';
+import CommentThread from './CommentThread';
 
 interface Props {
   title: string;
   content: string;
   onChange: (content: string) => void;
   onClose: () => void;
-  position: { x: number; y: number }; // percentage position of the token
-  containerSize: number; // map container size in px
+  position: { x: number; y: number };
+  containerSize: number;
+  strategyId: string;
+  tokenId: string;
 }
 
-export default function TokenNotePopover({ title, content, onChange, onClose, position, containerSize }: Props) {
+export default function TokenNotePopover({ title, content, onChange, onClose, position, containerSize, strategyId, tokenId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const [showComments, setShowComments] = useState(false);
 
   // Close on click outside
   useEffect(() => {
@@ -20,7 +24,6 @@ export default function TokenNotePopover({ title, content, onChange, onClose, po
         onClose();
       }
     };
-    // Delay to avoid closing immediately from the click that opened it
     const timer = setTimeout(() => document.addEventListener('mousedown', handler), 50);
     return () => { clearTimeout(timer); document.removeEventListener('mousedown', handler); };
   }, [onClose]);
@@ -32,18 +35,17 @@ export default function TokenNotePopover({ title, content, onChange, onClose, po
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  // Position the popover near the token but keep it within bounds
-  const popoverWidth = 280;
+  const popoverWidth = 300;
   const pxX = position.x * containerSize;
   const pxY = position.y * containerSize;
   const left = pxX + 20 + popoverWidth > containerSize ? pxX - popoverWidth - 10 : pxX + 20;
-  const top = Math.max(10, Math.min(pxY - 30, containerSize - 250));
+  const top = Math.max(10, Math.min(pxY - 30, containerSize - 350));
 
   return (
     <div
       ref={ref}
       className="token-note-popover"
-      style={{ left: `${left}px`, top: `${top}px` }}
+      style={{ left: `${left}px`, top: `${top}px`, width: popoverWidth }}
       onClick={e => e.stopPropagation()}
       onMouseDown={e => e.stopPropagation()}
     >
@@ -51,12 +53,25 @@ export default function TokenNotePopover({ title, content, onChange, onClose, po
         <span>{title}</span>
         <button className="token-note-close" onClick={onClose}>✕</button>
       </div>
-      <RichEditor
-        content={content}
-        onChange={onChange}
-        placeholder="Add notes for this token..."
-        compact
-      />
+      <div className="token-note-body">
+        <RichEditor
+          content={content}
+          onChange={onChange}
+          placeholder="Add notes for this token..."
+          compact
+        />
+        <details className="token-comments-toggle" open={showComments} onToggle={e => setShowComments((e.target as HTMLDetailsElement).open)}>
+          <summary>Comments</summary>
+          {showComments && (
+            <CommentThread
+              strategyId={strategyId}
+              targetType="token"
+              targetId={tokenId}
+              compact
+            />
+          )}
+        </details>
+      </div>
     </div>
   );
 }

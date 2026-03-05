@@ -6,6 +6,7 @@ import auth from './routes/auth';
 import playbooks from './routes/playbooks';
 import share from './routes/share';
 import community from './routes/community';
+import discussions from './routes/discussions';
 
 const app = new Hono();
 
@@ -23,6 +24,7 @@ app.route('/auth', auth);
 app.route('/api/playbooks', playbooks);
 app.route('/api', share);
 app.route('/api/community', community);
+app.route('/api', discussions);
 
 const port = parseInt(process.env.PORT || '3000');
 console.log(`StratCall API running on port ${port}`);

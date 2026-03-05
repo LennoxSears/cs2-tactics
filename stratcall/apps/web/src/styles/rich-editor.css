@@ -218,3 +218,30 @@
 
 /* Remove border inside popover */
 .token-note-popover .rich-editor { border: none; border-radius: 0; }
+
+.token-note-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.token-comments-toggle {
+  border-top: 1px solid var(--border);
+}
+
+.token-comments-toggle summary {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  user-select: none;
+}
+
+.token-comments-toggle summary:hover { color: var(--text-primary); }
+
+.token-comments-toggle[open] > summary {
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.token-comments-toggle .comment-thread { padding: 4px 8px 6px; }
+.token-comments-toggle .comment-list { max-height: 100px; }

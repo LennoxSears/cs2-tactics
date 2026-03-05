@@ -1,4 +1,4 @@
-/* ===== COMMENT PANEL ===== */
+/* ===== COMMENT PANEL (outer shell) ===== */
 .comment-panel {
   border-top: 1px solid var(--border);
   background: var(--bg-secondary);
@@ -19,32 +19,170 @@
 }
 
 .comment-panel-toggle:hover { color: var(--text-primary); }
+.comment-panel-toggle svg { margin-right: 6px; }
+
+/* ===== DISCUSSION LIST ===== */
+.discussion-content { padding: 0 16px 12px; }
+
+.discussion-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.discussion-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.discussion-item:hover { background: rgba(255, 255, 255, 0.02); }
+.discussion-item:last-child { border-bottom: none; }
+
+.discussion-item-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.discussion-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+}
+
+.discussion-item-meta .comment-delete { opacity: 0.4; }
+.discussion-item:hover .comment-delete { opacity: 1; }
+
+/* ===== NEW DISCUSSION FORM ===== */
+.discussion-new-bar {
+  padding: 8px 0 0;
+}
+
+.discussion-new-btn {
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px dashed var(--accent-ct);
+  color: var(--accent-ct);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  width: 100%;
+  transition: all 0.15s;
+}
+
+.discussion-new-btn:hover { background: rgba(74, 158, 255, 0.2); }
+
+.discussion-new-form {
+  padding: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.discussion-title-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.discussion-title-input:focus { border-color: var(--accent-ct); }
+
+.discussion-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.discussion-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.discussion-cancel-btn:hover { color: var(--text-primary); }
+
+/* ===== DISCUSSION THREAD VIEW ===== */
+.discussion-thread-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discussion-thread-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discussion-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.discussion-back-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.discussion-thread-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.discussion-thread-body {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+/* ===== SHARED COMMENT STYLES (used by CommentThread) ===== */
+.comment-thread { display: flex; flex-direction: column; }
 
 .comment-list {
   max-height: 220px;
   overflow-y: auto;
-  padding: 0 16px;
 }
 
 .comment-empty {
-  padding: 16px 0;
+  padding: 12px 0;
   text-align: center;
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .comment-item {
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .comment-item:last-child { border-bottom: none; }
 
+.comment-reply {
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+}
+
 .comment-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .comment-author {
@@ -57,6 +195,22 @@
   font-size: 0.6rem;
   color: var(--text-secondary);
 }
+
+.comment-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0.4;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.comment-item:hover .comment-action-btn { opacity: 1; }
+.comment-action-btn:hover { color: var(--accent-ct); background: rgba(74, 158, 255, 0.1); }
 
 .comment-delete {
   background: none;
@@ -73,24 +227,24 @@
 .comment-item:hover .comment-delete { opacity: 1; }
 .comment-delete:hover { color: var(--accent-molotov); background: rgba(255, 68, 68, 0.1); }
 
+.comment-action-btn + .comment-delete { margin-left: 0; }
+
 .comment-body {
   font-size: 0.8rem;
   line-height: 1.4;
-  white-space: pre-wrap;
   word-break: break-word;
 }
 
+/* ===== COMPOSE ===== */
 .comment-compose {
-  padding: 8px 16px 10px;
+  padding: 6px 0 0;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.comment-compose .rich-editor {
-  width: 100%;
-}
+.comment-compose .rich-editor { width: 100%; }
 
 .comment-send-btn {
   align-self: flex-end;
@@ -110,30 +264,7 @@
 .comment-send-btn:hover:not(:disabled) { background: rgba(74, 158, 255, 0.25); }
 .comment-send-btn:disabled { opacity: 0.3; cursor: default; }
 
-/* Reply threading */
-.comment-reply {
-  border-left: 2px solid var(--border);
-  padding-left: 10px;
-}
-
-.comment-action-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.6rem;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  opacity: 0.4;
-  transition: all 0.15s;
-  margin-left: auto;
-}
-
-.comment-item:hover .comment-action-btn { opacity: 1; }
-.comment-action-btn:hover { color: var(--accent-ct); background: rgba(74, 158, 255, 0.1); }
-
-.comment-action-btn + .comment-delete { margin-left: 0; }
-
+/* ===== REPLY BANNER ===== */
 .comment-reply-banner {
   display: flex;
   align-items: center;
@@ -160,3 +291,9 @@
 }
 
 .comment-reply-cancel:hover { color: var(--text-primary); }
+
+/* ===== COMPACT VARIANT (token notes) ===== */
+.comment-thread.compact .comment-list { max-height: 120px; }
+.comment-thread.compact .comment-item { padding: 4px 0; }
+.comment-thread.compact .comment-body { font-size: 0.7rem; }
+.comment-thread.compact .comment-compose { padding: 4px 0 0; }

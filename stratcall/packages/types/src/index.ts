@@ -160,9 +160,13 @@ export interface Discussion {
   commentCount: number;
 }
 
+export type CommentTargetType = 'discussion' | 'phase' | 'token';
+
 export interface Comment {
   id: string;
-  discussionId: string;
+  strategyId: string;
+  targetType: CommentTargetType;
+  targetId: string; // discussion.id, phase.id, or token.id
   parentId: string | null; // null = top-level, otherwise reply
   body: string;
   createdBy: string;

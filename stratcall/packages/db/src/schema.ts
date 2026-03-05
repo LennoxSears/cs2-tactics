@@ -142,8 +142,10 @@ export const discussions = sqliteTable('discussions', {
 
 export const comments = sqliteTable('comments', {
   id: text('id').primaryKey(),
-  discussionId: text('discussion_id').notNull().references(() => discussions.id, { onDelete: 'cascade' }),
-  parentId: text('parent_id'),
+  strategyId: text('strategy_id').notNull().references(() => strategies.id, { onDelete: 'cascade' }),
+  targetType: text('target_type', { enum: ['discussion', 'phase', 'token'] }).notNull(),
+  targetId: text('target_id').notNull(), // discussion.id, phase.id, or token.id
+  parentId: text('parent_id'), // null = top-level, else reply-to comment.id
   body: text('body').notNull(),
   createdBy: text('created_by').notNull().references(() => users.id),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),

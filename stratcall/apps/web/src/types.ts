@@ -23,6 +23,7 @@ export type {
   Star,
   Discussion,
   Comment,
+  CommentTargetType,
   Team,
   TeamMember,
   TeamRole,

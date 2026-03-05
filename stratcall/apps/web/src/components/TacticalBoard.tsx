@@ -20,6 +20,7 @@ import AnimationPlayer from './AnimationPlayer';
 import DiscussionPanel from './DiscussionPanel';
 import TokenNotePopover from './TokenNotePopover';
 import RichEditor from './RichEditor';
+import CommentThread from './CommentThread';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCloud, faBolt, faFire, faBomb,
@@ -566,6 +567,10 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
           <div className="meta-section">
             <label className="meta-label">Phase Notes — {activePhase?.name}</label>
             <RichEditor content={phaseNotes} onChange={setPhaseNotes} placeholder="Notes for this phase..." compact />
+            <details className="phase-comments-toggle">
+              <summary>Phase Comments</summary>
+              <CommentThread strategyId={strategy.id} targetType="phase" targetId={activePhase.id} />
+            </details>
           </div>
         </div>
       )}
@@ -671,6 +676,8 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                     onClose={() => setNoteTarget(null)}
                     position={p.position}
                     containerSize={mapSquareSize}
+                    strategyId={strategy.id}
+                    tokenId={p.id}
                   />
                 );
               } else {
@@ -684,6 +691,8 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                     onClose={() => setNoteTarget(null)}
                     position={u.position}
                     containerSize={mapSquareSize}
+                    strategyId={strategy.id}
+                    tokenId={u.id}
                   />
                 );
               }
