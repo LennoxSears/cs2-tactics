@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { discussions, comments } from '@stratcall/db';
+import { discussions, comments, strategies, notifications, users } from '@stratcall/db';
 import { db } from '../db';
 
 const app = new Hono();
@@ -108,6 +108,41 @@ app.post('/comments', async (c) => {
 
   if (targetType === 'discussion') {
     await syncDiscussionCount(targetId);
+  }
+
+  // Notify: reply to a comment, or comment on a strategy
+  const now2 = new Date();
+  if (parentId) {
+    // Reply — notify the parent comment author
+    const [parent] = await db.select({ createdBy: comments.createdBy }).from(comments).where(eq(comments.id, parentId)).limit(1);
+    if (parent && parent.createdBy !== userId) {
+      const [strat] = await db.select({ name: strategies.name }).from(strategies).where(eq(strategies.id, strategyId)).limit(1);
+      await db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        recipientId: parent.createdBy,
+        actorId: userId,
+        type: 'reply',
+        targetId: strategyId,
+        targetName: strat?.name || 'a strategy',
+        isRead: false,
+        createdAt: now2,
+      });
+    }
+  } else {
+    // Top-level comment — notify strategy owner
+    const [strat] = await db.select({ createdBy: strategies.createdBy, name: strategies.name }).from(strategies).where(eq(strategies.id, strategyId)).limit(1);
+    if (strat && strat.createdBy !== userId) {
+      await db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        recipientId: strat.createdBy,
+        actorId: userId,
+        type: 'comment',
+        targetId: strategyId,
+        targetName: strat.name,
+        isRead: false,
+        createdAt: now2,
+      });
+    }
   }
 
   const [row] = await db.select().from(comments).where(eq(comments.id, id));

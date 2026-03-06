@@ -168,3 +168,16 @@ export const tagUsage = sqliteTable('tag_usage', {
   tag: text('tag').primaryKey(),
   count: integer('count').notNull().default(0),
 });
+
+// ── Notifications ──
+
+export const notifications = sqliteTable('notifications', {
+  id: text('id').primaryKey(),
+  recipientId: text('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['follow', 'star', 'fork', 'comment', 'reply'] }).notNull(),
+  targetId: text('target_id'),       // strategy/comment ID depending on type
+  targetName: text('target_name'),   // denormalized name for display without joins
+  isRead: integer('is_read', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});

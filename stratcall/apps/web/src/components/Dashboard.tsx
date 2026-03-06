@@ -9,6 +9,8 @@ import StrategyView from './StrategyView';
 import Community from './Community';
 import Profile from './Profile';
 import Tutorial from './Tutorial';
+import UserProfile from './UserProfile';
+import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 
@@ -18,7 +20,8 @@ type View =
   | { screen: 'playbook'; playbookId: string }
   | { screen: 'editor'; strategyId: string }
   | { screen: 'community' }
-  | { screen: 'profile' };
+  | { screen: 'profile' }
+  | { screen: 'userProfile'; userId: string };
 
 interface Props {
   session: Session;
@@ -150,6 +153,7 @@ export default function Dashboard({ session, onLogout }: Props) {
             </nav>
           </div>
           <div className="dash-topbar-user">
+            <NotificationBell onViewUser={(id) => setView({ screen: 'userProfile', userId: id })} />
             <button className="dash-help" onClick={() => setShowTutorial(true)} title="How StratCall works">
               <FontAwesomeIcon icon={faCircleQuestion} />
             </button>
@@ -201,6 +205,14 @@ export default function Dashboard({ session, onLogout }: Props) {
         )}
         {view.screen === 'profile' && (
           <Profile session={session} onOpenStrategy={(id) => setView({ screen: 'editor', strategyId: id })} />
+        )}
+        {view.screen === 'userProfile' && (
+          <UserProfile
+            userId={view.userId}
+            session={session}
+            onBack={() => setView({ screen: 'community' })}
+            onOpenStrategy={(id) => setView({ screen: 'editor', strategyId: id })}
+          />
         )}
       </div>
       {showTutorial && (

@@ -12,6 +12,8 @@
 @import './styles/discussions-page.css';
 @import './styles/rich-editor.css';
 @import './styles/tutorial.css';
+@import './styles/user-profile.css';
+@import './styles/notifications.css';
 
 .app {
   width: 100%;
