@@ -10,6 +10,7 @@ import type {
   FreehandDrawing,
 } from '../types';
 import { ROUND_SITUATIONS, STRAT_TYPES, STRAT_TEMPOS, SEED_TAGS } from '../types';
+import { api } from '../lib/api';
 import { getMapInfo } from '../maps';
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -90,6 +91,16 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
   const [tags, setTags] = useState<string[]>(strategy.tags);
   const [description, setDescription] = useState(strategy.description);
   const [phaseNotes, setPhaseNotes] = useState(activePhase?.notes || '');
+
+  // Popular tags from community usage
+  const [popularTags, setPopularTags] = useState<string[]>(SEED_TAGS);
+  useEffect(() => {
+    api.get<{ tag: string; count: number }[]>('/community/tags/popular')
+      .then(rows => {
+        if (rows.length > 0) setPopularTags(rows.map(r => r.tag));
+      })
+      .catch(() => {}); // fallback to SEED_TAGS
+  }, []);
 
   // UI state
   const [activeTool, setActiveTool] = useState<ToolType | null>(null);
@@ -469,6 +480,17 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
     setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
 
+  const addCustomTag = (tag: string) => {
+    const trimmed = tag.trim().toLowerCase();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags(prev => [...prev, trimmed]);
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setTags(prev => prev.filter(t => t !== tag));
+  };
+
   const allDrawings: Drawing[] = [
     ...drawings,
     ...(currentFreehand.length > 1
@@ -562,12 +584,32 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
           <div className="meta-section">
             <label className="meta-label">Tags</label>
             <div className="tag-grid">
-              {SEED_TAGS.map(t => (
+              {popularTags.map(t => (
                 <button key={t} className={`tag-btn ${tags.includes(t) ? 'active' : ''}`} onClick={() => toggleTag(t)}>
                   {t}
                 </button>
               ))}
             </div>
+            {tags.filter(t => !popularTags.includes(t)).length > 0 && (
+              <div className="custom-tags">
+                {tags.filter(t => !popularTags.includes(t)).map(t => (
+                  <span key={t} className="custom-tag">
+                    {t}
+                    <button className="custom-tag-remove" onClick={() => removeTag(t)}>&times;</button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              className="tag-input"
+              placeholder="Add custom tag..."
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  addCustomTag((e.target as HTMLInputElement).value);
+                  (e.target as HTMLInputElement).value = '';
+                }
+              }}
+            />
           </div>
           <div className="meta-section">
             <label className="meta-label">Description</label>

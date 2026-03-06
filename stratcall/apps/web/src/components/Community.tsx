@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MapName, RoundSituation, Side } from '../types';
-import { ROUND_SITUATIONS, SEED_TAGS } from '../types';
+import { ROUND_SITUATIONS } from '../types';
 import { maps } from '../maps';
 import { mapImages } from '../assets/mapImages';
 import { api } from '../lib/api';
@@ -83,7 +83,12 @@ export default function Community() {
     }
   };
 
-  const allTags = SEED_TAGS;
+  const [allTags, setAllTags] = useState<string[]>([]);
+  useEffect(() => {
+    api.get<{ tag: string; count: number }[]>('/community/tags/popular')
+      .then(rows => setAllTags(rows.map(r => r.tag)))
+      .catch(() => {});
+  }, []);
   const activeFilterCount = [filterMap, filterSide, filterSituation, filterTag].filter(f => f !== 'all').length;
 
   return (

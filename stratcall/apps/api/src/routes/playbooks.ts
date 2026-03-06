@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { eq, and, inArray } from 'drizzle-orm';
-import { playbooks, playbookEntries, strategies, phases } from '@stratcall/db';
+import { playbooks, playbookEntries, strategies, phases, tagUsage } from '@stratcall/db';
 import type { Database } from '@stratcall/db';
 
 type AuthEnv = { Variables: { db: Database; userId: string } };
@@ -10,6 +10,33 @@ const app = new Hono<AuthEnv>();
 // Helper: convert DB Date timestamps to epoch ms for frontend compatibility
 function toEpoch(d: Date | number): number {
   return d instanceof Date ? d.getTime() : d;
+}
+
+// Sync tag_usage counts when tags change
+async function syncTagCounts(db: Database, oldTags: string[], newTags: string[]) {
+  const oldSet = new Set(oldTags);
+  const newSet = new Set(newTags);
+  const added = newTags.filter(t => !oldSet.has(t));
+  const removed = oldTags.filter(t => !newSet.has(t));
+
+  for (const tag of added) {
+    // Upsert: insert with count=1 or increment
+    const [existing] = await db.select().from(tagUsage).where(eq(tagUsage.tag, tag)).limit(1);
+    if (existing) {
+      await db.update(tagUsage).set({ count: existing.count + 1 }).where(eq(tagUsage.tag, tag));
+    } else {
+      await db.insert(tagUsage).values({ tag, count: 1 });
+    }
+  }
+
+  for (const tag of removed) {
+    const [existing] = await db.select().from(tagUsage).where(eq(tagUsage.tag, tag)).limit(1);
+    if (existing && existing.count > 1) {
+      await db.update(tagUsage).set({ count: existing.count - 1 }).where(eq(tagUsage.tag, tag));
+    } else if (existing) {
+      await db.delete(tagUsage).where(eq(tagUsage.tag, tag));
+    }
+  }
 }
 
 // ── Strategies CRUD ──
@@ -74,6 +101,10 @@ app.post('/strategies', async (c) => {
   };
   await db.insert(phases).values(initialPhase);
 
+  // Track tag usage
+  const newTags = body.tags || [];
+  if (newTags.length > 0) await syncTagCounts(db, [], newTags);
+
   return c.json({
     id,
     name: body.name || 'Untitled',
@@ -122,6 +153,16 @@ app.patch('/strategies/:id', async (c) => {
     if (body[key] !== undefined) allowed[key] = body[key];
   }
 
+  // Sync tag counts if tags changed
+  if (body.tags !== undefined) {
+    const [existing] = await db.select({ tags: strategies.tags })
+      .from(strategies)
+      .where(and(eq(strategies.id, id), eq(strategies.createdBy, userId)))
+      .limit(1);
+    const oldTags = (existing?.tags as string[]) || [];
+    await syncTagCounts(db, oldTags, body.tags);
+  }
+
   await db.update(strategies)
     .set({ ...allowed, updatedAt: new Date() })
     .where(and(eq(strategies.id, id), eq(strategies.createdBy, userId)));
@@ -134,6 +175,17 @@ app.delete('/strategies/:id', async (c) => {
   const db = c.get('db');
   const userId = c.get('userId');
   const id = c.req.param('id');
+
+  // Decrement tag counts before deleting
+  const [existing] = await db.select({ tags: strategies.tags })
+    .from(strategies)
+    .where(and(eq(strategies.id, id), eq(strategies.createdBy, userId)))
+    .limit(1);
+  if (existing) {
+    const oldTags = (existing.tags as string[]) || [];
+    if (oldTags.length > 0) await syncTagCounts(db, oldTags, []);
+  }
+
   await db.delete(strategies).where(and(eq(strategies.id, id), eq(strategies.createdBy, userId)));
   return c.json({ ok: true });
 });

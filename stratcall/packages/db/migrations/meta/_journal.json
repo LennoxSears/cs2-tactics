@@ -15,6 +15,13 @@
       "when": 1772618400000,
       "tag": "0001_polymorphic_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772769000000,
+      "tag": "0002_add_tag_usage",
+      "breakpoints": true
     }
   ]
 }

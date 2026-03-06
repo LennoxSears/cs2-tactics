@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { strategies, phases, stars, users } from '@stratcall/db';
+import { strategies, phases, stars, users, tagUsage } from '@stratcall/db';
 import type { Database } from '@stratcall/db';
 
 type Env = { Variables: { db: Database; userId: string } };
@@ -129,6 +129,17 @@ community.post('/strategies/:id/fork', async (c) => {
     updatedAt: now.getTime(),
     phases: newPhases.sort((a, b) => a.sortOrder - b.sortOrder),
   });
+});
+
+// Popular tags — from pre-aggregated tag_usage table
+community.get('/tags/popular', async (c) => {
+  const db = c.get('db');
+  const limit = parseInt(c.req.query('limit') || '30', 10);
+  const rows = await db.select()
+    .from(tagUsage)
+    .orderBy(desc(tagUsage.count))
+    .limit(limit);
+  return c.json(rows);
 });
 
 // Get user's starred strategy IDs

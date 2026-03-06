@@ -161,3 +161,10 @@ export const sharedLinks = sqliteTable('shared_links', {
   expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
+
+// ── Tag usage (aggregated counts) ──
+
+export const tagUsage = sqliteTable('tag_usage', {
+  tag: text('tag').primaryKey(),
+  count: integer('count').notNull().default(0),
+});
