@@ -106,18 +106,16 @@
 
 .side-select:focus, .situation-select:focus { border-color: var(--accent-ct); }
 
-/* Phase comments section (below board) */
+/* Phase comments section (below board, reached by scrolling) */
 .phase-comments-section {
   border-top: 1px solid var(--border);
-  padding: 8px 16px;
+  padding: 12px 16px;
   background: var(--bg-secondary);
   flex: 0 0 auto;
-  max-height: 35vh;
-  overflow-y: auto;
 }
 
-.phase-comments-section .comment-list { max-height: 20vh; overflow-y: auto; }
-.phase-comments-section .comment-compose .re-content { min-height: 36px; max-height: 60px; overflow-y: auto; }
+.phase-comments-section .comment-list { max-height: 300px; overflow-y: auto; }
+.phase-comments-section .comment-compose .re-content { min-height: 36px; max-height: 80px; overflow-y: auto; }
 
 .phase-comments-heading {
   font-size: 0.8rem;
