@@ -485,17 +485,39 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
   return (
     <div className="tactical-board">
       <div className="board-header">
-        <button className="back-btn" onClick={onBack}>
-          <FontAwesomeIcon icon={faArrowLeft} /> Back
-        </button>
-        <span className="header-map-name">{mapInfo.displayName}</span>
-        <input
-          className="strat-name-input"
-          placeholder="Strategy name..."
-          value={stratName}
-          onChange={e => setStratName(e.target.value)}
-        />
-        <div className="axis-group">
+        <div className="header-row-1">
+          <button className="back-btn" onClick={onBack}>
+            <FontAwesomeIcon icon={faArrowLeft} /> Back
+          </button>
+          <span className="header-map-name">{mapInfo.displayName}</span>
+          <input
+            className="strat-name-input"
+            placeholder="Strategy name..."
+            value={stratName}
+            onChange={e => setStratName(e.target.value)}
+          />
+          <div className="header-actions">
+            <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title="Undo">
+              <FontAwesomeIcon icon={faRotateLeft} />
+            </button>
+            <button className="header-btn icon-btn" onClick={handleRedo} disabled={redoStack.length === 0} title="Redo">
+              <FontAwesomeIcon icon={faRotateRight} />
+            </button>
+            {phases.length > 1 && (
+              <button className="header-btn animate-btn" onClick={() => setShowAnimation(true)} title="Play animation">
+                <FontAwesomeIcon icon={faPlay} /> Animate
+              </button>
+            )}
+            <button className="header-btn" onClick={() => setShowMeta(!showMeta)}>
+              {showMeta ? 'Hide Info' : 'Info'}
+            </button>
+            <button className={`header-btn save${saveFlash ? ' saved-flash' : ''}`} onClick={handleSave}>
+              {saveFlash ? 'Saved!' : 'Save'}
+            </button>
+            <button className="header-btn danger" onClick={handleClear}>Clear</button>
+          </div>
+        </div>
+        <div className="header-row-2">
           <div className="axis-item">
             <label className="axis-label" data-help="Which side this strategy is for">Side</label>
             <select value={side} onChange={e => setSide(e.target.value as 'ct' | 't')}>
@@ -521,26 +543,6 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
               {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
-        </div>
-        <div className="header-actions">
-          <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title="Undo">
-            <FontAwesomeIcon icon={faRotateLeft} />
-          </button>
-          <button className="header-btn icon-btn" onClick={handleRedo} disabled={redoStack.length === 0} title="Redo">
-            <FontAwesomeIcon icon={faRotateRight} />
-          </button>
-          {phases.length > 1 && (
-            <button className="header-btn animate-btn" onClick={() => setShowAnimation(true)} title="Play animation">
-              <FontAwesomeIcon icon={faPlay} /> Animate
-            </button>
-          )}
-          <button className="header-btn" onClick={() => setShowMeta(!showMeta)}>
-            {showMeta ? 'Hide Info' : 'Info'}
-          </button>
-          <button className={`header-btn save${saveFlash ? ' saved-flash' : ''}`} onClick={handleSave}>
-            {saveFlash ? 'Saved!' : 'Save'}
-          </button>
-          <button className="header-btn danger" onClick={handleClear}>Clear</button>
         </div>
       </div>
 

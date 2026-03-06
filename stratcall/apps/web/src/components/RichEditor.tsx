@@ -1,7 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useCallback } from 'react';
@@ -40,9 +39,9 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
     extensions: [
       StarterKit.configure({
         heading: compact ? false : { levels: [3] },
+        link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
       }),
       Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({ openOnClick: false, autolink: true, defaultProtocol: 'https' }),
       Youtube.configure({ width: 480, height: 270 }),
       Placeholder.configure({ placeholder: placeholder || 'Write something...' }),
     ],
@@ -192,9 +191,11 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
 export function RichViewer({ content }: { content: string }) {
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [3] } }),
+      StarterKit.configure({
+        heading: { levels: [3] },
+        link: { openOnClick: true, defaultProtocol: 'https' },
+      }),
       Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({ openOnClick: true, defaultProtocol: 'https' }),
       Youtube.configure({ width: 480, height: 270 }),
     ],
     content: parseContent(content),

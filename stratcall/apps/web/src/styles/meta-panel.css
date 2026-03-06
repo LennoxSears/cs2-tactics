@@ -1,13 +1,13 @@
 /* ===== META PANEL (tags, notes) ===== */
 .meta-panel {
   display: flex;
-  gap: 16px;
-  padding: 8px 12px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  overflow-x: auto;
-  max-height: 30vh;
+  max-height: 35vh;
   overflow-y: auto;
 }
 
@@ -69,66 +69,37 @@
 
 .meta-textarea:focus { border-color: var(--accent-ct); }
 
-.meta-axes {
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-}
-
-.meta-axis {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.meta-axis select {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  outline: none;
-}
-
-.meta-axis select:focus { border-color: var(--accent-ct); }
-
-/* Header axis selectors */
-.axis-group {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-}
-
+/* Axis selectors (header row 2) */
 .axis-item {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .axis-label {
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
   cursor: help;
   position: relative;
+  line-height: 1;
 }
 
 .axis-label::after {
   content: ' ?';
   font-size: 0.5rem;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .axis-label:hover::before {
   content: attr(data-help);
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   margin-top: 6px;
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -149,10 +120,11 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  padding: 3px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
   outline: none;
+  height: 26px;
 }
 
 .axis-item select:focus { border-color: var(--accent-ct); }
@@ -160,7 +132,7 @@
 /* Phase comments section (below board, reached by scrolling) */
 .phase-comments-section {
   border-top: 1px solid var(--border);
-  padding: 12px 16px;
+  padding: 12px;
   background: var(--bg-secondary);
   flex: 0 0 auto;
 }
@@ -169,9 +141,11 @@
 .phase-comments-section .comment-compose .re-content { min-height: 36px; max-height: 80px; overflow-y: auto; }
 
 .phase-comments-heading {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
   margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
