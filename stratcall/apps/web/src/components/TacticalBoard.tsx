@@ -495,19 +495,33 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
           value={stratName}
           onChange={e => setStratName(e.target.value)}
         />
-        <select className="side-select" value={side} onChange={e => setSide(e.target.value as 'ct' | 't')}>
-          <option value="t">T-Side</option>
-          <option value="ct">CT-Side</option>
-        </select>
-        <select className="situation-select" value={situation} onChange={e => setSituation(e.target.value as Strategy['situation'])}>
-          {ROUND_SITUATIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        <select className="type-select" value={stratType} onChange={e => setStratType(e.target.value as Strategy['stratType'])}>
-          {STRAT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-        <select className="tempo-select" value={tempo} onChange={e => setTempo(e.target.value as Strategy['tempo'])}>
-          {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
+        <div className="axis-group">
+          <div className="axis-item">
+            <label className="axis-label" data-help="Which side this strategy is for">Side</label>
+            <select value={side} onChange={e => setSide(e.target.value as 'ct' | 't')}>
+              <option value="t">T-Side</option>
+              <option value="ct">CT-Side</option>
+            </select>
+          </div>
+          <div className="axis-item">
+            <label className="axis-label" data-help="Economy state — pistol, eco, force buy, full buy, etc.">Situation</label>
+            <select value={situation} onChange={e => setSituation(e.target.value as Strategy['situation'])}>
+              {ROUND_SITUATIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div className="axis-item">
+            <label className="axis-label" data-help="Play style — execute, rush, fake, split, default, etc.">Type</label>
+            <select value={stratType} onChange={e => setStratType(e.target.value as Strategy['stratType'])}>
+              {STRAT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div className="axis-item">
+            <label className="axis-label" data-help="Timing — fast (early aggression), mid-round (default play), or slow (late execute)">Tempo</label>
+            <select value={tempo} onChange={e => setTempo(e.target.value as Strategy['tempo'])}>
+              {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+        </div>
         <div className="header-actions">
           <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title="Undo">
             <FontAwesomeIcon icon={faRotateLeft} />

@@ -92,6 +92,23 @@
   color: var(--text-primary);
 }
 
+.dash-help {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.dash-help:hover {
+  border-color: var(--accent-ct);
+  color: var(--accent-ct);
+  background: rgba(74, 158, 255, 0.1);
+}
+
 .dash-logout {
   background: none;
   border: 1px solid var(--border);

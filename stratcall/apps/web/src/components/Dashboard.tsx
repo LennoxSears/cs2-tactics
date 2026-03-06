@@ -8,8 +8,9 @@ import PlaybookView from './PlaybookView';
 import StrategyView from './StrategyView';
 import Community from './Community';
 import Profile from './Profile';
+import Tutorial from './Tutorial';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightFromBracket, faGlobe, faBook, faMap, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 
 type View =
   | { screen: 'strategies' }
@@ -28,6 +29,9 @@ export default function Dashboard({ session, onLogout }: Props) {
   const [view, setView] = useState<View>({ screen: 'strategies' });
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem('stratcall-tutorial-seen');
+  });
 
   const refresh = useCallback(async () => {
     const [strats, pbs] = await Promise.all([
@@ -146,6 +150,9 @@ export default function Dashboard({ session, onLogout }: Props) {
             </nav>
           </div>
           <div className="dash-topbar-user">
+            <button className="dash-help" onClick={() => setShowTutorial(true)} title="How StratCall works">
+              <FontAwesomeIcon icon={faCircleQuestion} />
+            </button>
             {session.avatarUrl && (
               <img className="dash-avatar" src={session.avatarUrl} alt="" />
             )}
@@ -196,6 +203,12 @@ export default function Dashboard({ session, onLogout }: Props) {
           <Profile session={session} onOpenStrategy={(id) => setView({ screen: 'editor', strategyId: id })} />
         )}
       </div>
+      {showTutorial && (
+        <Tutorial onClose={() => {
+          setShowTutorial(false);
+          localStorage.setItem('stratcall-tutorial-seen', '1');
+        }} />
+      )}
     </div>
   );
 }

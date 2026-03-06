@@ -1,0 +1,262 @@
+/* ===== TUTORIAL OVERLAY ===== */
+.tut-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.tut-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.tut-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.tut-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tut-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 12px;
+}
+
+.tut-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.tut-header-icon {
+  font-size: 1.3rem;
+  color: var(--accent-ct);
+}
+
+.tut-body {
+  padding: 0 24px 16px;
+}
+
+.tut-intro {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+/* Hierarchy diagram */
+.tut-hierarchy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.tut-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.tut-level-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.tut-level-icon.playbook { background: rgba(74, 158, 255, 0.15); color: var(--accent-ct); }
+.tut-level-icon.strategy { background: rgba(255, 179, 71, 0.15); color: #ffb347; }
+.tut-level-icon.phase { background: rgba(119, 221, 119, 0.15); color: #77dd77; }
+
+.tut-level-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tut-level-text strong {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.tut-level-text span {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tut-arrow {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* 4-axis cards */
+.tut-axes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tut-axis-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tut-axis-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-ct);
+  margin-bottom: 4px;
+}
+
+.tut-axis-desc {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.tut-axis-values {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Board tips */
+.tut-board-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tut-tip {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.tut-tip-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-ct);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.tut-tip-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Footer */
+.tut-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.tut-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.tut-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.tut-dot.active {
+  background: var(--accent-ct);
+}
+
+.tut-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.tut-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tut-btn.primary {
+  background: var(--accent-ct);
+  color: #fff;
+  border-color: var(--accent-ct);
+}
+
+.tut-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.tut-btn.secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tut-btn.secondary:hover {
+  background: var(--bg-hover);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .tut-hierarchy { flex-direction: column; }
+  .tut-arrow { transform: rotate(90deg); }
+  .tut-axes { grid-template-columns: 1fr; }
+}

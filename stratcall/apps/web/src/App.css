@@ -11,6 +11,7 @@
 @import './styles/discussion.css';
 @import './styles/discussions-page.css';
 @import './styles/rich-editor.css';
+@import './styles/tutorial.css';
 
 .app {
   width: 100%;
@@ -388,7 +389,7 @@
   .header-actions { gap: 4px; }
   .header-btn { padding: 4px 8px; font-size: 0.7rem; }
   .back-btn { padding: 4px 8px; font-size: 0.75rem; }
-  .side-select, .situation-select, .type-select, .tempo-select { display: none; }
+  .axis-group { display: none; }
 
   .board-body { flex-direction: column-reverse; height: calc(100vh - 180px); min-height: 280px; }
   .toolbar {

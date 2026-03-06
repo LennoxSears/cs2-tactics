@@ -93,18 +93,69 @@
 
 .meta-axis select:focus { border-color: var(--accent-ct); }
 
-/* Header selects */
-.side-select, .situation-select {
+/* Header axis selectors */
+.axis-group {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.axis-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: relative;
+}
+
+.axis-label {
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  cursor: help;
+  position: relative;
+}
+
+.axis-label::after {
+  content: ' ?';
+  font-size: 0.5rem;
+  opacity: 0.5;
+}
+
+.axis-label:hover::before {
+  content: attr(data-help);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.axis-item select {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  padding: 4px 6px;
-  border-radius: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
   font-size: 0.75rem;
   outline: none;
 }
 
-.side-select:focus, .situation-select:focus { border-color: var(--accent-ct); }
+.axis-item select:focus { border-color: var(--accent-ct); }
 
 /* Phase comments section (below board, reached by scrolling) */
 .phase-comments-section {
