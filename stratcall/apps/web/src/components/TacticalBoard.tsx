@@ -11,7 +11,9 @@ import type {
 } from '../types';
 import { ROUND_SITUATIONS, STRAT_TYPES, STRAT_TEMPOS, SEED_TAGS } from '../types';
 import { getMapInfo } from '../maps';
-import { generateId } from '../storage';
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
 import { mapImages } from '../assets/mapImages';
 import Toolbar from './Toolbar';
 import DrawingCanvas from './DrawingCanvas';

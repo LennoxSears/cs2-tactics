@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { MapName, RoundSituation, Side, Strategy } from '../types';
+import type { MapName, RoundSituation, Side } from '../types';
 import { ROUND_SITUATIONS, SEED_TAGS } from '../types';
 import { maps } from '../maps';
 import { mapImages } from '../assets/mapImages';
 import { api } from '../lib/api';
-import { generateId, saveStrategy } from '../storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowUp, faArrowDown, faFilter, faDownload, faSpinner,
@@ -75,35 +74,13 @@ export default function Community() {
     }
   };
 
-  const handleImport = (strat: CommunityStrategy) => {
-    const now = Date.now();
-    const imported: Strategy = {
-      id: generateId(),
-      name: `${strat.strategy.name} (forked)`,
-      description: '',
-      map: strat.strategy.map as MapName,
-      side: strat.strategy.side as Side,
-      situation: (strat.strategy.situation || 'default') as RoundSituation,
-      stratType: 'execute',
-      tempo: 'mid-round',
-      tags: strat.strategy.tags || [],
-      phases: [{
-        id: generateId(),
-        name: 'Setup',
-        sortOrder: 0,
-        boardState: { players: [], utilities: [], drawings: [] },
-        notes: '',
-      }],
-      isPublic: false,
-      starCount: 0,
-      forkCount: 0,
-      forkedFrom: strat.strategy.id,
-      createdBy: 'local',
-      createdAt: now,
-      updatedAt: now,
-    };
-    saveStrategy(imported);
-    setImportedIds(prev => new Set(prev).add(strat.strategy.id));
+  const handleImport = async (strat: CommunityStrategy) => {
+    try {
+      await api.post(`/community/strategies/${strat.strategy.id}/fork`, {});
+      setImportedIds(prev => new Set(prev).add(strat.strategy.id));
+    } catch {
+      // Fork failed silently
+    }
   };
 
   const allTags = SEED_TAGS;

@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import type { Strategy } from '../types';
+import { useState, useEffect } from 'react';
+import type { Strategy, Playbook } from '../types';
 import type { Session } from '../lib/auth';
 import { ROUND_SITUATIONS, STRAT_TYPES } from '../types';
 import { maps } from '../maps';
-import { loadStrategies, loadPlaybooks, loadStarredIds } from '../storage';
+import { api } from '../lib/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGlobe, faLock, faCodeFork, faStar, faBook, faMap } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,10 +13,22 @@ interface Props {
 }
 
 export default function Profile({ session, onOpenStrategy }: Props) {
-  const strategies = loadStrategies();
-  const playbooks = loadPlaybooks();
-  const starredIds = loadStarredIds();
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<'strategies' | 'playbooks' | 'starred'>('strategies');
+
+  useEffect(() => {
+    Promise.all([
+      api.get<Strategy[]>('/playbooks/strategies'),
+      api.get<Playbook[]>('/playbooks/playbooks'),
+      api.get<string[]>('/community/starred'),
+    ]).then(([strats, pbs, starred]) => {
+      setStrategies(strats);
+      setPlaybooks(pbs);
+      setStarredIds(new Set(starred));
+    });
+  }, []);
 
   const publicStrats = strategies.filter(s => s.isPublic);
   const forkedStrats = strategies.filter(s => s.forkedFrom);

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Playbook, Strategy } from '../types';
 import { ROUND_SITUATIONS } from '../types';
 import { maps } from '../maps';
-import { getPlaybookStrategies, loadStrategies, addToPlaybook, removeFromPlaybook } from '../storage';
+import { api } from '../lib/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,12 +17,27 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
   const [allStrategies, setAllStrategies] = useState<Strategy[]>([]);
   const [showAdd, setShowAdd] = useState(false);
 
-  const refresh = () => {
-    setPbStrategies(getPlaybookStrategies(playbook.id));
-    setAllStrategies(loadStrategies());
+  const refresh = useCallback(async () => {
+    const [pbData, allStrats] = await Promise.all([
+      api.get<{ strategies: Strategy[] }>(`/playbooks/playbooks/${playbook.id}`),
+      api.get<Strategy[]>('/playbooks/strategies'),
+    ]);
+    setPbStrategies(pbData.strategies || []);
+    setAllStrategies(allStrats);
+  }, [playbook.id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const handleAdd = async (strategyId: string) => {
+    const maxOrder = pbStrategies.reduce((m, _, i) => Math.max(m, i), -1);
+    await api.post(`/playbooks/playbooks/${playbook.id}/strategies`, { strategyId, sortOrder: maxOrder + 1 });
+    await refresh();
   };
 
-  useEffect(() => { refresh(); }, [playbook.id]);
+  const handleRemove = async (strategyId: string) => {
+    await api.delete(`/playbooks/playbooks/${playbook.id}/strategies/${strategyId}`);
+    await refresh();
+  };
 
   const pbIds = new Set(pbStrategies.map(s => s.id));
   const available = allStrategies.filter(s => !pbIds.has(s.id));
@@ -52,7 +67,7 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
           ) : (
             <div className="add-to-pb-list">
               {available.map(s => (
-                <button key={s.id} className="add-to-pb-item" onClick={() => { addToPlaybook(playbook.id, s.id); refresh(); }}>
+                <button key={s.id} className="add-to-pb-item" onClick={() => handleAdd(s.id)}>
                   <FontAwesomeIcon icon={faPlus} />
                   <span>{s.name || 'Untitled'}</span>
                   <span className="add-to-pb-map">{maps.find(m => m.name === s.map)?.displayName}</span>
@@ -85,7 +100,7 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
                 </div>
                 <button
                   className="strat-card-delete"
-                  onClick={e => { e.stopPropagation(); removeFromPlaybook(playbook.id, strat.id); refresh(); }}
+                  onClick={e => { e.stopPropagation(); handleRemove(strat.id); }}
                   title="Remove from playbook"
                 >
                   <FontAwesomeIcon icon={faMinus} />

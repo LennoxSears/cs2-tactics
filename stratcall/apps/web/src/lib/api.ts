@@ -1,13 +1,18 @@
+import { getAuthHeaders } from './auth';
+
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const DEV_FALLBACK_HEADERS: Record<string, string> =
+  import.meta.env.DEV ? { 'X-User-Id': 'local-dev-user' } : {};
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const authHeaders = getAuthHeaders();
+  const headers = Object.keys(authHeaders).length > 0 ? authHeaders : DEV_FALLBACK_HEADERS;
   const url = `${API_BASE}${path}`;
   const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      // Dev mode: use local user ID
-      'X-User-Id': 'local-dev-user',
+      ...headers,
       ...options?.headers,
     },
   });

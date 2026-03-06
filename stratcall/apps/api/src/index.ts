@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serve } from '@hono/node-server';
+import { db } from './db';
 import auth from './routes/auth';
 import playbooks from './routes/playbooks';
 import share from './routes/share';
@@ -15,6 +16,20 @@ app.use('*', cors({
   origin: (origin) => origin || '*',
   credentials: true,
 }));
+
+// Inject db and userId into context for all /api/* routes
+app.use('/api/*', async (c, next) => {
+  c.set('db', db);
+  const userId = c.req.header('X-User-Id') || '';
+  c.set('userId', userId);
+  await next();
+});
+
+// Global error handler
+app.onError((err, c) => {
+  console.error('Unhandled error:', err);
+  return c.json({ error: err.message }, 500);
+});
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', service: 'stratcall-api' }));

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { playbooks, playbookEntries, strategies, phases } from '@stratcall/db';
 import type { Database } from '@stratcall/db';
 
@@ -7,14 +7,32 @@ type AuthEnv = { Variables: { db: Database; userId: string } };
 
 const app = new Hono<AuthEnv>();
 
+// Helper: convert DB Date timestamps to epoch ms for frontend compatibility
+function toEpoch(d: Date | number): number {
+  return d instanceof Date ? d.getTime() : d;
+}
+
 // ── Strategies CRUD ──
 
-// List user's strategies
+// List user's strategies (with phases)
 app.get('/strategies', async (c) => {
   const db = c.get('db');
   const userId = c.get('userId');
-  const results = await db.select().from(strategies).where(eq(strategies.createdBy, userId));
-  return c.json(results);
+  const strats = await db.select().from(strategies).where(eq(strategies.createdBy, userId));
+  const stratIds = strats.map(s => s.id);
+  const allPhases = stratIds.length > 0
+    ? await db.select().from(phases).where(inArray(phases.strategyId, stratIds))
+    : [];
+
+  const result = strats.map(s => ({
+    ...s,
+    createdAt: toEpoch(s.createdAt),
+    updatedAt: toEpoch(s.updatedAt),
+    phases: allPhases
+      .filter(p => p.strategyId === s.id)
+      .sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
+  return c.json(result);
 });
 
 // Create strategy
@@ -24,6 +42,7 @@ app.post('/strategies', async (c) => {
   const body = await c.req.json();
   const now = new Date();
   const id = crypto.randomUUID();
+  const phaseId = crypto.randomUUID();
 
   await db.insert(strategies).values({
     id,
@@ -45,16 +64,35 @@ app.post('/strategies', async (c) => {
   });
 
   // Create initial phase
-  await db.insert(phases).values({
-    id: crypto.randomUUID(),
+  const initialPhase = {
+    id: phaseId,
     strategyId: id,
     name: 'Setup',
     sortOrder: 0,
     boardState: { players: [], utilities: [], drawings: [] },
     notes: '',
-  });
+  };
+  await db.insert(phases).values(initialPhase);
 
-  return c.json({ id }, 201);
+  return c.json({
+    id,
+    name: body.name || 'Untitled',
+    description: body.description || '',
+    map: body.map,
+    side: body.side || 't',
+    situation: body.situation || 'default',
+    stratType: body.stratType || 'execute',
+    tempo: body.tempo || 'mid-round',
+    tags: body.tags || [],
+    isPublic: false,
+    starCount: 0,
+    forkCount: 0,
+    forkedFrom: null,
+    createdBy: userId,
+    createdAt: now.getTime(),
+    updatedAt: now.getTime(),
+    phases: [initialPhase],
+  }, 201);
 });
 
 // Get strategy with phases
@@ -64,18 +102,28 @@ app.get('/strategies/:id', async (c) => {
   const [strat] = await db.select().from(strategies).where(eq(strategies.id, id)).limit(1);
   if (!strat) return c.json({ error: 'Not found' }, 404);
   const stratPhases = await db.select().from(phases).where(eq(phases.strategyId, id));
-  return c.json({ ...strat, phases: stratPhases.sort((a, b) => a.sortOrder - b.sortOrder) });
+  return c.json({
+    ...strat,
+    createdAt: toEpoch(strat.createdAt),
+    updatedAt: toEpoch(strat.updatedAt),
+    phases: stratPhases.sort((a, b) => a.sortOrder - b.sortOrder),
+  });
 });
 
-// Update strategy
+// Update strategy (only allow safe fields)
 app.patch('/strategies/:id', async (c) => {
   const db = c.get('db');
   const userId = c.get('userId');
   const id = c.req.param('id');
   const body = await c.req.json();
 
+  const allowed: Record<string, unknown> = {};
+  for (const key of ['name', 'description', 'map', 'side', 'situation', 'stratType', 'tempo', 'tags', 'isPublic'] as const) {
+    if (body[key] !== undefined) allowed[key] = body[key];
+  }
+
   await db.update(strategies)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...allowed, updatedAt: new Date() })
     .where(and(eq(strategies.id, id), eq(strategies.createdBy, userId)));
 
   return c.json({ ok: true });
@@ -131,7 +179,11 @@ app.get('/playbooks', async (c) => {
   const db = c.get('db');
   const userId = c.get('userId');
   const results = await db.select().from(playbooks).where(eq(playbooks.createdBy, userId));
-  return c.json(results);
+  return c.json(results.map(pb => ({
+    ...pb,
+    createdAt: toEpoch(pb.createdAt),
+    updatedAt: toEpoch(pb.updatedAt),
+  })));
 });
 
 app.post('/playbooks', async (c) => {
@@ -151,7 +203,15 @@ app.post('/playbooks', async (c) => {
     updatedAt: now,
   });
 
-  return c.json({ id }, 201);
+  return c.json({
+    id,
+    name: body.name || 'Untitled',
+    description: body.description || '',
+    isPublic: false,
+    createdBy: userId,
+    createdAt: now.getTime(),
+    updatedAt: now.getTime(),
+  }, 201);
 });
 
 app.delete('/playbooks/:id', async (c) => {
@@ -188,7 +248,7 @@ app.delete('/playbooks/:pbId/strategies/:stratId', async (c) => {
   return c.json({ ok: true });
 });
 
-// Get playbook with strategies
+// Get playbook with strategies (including phases)
 app.get('/playbooks/:id', async (c) => {
   const db = c.get('db');
   const id = c.req.param('id');
@@ -198,10 +258,37 @@ app.get('/playbooks/:id', async (c) => {
   const entries = await db.select().from(playbookEntries).where(eq(playbookEntries.playbookId, id));
   const stratIds = entries.map(e => e.strategyId);
   const strats = stratIds.length > 0
-    ? await db.select().from(strategies).where(eq(strategies.id, stratIds[0])) // TODO: use inArray for multiple
+    ? await db.select().from(strategies).where(inArray(strategies.id, stratIds))
     : [];
 
-  return c.json({ ...pb, strategies: strats });
+  // Load phases for all strategies
+  const allPhases = stratIds.length > 0
+    ? await db.select().from(phases).where(inArray(phases.strategyId, stratIds))
+    : [];
+
+  // Sort strategies by playbook entry order
+  const sortedStrats = entries
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(e => {
+      const s = strats.find(s => s.id === e.strategyId);
+      if (!s) return null;
+      return {
+        ...s,
+        createdAt: toEpoch(s.createdAt),
+        updatedAt: toEpoch(s.updatedAt),
+        phases: allPhases
+          .filter(p => p.strategyId === s.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder),
+      };
+    })
+    .filter(Boolean);
+
+  return c.json({
+    ...pb,
+    createdAt: toEpoch(pb.createdAt),
+    updatedAt: toEpoch(pb.updatedAt),
+    strategies: sortedStrats,
+  });
 });
 
 export default app;

@@ -1,11 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Strategy, Playbook, MapName } from '../types';
 import type { Session } from '../lib/auth';
-import {
-  loadStrategies, saveStrategy, deleteStrategy,
-  loadPlaybooks, savePlaybook, deletePlaybook,
-  generateId, migrateFromLegacy,
-} from '../storage';
+import { api } from '../lib/api';
 import MyStrategies from './MyStrategies';
 import PlaybookList from './PlaybookList';
 import PlaybookView from './PlaybookView';
@@ -33,77 +29,79 @@ export default function Dashboard({ session, onLogout }: Props) {
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
 
-  useEffect(() => {
-    migrateFromLegacy();
-    setStrategies(loadStrategies());
-    setPlaybooks(loadPlaybooks());
+  const refresh = useCallback(async () => {
+    const [strats, pbs] = await Promise.all([
+      api.get<Strategy[]>('/playbooks/strategies'),
+      api.get<Playbook[]>('/playbooks/playbooks'),
+    ]);
+    setStrategies(strats);
+    setPlaybooks(pbs);
   }, []);
 
-  const refresh = () => {
-    setStrategies(loadStrategies());
-    setPlaybooks(loadPlaybooks());
-  };
-
-  const handleCreateStrategy = (map: MapName, name: string) => {
-    const now = Date.now();
-    const strat: Strategy = {
-      id: generateId(),
-      name,
-      description: '',
-      map,
-      side: 't',
-      situation: 'default',
-      stratType: 'execute',
-      tempo: 'mid-round',
-      tags: [],
-      phases: [{
-        id: generateId(),
-        name: 'Setup',
-        sortOrder: 0,
-        boardState: { players: [], utilities: [], drawings: [] },
-        notes: '',
-      }],
-      isPublic: false,
-      starCount: 0,
-      forkCount: 0,
-      forkedFrom: null,
-      createdBy: session.userId,
-      createdAt: now,
-      updatedAt: now,
-    };
-    saveStrategy(strat);
+  useEffect(() => {
     refresh();
+  }, [refresh]);
+
+  const handleCreateStrategy = async (map: MapName, name: string) => {
+    const strat = await api.post<Strategy>('/playbooks/strategies', { map, name });
+    await refresh();
     setView({ screen: 'editor', strategyId: strat.id });
   };
 
-  const handleSaveStrategy = (strat: Strategy) => {
-    saveStrategy(strat);
-    refresh();
+  const handleSaveStrategy = async (strat: Strategy) => {
+    const { id, phases: stratPhases, ...fields } = strat;
+    await api.patch(`/playbooks/strategies/${id}`, {
+      name: fields.name,
+      description: fields.description,
+      map: fields.map,
+      side: fields.side,
+      situation: fields.situation,
+      stratType: fields.stratType,
+      tempo: fields.tempo,
+      tags: fields.tags,
+      isPublic: fields.isPublic,
+    });
+
+    // Sync phases: update existing, create new, delete removed
+    const existing = strategies.find(s => s.id === id);
+    const existingPhaseIds = new Set(existing?.phases.map(p => p.id) || []);
+    const newPhaseIds = new Set(stratPhases.map(p => p.id));
+
+    for (const phase of stratPhases) {
+      if (existingPhaseIds.has(phase.id)) {
+        await api.patch(`/playbooks/phases/${phase.id}`, {
+          name: phase.name,
+          sortOrder: phase.sortOrder,
+          boardState: phase.boardState,
+          notes: phase.notes,
+        });
+      } else {
+        await api.post(`/playbooks/strategies/${id}/phases`, phase);
+      }
+    }
+
+    for (const pid of existingPhaseIds) {
+      if (!newPhaseIds.has(pid)) {
+        await api.delete(`/playbooks/phases/${pid}`);
+      }
+    }
+
+    await refresh();
   };
 
-  const handleDeleteStrategy = (id: string) => {
-    deleteStrategy(id);
-    refresh();
+  const handleDeleteStrategy = async (id: string) => {
+    await api.delete(`/playbooks/strategies/${id}`);
+    await refresh();
   };
 
-  const handleCreatePlaybook = (name: string) => {
-    const now = Date.now();
-    const pb: Playbook = {
-      id: generateId(),
-      name,
-      description: '',
-      isPublic: false,
-      createdBy: session.userId,
-      createdAt: now,
-      updatedAt: now,
-    };
-    savePlaybook(pb);
-    refresh();
+  const handleCreatePlaybook = async (name: string) => {
+    await api.post('/playbooks/playbooks', { name });
+    await refresh();
   };
 
-  const handleDeletePlaybook = (id: string) => {
-    deletePlaybook(id);
-    refresh();
+  const handleDeletePlaybook = async (id: string) => {
+    await api.delete(`/playbooks/playbooks/${id}`);
+    await refresh();
   };
 
   const currentStrategy = view.screen === 'editor'

@@ -78,7 +78,7 @@ community.post('/strategies/:id/star', async (c) => {
   }
 });
 
-// Fork a strategy
+// Fork a strategy — returns the full forked strategy with phases
 community.post('/strategies/:id/fork', async (c) => {
   const db = c.get('db');
   const userId = c.get('userId');
@@ -110,15 +110,33 @@ community.post('/strategies/:id/fork', async (c) => {
     .where(eq(strategies.id, stratId));
 
   // Copy phases
+  const newPhases = [];
   for (const phase of originalPhases) {
-    await db.insert(phases).values({
-      ...phase,
-      id: crypto.randomUUID(),
-      strategyId: newId,
-    });
+    const newPhase = { ...phase, id: crypto.randomUUID(), strategyId: newId };
+    await db.insert(phases).values(newPhase);
+    newPhases.push(newPhase);
   }
 
-  return c.json({ id: newId });
+  return c.json({
+    ...original,
+    id: newId,
+    isPublic: false,
+    starCount: 0,
+    forkCount: 0,
+    forkedFrom: stratId,
+    createdBy: userId,
+    createdAt: now.getTime(),
+    updatedAt: now.getTime(),
+    phases: newPhases.sort((a, b) => a.sortOrder - b.sortOrder),
+  });
+});
+
+// Get user's starred strategy IDs
+community.get('/starred', async (c) => {
+  const db = c.get('db');
+  const userId = c.get('userId');
+  const results = await db.select({ strategyId: stars.strategyId }).from(stars).where(eq(stars.userId, userId));
+  return c.json(results.map(r => r.strategyId));
 });
 
 export default community;
