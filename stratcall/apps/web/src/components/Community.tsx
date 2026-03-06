@@ -6,8 +6,9 @@ import { mapImages } from '../assets/mapImages';
 import { api } from '../lib/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faArrowUp, faArrowDown, faFilter, faDownload, faSpinner,
+  faStar, faFilter, faDownload, faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
+import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons';
 
 interface CommunityStrategy {
   strategy: {
@@ -40,6 +41,14 @@ export default function Community() {
   const [filterTag, setFilterTag] = useState<string | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [importedIds, setImportedIds] = useState<Set<string>>(new Set());
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+
+  // Fetch user's starred IDs on mount
+  useEffect(() => {
+    api.get<string[]>('/community/starred')
+      .then(ids => setStarredIds(new Set(ids)))
+      .catch(() => {});
+  }, []);
 
   const fetchStrategies = useCallback(async () => {
     setLoading(true);
@@ -65,10 +74,20 @@ export default function Community() {
     fetchStrategies();
   }, [fetchStrategies]);
 
-  const handleVote = async (stratId: string, value: 1 | -1) => {
+  const handleStar = async (stratId: string) => {
     try {
-      await api.post(`/community/strategies/${stratId}/vote`, { value });
-      fetchStrategies();
+      const res = await api.post<{ starred: boolean }>(`/community/strategies/${stratId}/star`, {});
+      setStarredIds(prev => {
+        const next = new Set(prev);
+        if (res.starred) next.add(stratId); else next.delete(stratId);
+        return next;
+      });
+      // Update local vote count
+      setResults(prev => prev.map(item =>
+        item.strategy.id === stratId
+          ? { ...item, voteCount: item.voteCount + (res.starred ? 1 : -1) }
+          : item
+      ));
     } catch {
       // Silently fail — user may not be authenticated
     }
@@ -194,13 +213,14 @@ export default function Community() {
                 )}
               </div>
               <div className="community-card-actions">
-                <div className="vote-controls">
-                  <button className="vote-btn up" onClick={() => handleVote(item.strategy.id, 1)}>
-                    <FontAwesomeIcon icon={faArrowUp} />
-                  </button>
-                  <span className="vote-count">{item.voteCount}</span>
-                  <button className="vote-btn down" onClick={() => handleVote(item.strategy.id, -1)}>
-                    <FontAwesomeIcon icon={faArrowDown} />
+                <div className="star-controls">
+                  <button
+                    className={`star-btn ${starredIds.has(item.strategy.id) ? 'starred' : ''}`}
+                    onClick={() => handleStar(item.strategy.id)}
+                    title={starredIds.has(item.strategy.id) ? 'Unstar' : 'Star'}
+                  >
+                    <FontAwesomeIcon icon={starredIds.has(item.strategy.id) ? faStar : faStarOutline} />
+                    <span className="star-count">{item.voteCount}</span>
                   </button>
                 </div>
                 <button

@@ -137,37 +137,30 @@
   flex-shrink: 0;
 }
 
-.vote-controls {
+.star-controls {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
 }
 
-.vote-btn {
+.star-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  width: 28px;
-  height: 24px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
   transition: all 0.15s;
 }
 
-.vote-btn.up:hover { color: #44cc44; border-color: #44cc44; background: rgba(68, 204, 68, 0.1); }
-.vote-btn.down:hover { color: var(--accent-molotov); border-color: var(--accent-molotov); background: rgba(255, 68, 68, 0.1); }
+.star-btn:hover { color: #f5c542; border-color: #f5c542; background: rgba(245, 197, 66, 0.1); }
+.star-btn.starred { color: #f5c542; border-color: #f5c542; background: rgba(245, 197, 66, 0.1); }
 
-.vote-count {
-  font-size: 0.75rem;
+.star-count {
   font-weight: 600;
-  color: var(--text-primary);
-  min-width: 20px;
-  text-align: center;
 }
 
 .import-btn {
@@ -192,5 +185,5 @@
   .community-card { flex-wrap: wrap; }
   .community-card-thumb { width: 40px; height: 40px; }
   .community-card-actions { flex-direction: row; width: 100%; justify-content: flex-end; }
-  .vote-controls { flex-direction: row; }
+  .star-controls { flex-direction: row; }
 }

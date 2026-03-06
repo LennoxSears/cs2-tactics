@@ -1,9 +1,12 @@
 import { Hono } from 'hono';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { discussions, comments, strategies, notifications, users } from '@stratcall/db';
+import type { Database } from '@stratcall/db';
 import { db } from '../db';
 
-const app = new Hono();
+type Env = { Variables: { db: Database; userId: string } };
+
+const app = new Hono<Env>();
 
 // Recount comments for a discussion from the DB
 async function syncDiscussionCount(discussionId: string) {
@@ -31,7 +34,7 @@ app.get('/strategies/:strategyId/discussions', async (c) => {
 app.post('/strategies/:strategyId/discussions', async (c) => {
   const { strategyId } = c.req.param();
   const { title, body } = await c.req.json<{ title: string; body: string }>();
-  const userId = c.req.header('X-User-Id') || 'anonymous';
+  const userId = c.get('userId') || 'anonymous';
   const now = new Date();
   const id = crypto.randomUUID();
 
@@ -96,7 +99,7 @@ app.post('/comments', async (c) => {
     return c.json({ error: 'strategyId, targetType, targetId, and body are required' }, 400);
   }
 
-  const userId = c.req.header('X-User-Id') || 'anonymous';
+  const userId = c.get('userId') || 'anonymous';
   const now = new Date();
   const id = crypto.randomUUID();
 
