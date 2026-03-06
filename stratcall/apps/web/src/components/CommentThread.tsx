@@ -3,6 +3,7 @@ import RichEditor, { RichViewer } from './RichEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faReply, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import type { Comment, CommentTargetType } from '../types';
 
 interface Props {
@@ -40,6 +41,7 @@ function isContentEmpty(content: string): boolean {
 }
 
 export default function CommentThread({ strategyId, targetType, targetId, compact }: Props) {
+  const { t } = useLocale();
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -123,10 +125,10 @@ export default function CommentThread({ strategyId, targetType, targetId, compac
           <div className="comment-header">
             <span className="comment-author">{c.createdBy}</span>
             <span className="comment-time">{timeAgo(c.createdAt)}</span>
-            <button className="comment-action-btn" onClick={() => setReplyTo(c.id)} title="Reply">
+            <button className="comment-action-btn" onClick={() => setReplyTo(c.id)} title={t('comment.replyBtn')}>
               <FontAwesomeIcon icon={faReply} />
             </button>
-            <button className="comment-delete" onClick={() => deleteComment(c.id)} title="Delete">
+            <button className="comment-delete" onClick={() => deleteComment(c.id)} title={t('delete')}>
               <FontAwesomeIcon icon={faTrash} />
             </button>
           </div>
@@ -140,14 +142,14 @@ export default function CommentThread({ strategyId, targetType, targetId, compac
   };
 
   if (loading) {
-    return <div className="comment-empty">Loading...</div>;
+    return <div className="comment-empty">{t('loading')}</div>;
   }
 
   return (
     <div className={`comment-thread${compact ? ' compact' : ''}`}>
       <div className="comment-list" ref={listRef}>
         {comments.length === 0 ? (
-          <div className="comment-empty">No comments yet.</div>
+          <div className="comment-empty">{t('comment.empty')}</div>
         ) : (
           topLevel.map(c => renderComment(c, 0))
         )}
@@ -156,14 +158,14 @@ export default function CommentThread({ strategyId, targetType, targetId, compac
         {replyTarget && (
           <div className="comment-reply-banner">
             <FontAwesomeIcon icon={faReply} />
-            <span>Replying to <strong>{replyTarget.createdBy}</strong></span>
+            <span>{t('comment.replyingTo', { name: replyTarget.createdBy })}</span>
             <button className="comment-reply-cancel" onClick={cancelReply}>✕</button>
           </div>
         )}
         <RichEditor
           content={draft}
           onChange={setDraft}
-          placeholder={replyTo ? 'Write a reply...' : 'Write a comment...'}
+          placeholder={replyTo ? t('comment.replyPlaceholder') : t('comment.writePlaceholder')}
           compact
         />
         <button
@@ -171,7 +173,7 @@ export default function CommentThread({ strategyId, targetType, targetId, compac
           onClick={addComment}
           disabled={isContentEmpty(draft)}
         >
-          <FontAwesomeIcon icon={faPaperPlane} /> {replyTo ? 'Reply' : 'Post'}
+          <FontAwesomeIcon icon={faPaperPlane} /> {replyTo ? t('comment.replyBtn') : t('comment.post')}
         </button>
       </div>
     </div>

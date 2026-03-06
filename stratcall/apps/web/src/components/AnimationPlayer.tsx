@@ -13,6 +13,7 @@ import {
   faRotateRight, faCloud, faBolt, faFire, faBomb, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   mapName: MapName;
@@ -27,6 +28,7 @@ const utilityFA: Record<string, IconDefinition> = {
 const SPEEDS = [0.5, 1, 1.5, 2];
 
 export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
+  const { t } = useLocale();
   const mapInfo = getMapInfo(mapName);
   const [navMesh, setNavMesh] = useState<NavMesh | null>(null);
   const [timeline, setTimeline] = useState<AnimationTimeline | null>(null);
@@ -157,7 +159,7 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
       <div className="anim-header">
         <span className="anim-title">Animation Playback</span>
         <span className="anim-phase-label">
-          {phases[currentPhaseIdx]?.name || `Phase ${currentPhaseIdx + 1}`}
+          {phases[currentPhaseIdx]?.name || t('anim.phase', { number: currentPhaseIdx + 1 })}
         </span>
         <button className="anim-close" onClick={onClose}>
           <FontAwesomeIcon icon={faXmark} />
@@ -215,7 +217,7 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
 
       <div className="anim-controls">
         <div className="anim-buttons">
-          <button className="anim-btn" onClick={stepBack} title="Previous phase">
+          <button className="anim-btn" onClick={stepBack} title={t('anim.prevPhase')}>
             <FontAwesomeIcon icon={faBackwardStep} />
           </button>
           <button
@@ -229,20 +231,20 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
           >
             <FontAwesomeIcon icon={playing ? faPause : faPlay} />
           </button>
-          <button className="anim-btn" onClick={stepForward} title="Next phase">
+          <button className="anim-btn" onClick={stepForward} title={t('anim.nextPhase')}>
             <FontAwesomeIcon icon={faForwardStep} />
           </button>
           <button
             className={`anim-btn ${loop ? 'active' : ''}`}
             onClick={() => setLoop(!loop)}
-            title="Loop"
+            title={t('anim.loop')}
           >
             <FontAwesomeIcon icon={faRotateRight} />
           </button>
           <button
             className="anim-btn speed-btn"
             onClick={() => setSpeedIdx((speedIdx + 1) % SPEEDS.length)}
-            title="Speed"
+            title={t('anim.speed')}
           >
             {SPEEDS[speedIdx]}x
           </button>

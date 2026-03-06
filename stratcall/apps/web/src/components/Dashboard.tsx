@@ -13,6 +13,8 @@ import UserProfile from './UserProfile';
 import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 type View =
   | { screen: 'strategies' }
@@ -119,6 +121,8 @@ export default function Dashboard({ session, onLogout }: Props) {
     ? playbooks.find(p => p.id === view.playbookId)
     : undefined;
 
+  const { t } = useLocale();
+
   return (
     <div className="dashboard">
       {view.screen !== 'editor' && (
@@ -130,30 +134,31 @@ export default function Dashboard({ session, onLogout }: Props) {
                 className={`dash-nav-btn ${view.screen === 'strategies' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'strategies' })}
               >
-                <FontAwesomeIcon icon={faMap} /> My Strategies
+                <FontAwesomeIcon icon={faMap} /> {t('nav.myStrategies')}
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'playbooks' || view.screen === 'playbook' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'playbooks' })}
               >
-                <FontAwesomeIcon icon={faBook} /> Playbooks
+                <FontAwesomeIcon icon={faBook} /> {t('nav.playbooks')}
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'community' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'community' })}
               >
-                <FontAwesomeIcon icon={faGlobe} /> Community
+                <FontAwesomeIcon icon={faGlobe} /> {t('nav.community')}
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'profile' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'profile' })}
               >
-                <FontAwesomeIcon icon={faUser} /> Profile
+                <FontAwesomeIcon icon={faUser} /> {t('nav.profile')}
               </button>
             </nav>
           </div>
           <div className="dash-topbar-user">
             <NotificationBell onViewUser={(id) => setView({ screen: 'userProfile', userId: id })} />
+            <LanguageSwitcher />
             <button className="dash-help" onClick={() => setShowTutorial(true)} title="How StratCall works">
               <FontAwesomeIcon icon={faCircleQuestion} />
             </button>
@@ -161,7 +166,7 @@ export default function Dashboard({ session, onLogout }: Props) {
               <img className="dash-avatar" src={session.avatarUrl} alt="" />
             )}
             <span className="dash-username">{session.displayName}</span>
-            <button className="dash-logout" onClick={onLogout} title="Sign out">
+            <button className="dash-logout" onClick={onLogout} title={t('signOut')}>
               <FontAwesomeIcon icon={faRightFromBracket} />
             </button>
           </div>

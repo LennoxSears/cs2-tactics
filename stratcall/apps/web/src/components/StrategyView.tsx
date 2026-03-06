@@ -2,6 +2,7 @@ import { useState } from 'react';
 import TacticalBoard from './TacticalBoard';
 import DiscussionsPage from './DiscussionsPage';
 import type { Strategy } from '../types';
+import { useLocale } from '../lib/i18n';
 
 type Tab = 'board' | 'discussions';
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function StrategyView({ strategy, onBack, onSave }: Props) {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<Tab>('board');
 
   return (
@@ -21,13 +23,13 @@ export default function StrategyView({ strategy, onBack, onSave }: Props) {
           className={`strategy-tab${activeTab === 'board' ? ' active' : ''}`}
           onClick={() => setActiveTab('board')}
         >
-          Board
+          {t('board.tab')}
         </button>
         <button
           className={`strategy-tab${activeTab === 'discussions' ? ' active' : ''}`}
           onClick={() => setActiveTab('discussions')}
         >
-          Discussions
+          {t('board.discussions')}
         </button>
       </div>
 

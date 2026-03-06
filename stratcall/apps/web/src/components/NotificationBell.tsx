@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faStar, faCodeFork, faUserPlus, faComment, faReply, faCheck } from '@fortawesome/free-solid-svg-icons';
 
@@ -30,26 +31,28 @@ const TYPE_ICON = {
   reply: faReply,
 };
 
-const TYPE_LABEL = {
-  follow: 'followed you',
-  star: 'starred',
-  fork: 'forked',
-  comment: 'commented on',
-  reply: 'replied on',
+const TYPE_LABEL_KEY = {
+  follow: 'notif.followedYou' as const,
+  star: 'notif.starred' as const,
+  fork: 'notif.forked' as const,
+  comment: 'notif.commentedOn' as const,
+  reply: 'notif.repliedOn' as const,
 };
 
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
-
 export default function NotificationBell({ onViewUser }: Props) {
+  const { t } = useLocale();
+
+  const timeAgo = (ts: number): string => {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t('time.justNow');
+    if (mins < 60) return t('time.minsAgo', { count: mins });
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return t('time.hoursAgo', { count: hrs });
+    const days = Math.floor(hrs / 24);
+    return t('time.daysAgo', { count: days });
+  };
+
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -108,7 +111,7 @@ export default function NotificationBell({ onViewUser }: Props) {
 
   return (
     <div className="notif-bell" ref={ref}>
-      <button className="notif-bell-btn" onClick={handleOpen} title="Notifications">
+      <button className="notif-bell-btn" onClick={handleOpen} title={t('notif.title')}>
         <FontAwesomeIcon icon={faBell} />
         {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
       </button>
@@ -116,16 +119,16 @@ export default function NotificationBell({ onViewUser }: Props) {
       {open && (
         <div className="notif-dropdown">
           <div className="notif-header">
-            <span className="notif-title">Notifications</span>
+            <span className="notif-title">{t('notif.title')}</span>
             {unreadCount > 0 && (
               <button className="notif-mark-all" onClick={handleMarkAllRead}>
-                <FontAwesomeIcon icon={faCheck} /> Mark all read
+                <FontAwesomeIcon icon={faCheck} /> {t('notif.markAllRead')}
               </button>
             )}
           </div>
           <div className="notif-list">
             {notifications.length === 0 && (
-              <div className="notif-empty">No notifications yet</div>
+              <div className="notif-empty">{t('notif.empty')}</div>
             )}
             {notifications.map(n => (
               <div
@@ -138,7 +141,7 @@ export default function NotificationBell({ onViewUser }: Props) {
                 </div>
                 <div className="notif-body">
                   <span className="notif-text">
-                    <strong>{n.actor.displayName}</strong> {TYPE_LABEL[n.type]}
+                    <strong>{n.actor.displayName}</strong> {t(TYPE_LABEL_KEY[n.type])}
                     {n.targetName && n.type !== 'follow' && <> <em>{n.targetName}</em></>}
                   </span>
                   <span className="notif-time">{timeAgo(n.createdAt)}</span>

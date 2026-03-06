@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Phase } from '../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   phases: Phase[];
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelete, onRename }: Props) {
+  const { t } = useLocale();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
 
@@ -66,7 +68,7 @@ export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelet
             )}
           </div>
         ))}
-        <button className="phase-add" onClick={onAdd} title="Add phase">
+        <button className="phase-add" onClick={onAdd} title={t('phases.addPhase')}>
           <FontAwesomeIcon icon={faPlus} />
         </button>
       </div>

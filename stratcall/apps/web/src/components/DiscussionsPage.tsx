@@ -4,6 +4,7 @@ import { faPlus, faTrash, faArrowLeft, faComments } from '@fortawesome/free-soli
 import RichEditor, { RichViewer } from './RichEditor';
 import CommentThread from './CommentThread';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import type { Discussion } from '../types';
 
 function timeAgo(ts: number | string): string {
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function DiscussionsPage({ strategyId }: Props) {
+  const { t } = useLocale();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [activeDiscussion, setActiveDiscussion] = useState<Discussion | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -80,7 +82,7 @@ export default function DiscussionsPage({ strategyId }: Props) {
       <div className="discussions-page">
         <div className="discussions-page-header">
           <button className="disc-back-btn" onClick={() => { setActiveDiscussion(null); fetchDiscussions(); }}>
-            <FontAwesomeIcon icon={faArrowLeft} /> All Discussions
+            <FontAwesomeIcon icon={faArrowLeft} /> {t('disc.allDiscussions')}
           </button>
         </div>
         <div className="disc-thread">
@@ -111,10 +113,10 @@ export default function DiscussionsPage({ strategyId }: Props) {
     <div className="discussions-page">
       <div className="discussions-page-header">
         <h2 className="discussions-page-title">
-          <FontAwesomeIcon icon={faComments} /> Discussions
+          <FontAwesomeIcon icon={faComments} /> {t('disc.title')}
         </h2>
         <button className="disc-new-btn" onClick={() => setShowNewForm(true)}>
-          <FontAwesomeIcon icon={faPlus} /> New Discussion
+          <FontAwesomeIcon icon={faPlus} /> {t('disc.new')}
         </button>
       </div>
 
@@ -124,22 +126,22 @@ export default function DiscussionsPage({ strategyId }: Props) {
             className="disc-title-input"
             value={newTitle}
             onChange={e => setNewTitle(e.target.value)}
-            placeholder="Discussion title..."
+            placeholder={t('disc.titlePlaceholder')}
             autoFocus
             onKeyDown={e => { if (e.key === 'Enter' && newTitle.trim()) createDiscussion(); }}
           />
           <RichEditor
             content={newBody}
             onChange={setNewBody}
-            placeholder="Optional description..."
+            placeholder={t('disc.bodyPlaceholder')}
             compact
           />
           <div className="disc-form-actions">
             <button className="disc-cancel-btn" onClick={() => { setShowNewForm(false); setNewTitle(''); setNewBody(''); }}>
-              Cancel
+              {t('cancel')}
             </button>
             <button className="disc-create-btn" onClick={createDiscussion} disabled={!newTitle.trim()}>
-              Create Discussion
+              {t('disc.createDiscussion')}
             </button>
           </div>
         </div>
@@ -147,10 +149,10 @@ export default function DiscussionsPage({ strategyId }: Props) {
 
       <div className="disc-list">
         {loading ? (
-          <div className="disc-empty">Loading...</div>
+          <div className="disc-empty">{t('loading')}</div>
         ) : discussions.length === 0 ? (
           <div className="disc-empty">
-            No discussions yet. Start one to discuss this strategy with your team.
+            {t('disc.empty')}
           </div>
         ) : (
           discussions.map(d => (
@@ -159,8 +161,8 @@ export default function DiscussionsPage({ strategyId }: Props) {
               <div className="disc-item-meta">
                 <span className="disc-item-author">{d.createdBy}</span>
                 <span className="disc-item-time">{timeAgo(d.createdAt)}</span>
-                <span className="disc-item-count">{d.commentCount} {d.commentCount === 1 ? 'reply' : 'replies'}</span>
-                <button className="disc-item-delete" onClick={e => deleteDiscussion(d.id, e)} title="Delete">
+                <span className="disc-item-count">{t('disc.replyCount', { count: d.commentCount })}</span>
+                <button className="disc-item-delete" onClick={e => deleteDiscussion(d.id, e)} title={t('delete')}>
                   <FontAwesomeIcon icon={faTrash} />
                 </button>
               </div>

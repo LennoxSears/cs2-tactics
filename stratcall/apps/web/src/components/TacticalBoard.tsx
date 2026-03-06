@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { ROUND_SITUATIONS, STRAT_TYPES, STRAT_TEMPOS, SEED_TAGS } from '../types';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import { getMapInfo } from '../maps';
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -68,6 +69,7 @@ const utilityFA: Record<string, IconDefinition> = {
 };
 
 export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
+  const { t } = useLocale();
   const mapInfo = getMapInfo(strategy.map);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
@@ -509,58 +511,58 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
       <div className="board-header">
         <div className="header-row-1">
           <button className="back-btn" onClick={onBack}>
-            <FontAwesomeIcon icon={faArrowLeft} /> Back
+            <FontAwesomeIcon icon={faArrowLeft} /> {t('back')}
           </button>
           <span className="header-map-name">{mapInfo.displayName}</span>
           <input
             className="strat-name-input"
-            placeholder="Strategy name..."
+            placeholder={t('board.stratNamePlaceholder')}
             value={stratName}
             onChange={e => setStratName(e.target.value)}
           />
           <div className="header-actions">
-            <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title="Undo">
+            <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title={t('board.undo')}>
               <FontAwesomeIcon icon={faRotateLeft} />
             </button>
-            <button className="header-btn icon-btn" onClick={handleRedo} disabled={redoStack.length === 0} title="Redo">
+            <button className="header-btn icon-btn" onClick={handleRedo} disabled={redoStack.length === 0} title={t('board.redo')}>
               <FontAwesomeIcon icon={faRotateRight} />
             </button>
             {phases.length > 1 && (
               <button className="header-btn animate-btn" onClick={() => setShowAnimation(true)} title="Play animation">
-                <FontAwesomeIcon icon={faPlay} /> Animate
+                <FontAwesomeIcon icon={faPlay} /> {t('board.animate')}
               </button>
             )}
             <button className="header-btn" onClick={() => setShowMeta(!showMeta)}>
-              {showMeta ? 'Hide Info' : 'Info'}
+              {showMeta ? t('board.hideInfo') : t('board.info')}
             </button>
             <button className={`header-btn save${saveFlash ? ' saved-flash' : ''}`} onClick={handleSave}>
-              {saveFlash ? 'Saved!' : 'Save'}
+              {saveFlash ? t('saved') : t('save')}
             </button>
-            <button className="header-btn danger" onClick={handleClear}>Clear</button>
+            <button className="header-btn danger" onClick={handleClear}>{t('board.clear')}</button>
           </div>
         </div>
         <div className="header-row-2">
           <div className="axis-item">
-            <label className="axis-label" data-help="Which side this strategy is for">Side</label>
+            <label className="axis-label" data-help={t('axis.sideHelp')}>{t('axis.side')}</label>
             <select value={side} onChange={e => setSide(e.target.value as 'ct' | 't')}>
-              <option value="t">T-Side</option>
-              <option value="ct">CT-Side</option>
+              <option value="t">{t('filter.tSide')}</option>
+              <option value="ct">{t('filter.ctSide')}</option>
             </select>
           </div>
           <div className="axis-item">
-            <label className="axis-label" data-help="Economy state — pistol, eco, force buy, full buy, etc.">Situation</label>
+            <label className="axis-label" data-help={t('axis.situationHelp')}>{t('axis.situation')}</label>
             <select value={situation} onChange={e => setSituation(e.target.value as Strategy['situation'])}>
               {ROUND_SITUATIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
           <div className="axis-item">
-            <label className="axis-label" data-help="Play style — execute, rush, fake, split, default, etc.">Type</label>
+            <label className="axis-label" data-help={t('axis.typeHelp')}>{t('axis.type')}</label>
             <select value={stratType} onChange={e => setStratType(e.target.value as Strategy['stratType'])}>
               {STRAT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div className="axis-item">
-            <label className="axis-label" data-help="Timing — fast (early aggression), mid-round (default play), or slow (late execute)">Tempo</label>
+            <label className="axis-label" data-help={t('axis.tempoHelp')}>{t('axis.tempo')}</label>
             <select value={tempo} onChange={e => setTempo(e.target.value as Strategy['tempo'])}>
               {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
@@ -582,7 +584,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
       {showMeta && (
         <div className="meta-panel">
           <div className="meta-section">
-            <label className="meta-label">Tags</label>
+            <label className="meta-label">{t('meta.tags')}</label>
             <div className="tag-grid">
               {popularTags.map(t => (
                 <button key={t} className={`tag-btn ${tags.includes(t) ? 'active' : ''}`} onClick={() => toggleTag(t)}>
@@ -602,7 +604,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
             )}
             <input
               className="tag-input"
-              placeholder="Add custom tag..."
+              placeholder={t('meta.addCustomTag')}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   addCustomTag((e.target as HTMLInputElement).value);
@@ -612,12 +614,12 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
             />
           </div>
           <div className="meta-section">
-            <label className="meta-label">Description</label>
-            <RichEditor content={description} onChange={setDescription} placeholder="Describe this strategy..." compact />
+            <label className="meta-label">{t('meta.description')}</label>
+            <RichEditor content={description} onChange={setDescription} placeholder={t('meta.descPlaceholder')} compact />
           </div>
           <div className="meta-section">
-            <label className="meta-label">Phase Notes — {activePhase?.name}</label>
-            <RichEditor content={phaseNotes} onChange={setPhaseNotes} placeholder="Notes for this phase..." compact />
+            <label className="meta-label">{t('meta.phaseNotes', { name: activePhase?.name || '' })}</label>
+            <RichEditor content={phaseNotes} onChange={setPhaseNotes} placeholder={t('meta.phaseNotesPlaceholder')} compact />
 
           </div>
         </div>
@@ -626,8 +628,8 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
       <div className="board-body">
         <Toolbar activeTool={activeTool} onToolChange={setActiveTool} />
         <div className="canvas-area" ref={canvasAreaRef}>
-          {dragOutOfBounds && <div className="delete-hint">Drop to delete</div>}
-          {utilDragLink && <div className="link-hint">Drop on a player to assign thrower</div>}
+          {dragOutOfBounds && <div className="delete-hint">{t('board.dropToDelete')}</div>}
+          {utilDragLink && <div className="link-hint">{t('board.dropToAssign')}</div>}
           <div
             className="map-container"
             ref={containerRef}

@@ -92,6 +92,21 @@
   color: var(--text-primary);
 }
 
+.lang-switcher {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lang-switcher:hover {
+  border-color: var(--accent-ct);
+  color: var(--text-primary);
+}
+
 .dash-help {
   background: none;
   border: 1px solid var(--border);

@@ -1,0 +1,272 @@
+const en = {
+  // ── Common ──
+  back: 'Back',
+  cancel: 'Cancel',
+  create: 'Create',
+  delete: 'Delete',
+  save: 'Save',
+  saved: 'Saved!',
+  clear: 'Clear',
+  loading: 'Loading...',
+  retry: 'Retry',
+  confirm: 'Confirm',
+  close: 'Close',
+  next: 'Next',
+  untitled: 'Untitled',
+  signOut: 'Sign out',
+
+  // ── Homepage ──
+  'hp.signInSteam': 'Sign in with Steam',
+  'hp.heroTitle': 'Your CS2 {accent}',
+  'hp.heroAccent': 'Tactical Playbook',
+  'hp.heroSub': 'Draw strategies, organize playbooks, share with your team. Built for IGLs and coaches who think in rounds.',
+  'hp.getStarted': 'Get Started with Steam',
+  'hp.featureMultiPhaseTitle': 'Multi-Phase Strategies',
+  'hp.featureMultiPhaseDesc': 'Break plays into sequential phases — setup, utility, entry, post-plant. Step through them like a real playbook.',
+  'hp.featurePlaybookTitle': 'Playbook Organization',
+  'hp.featurePlaybookDesc': 'Folders, tags, favorites, and 4-axis filtering. Find the right strat in seconds during a match.',
+  'hp.featureTeamTitle': 'Team Playbooks',
+  'hp.featureTeamDesc': 'Share playbooks with your team. Assign roles, build scouting reports, prepare for match day.',
+  'hp.featureCommunityTitle': 'Community Library',
+  'hp.featureCommunityDesc': 'Browse and import strategies from other players. Share your best strats with the community.',
+  'hp.allMaps': 'All Active Duty Maps',
+  'hp.mapList': 'Mirage · Inferno · Dust II · Nuke · Overpass · Ancient · Anubis · Vertigo · Train · Cache · Cobblestone',
+  'hp.footer': 'CS2 Tactical Platform',
+
+  // ── Auth ──
+  'auth.signingIn': 'Signing in with Steam...',
+  'auth.loginFailed': 'Login failed: {error}',
+  'auth.backToHome': 'Back to home',
+
+  // ── Dashboard nav ──
+  'nav.myStrategies': 'My Strategies',
+  'nav.playbooks': 'Playbooks',
+  'nav.community': 'Community',
+  'nav.profile': 'Profile',
+
+  // ── My Strategies ──
+  'strats.title': 'My Strategies',
+  'strats.count': '{count} strategies',
+  'strats.newStrategy': 'New Strategy',
+  'strats.namePlaceholder': 'Strategy name...',
+  'strats.emptyFirst': 'No strategies yet. Create your first one!',
+  'strats.emptyFiltered': 'No strategies match the current filters.',
+  'strats.deleteTitle': 'Delete Strategy?',
+  'strats.deleteMsg': '"{name}" will be permanently deleted.',
+  'strats.forked': 'forked',
+
+  // ── Filters ──
+  'filter.anyMap': 'Any Map',
+  'filter.anySide': 'Any Side',
+  'filter.anySituation': 'Any Situation',
+  'filter.anyTag': 'Any Tag',
+  'filter.tSide': 'T-Side',
+  'filter.ctSide': 'CT-Side',
+
+  // ── Playbooks ──
+  'pb.title': 'Playbooks',
+  'pb.newPlaybook': 'New Playbook',
+  'pb.namePlaceholder': 'Playbook name...',
+  'pb.empty': 'No playbooks yet. Create a collection to organize your strategies.',
+  'pb.deleteTitle': 'Delete Playbook?',
+  'pb.deleteMsg': '"{name}" will be permanently deleted.',
+  'pb.addStrategy': 'Add Strategy',
+  'pb.addFromYours': 'Add from your strategies:',
+  'pb.allAdded': 'All your strategies are already in this playbook.',
+  'pb.emptyPlaybook': 'This playbook is empty. Add strategies to build your collection.',
+  'pb.removeFromPlaybook': 'Remove from playbook',
+  'pb.phases': '{count} phases',
+
+  // ── Community ──
+  'community.title': 'Community Strategies',
+  'community.count': '{count} strategies',
+  'community.loading': 'Loading strategies...',
+  'community.error': 'Failed to load strategies',
+  'community.empty': 'No public strategies found. Be the first to share one!',
+  'community.star': 'Star',
+  'community.unstar': 'Unstar',
+  'community.import': 'Import',
+  'community.imported': 'Imported',
+
+  // ── Strategy View / Tactical Board ──
+  'board.tab': 'Board',
+  'board.discussions': 'Discussions',
+  'board.stratNamePlaceholder': 'Strategy name...',
+  'board.undo': 'Undo',
+  'board.redo': 'Redo',
+  'board.animate': 'Animate',
+  'board.hideInfo': 'Hide Info',
+  'board.info': 'Info',
+  'board.clear': 'Clear',
+  'board.dropToDelete': 'Drop to delete',
+  'board.dropToAssign': 'Drop on a player to assign thrower',
+
+  // ── Axis labels ──
+  'axis.side': 'Side',
+  'axis.sideHelp': 'Which side this strategy is for',
+  'axis.situation': 'Situation',
+  'axis.situationHelp': 'Economy state — pistol, eco, force buy, full buy, etc.',
+  'axis.type': 'Type',
+  'axis.typeHelp': 'Play style — execute, rush, fake, split, default, etc.',
+  'axis.tempo': 'Tempo',
+  'axis.tempoHelp': 'Timing — fast (early aggression), mid-round (default play), or slow (late execute)',
+
+  // ── Axis values ──
+  'val.pistol': 'Pistol',
+  'val.eco': 'Eco',
+  'val.forceBuy': 'Force Buy',
+  'val.fullBuy': 'Full Buy',
+  'val.save': 'Save',
+  'val.antiEco': 'Anti-Eco',
+  'val.default': 'Default',
+  'val.retake': 'Retake',
+  'val.execute': 'Execute',
+  'val.rush': 'Rush',
+  'val.fake': 'Fake',
+  'val.split': 'Split',
+  'val.stack': 'Stack',
+  'val.rotate': 'Rotate',
+  'val.fast': 'Fast',
+  'val.slow': 'Slow',
+  'val.midRound': 'Mid-Round',
+
+  // ── Meta panel ──
+  'meta.tags': 'Tags',
+  'meta.addCustomTag': 'Add custom tag...',
+  'meta.description': 'Description',
+  'meta.descPlaceholder': 'Describe this strategy...',
+  'meta.phaseNotes': 'Phase Notes — {name}',
+  'meta.phaseNotesPlaceholder': 'Notes for this phase...',
+
+  // ── Toolbar ──
+  'tool.placeCT': 'Place CT',
+  'tool.placeT': 'Place T',
+  'tool.smoke': 'Smoke',
+  'tool.flash': 'Flash',
+  'tool.molotov': 'Molotov',
+  'tool.he': 'HE Grenade',
+  'tool.freehand': 'Freehand',
+  'tool.eraser': 'Erase Drawing',
+
+  // ── Phase bar ──
+  'phases.label': 'Phases',
+  'phases.addPhase': 'Add phase',
+
+  // ── Token popover ──
+  'token.player': 'Player {number} ({side})',
+  'token.clearNote': 'Clear note',
+  'token.addNotes': 'Add notes for this token...',
+  'token.comments': 'Comments',
+
+  // ── Animation player ──
+  'anim.title': 'Animation Playback',
+  'anim.phase': 'Phase {number}',
+  'anim.prevPhase': 'Previous phase',
+  'anim.nextPhase': 'Next phase',
+  'anim.loop': 'Loop',
+  'anim.speed': 'Speed',
+
+  // ── Discussions ──
+  'disc.title': 'Discussions',
+  'disc.new': 'New Discussion',
+  'disc.titlePlaceholder': 'Discussion title...',
+  'disc.bodyPlaceholder': 'Optional description...',
+  'disc.createDiscussion': 'Create Discussion',
+  'disc.allDiscussions': 'All Discussions',
+  'disc.empty': 'No discussions yet. Start one to discuss this strategy with your team.',
+  'disc.reply': '{count, plural, one {# reply} other {# replies}}',
+  'disc.replyCount': '{count} {count, plural, one {reply} other {replies}}',
+
+  // ── Comments ──
+  'comment.empty': 'No comments yet.',
+  'comment.replyingTo': 'Replying to {name}',
+  'comment.writePlaceholder': 'Write a comment...',
+  'comment.replyPlaceholder': 'Write a reply...',
+  'comment.post': 'Post',
+  'comment.replyBtn': 'Reply',
+
+  // ── Profile ──
+  'profile.strategies': '{count} strategies',
+  'profile.playbooks': '{count} playbooks',
+  'profile.public': '{count} public',
+  'profile.forkedCount': '{count} forked',
+  'profile.tabStrategies': 'Strategies ({count})',
+  'profile.tabPlaybooks': 'Playbooks ({count})',
+  'profile.tabStarred': 'Starred ({count})',
+  'profile.noStrategies': 'No strategies yet.',
+  'profile.noPlaybooks': 'No playbooks yet.',
+  'profile.noStarred': 'No starred strategies.',
+
+  // ── User Profile ──
+  'userProfile.followers': 'followers',
+  'userProfile.following': 'following',
+  'userProfile.publicStrategies': 'public strategies',
+  'userProfile.follow': 'Follow',
+  'userProfile.unfollow': 'Unfollow',
+  'userProfile.tabStrategies': 'Strategies',
+  'userProfile.tabFollowers': 'Followers',
+  'userProfile.tabFollowing': 'Following',
+  'userProfile.noStrategies': 'No public strategies yet.',
+  'userProfile.noFollowers': 'No followers yet.',
+  'userProfile.noFollowing': 'Not following anyone yet.',
+
+  // ── Notifications ──
+  'notif.title': 'Notifications',
+  'notif.markAllRead': 'Mark all read',
+  'notif.empty': 'No notifications yet',
+  'notif.followedYou': 'followed you',
+  'notif.starred': 'starred',
+  'notif.forked': 'forked',
+  'notif.commentedOn': 'commented on',
+  'notif.repliedOn': 'replied on',
+
+  // ── Tutorial ──
+  'tut.step1Title': 'How StratCall Organizes Tactics',
+  'tut.playbook': 'Playbook',
+  'tut.playbookDesc': "A collection of strategies — your team's game plan for a match or map pool.",
+  'tut.strategy': 'Strategy',
+  'tut.strategyDesc': 'A single tactical play for a specific map and side. Classified by 4 axes (see next).',
+  'tut.phase': 'Phase',
+  'tut.phaseDesc': 'One step in a strategy — setup, utility, entry, post-plant. Each has its own board state.',
+  'tut.step2Title': 'The 4-Axis Strategy Model',
+  'tut.step2Intro': 'Every strategy is classified along 4 axes so you can filter and find the right play instantly.',
+  'tut.sideDesc': 'T-Side or CT-Side. Determines which side of the map the strategy is designed for.',
+  'tut.sideValues': 'T-Side, CT-Side',
+  'tut.situationDesc': 'The economy state of the round. A pistol round strat is very different from a full-buy execute.',
+  'tut.situationValues': 'Pistol, Eco, Force Buy, Full Buy, Save, Anti-Eco, Default, Retake',
+  'tut.typeDesc': 'The style of play. Are you executing onto a site, faking, splitting, or playing default?',
+  'tut.typeValues': 'Execute, Default, Rush, Fake, Split, Retake, Stack, Rotate',
+  'tut.tempoDesc': 'When the play happens in the round. Fast plays hit early, slow plays wait for information.',
+  'tut.tempoValues': 'Fast, Mid-Round, Slow',
+  'tut.step3Title': 'Using the Tactical Board',
+  'tut.tipPlayers': 'Players',
+  'tut.tipPlayersText': 'Select a player tool (CT/T) from the toolbar, then click the map to place. Drag to reposition. Drag off the board to delete.',
+  'tut.tipUtilities': 'Utilities',
+  'tut.tipUtilitiesText': 'Place smokes, flashes, molotovs, and HE grenades. Drag a utility onto a player to assign a thrower.',
+  'tut.tipDrawing': 'Drawing',
+  'tut.tipDrawingText': 'Use the freehand tool to draw movement paths and annotations. Use the eraser to remove drawings.',
+  'tut.tipPhases': 'Phases',
+  'tut.tipPhasesText': 'Add phases to break a strategy into steps. Each phase has its own board state. Use Animate to play through them.',
+  'tut.tipRightClick': 'Right-click',
+  'tut.tipRightClickText': 'Right-click any player or utility token to add notes, assign roles, or set labels.',
+  'tut.getStarted': 'Get Started',
+
+  // ── Time ago ──
+  'time.justNow': 'just now',
+  'time.minsAgo': '{count}m ago',
+  'time.hoursAgo': '{count}h ago',
+  'time.daysAgo': '{count}d ago',
+
+  // ── Rich Editor ──
+  'editor.writeSomething': 'Write something...',
+  'editor.imageUrl': 'Image URL:',
+  'editor.linkUrl': 'Link URL:',
+  'editor.videoUrl': 'YouTube or video URL:',
+
+  // ── Language ──
+  'lang.label': 'Language',
+} as const;
+
+export type LocaleKeys = keyof typeof en;
+export type LocaleMap = Record<LocaleKeys, string>;
+export default en;

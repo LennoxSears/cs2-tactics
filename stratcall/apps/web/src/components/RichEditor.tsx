@@ -4,6 +4,7 @@ import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useCallback } from 'react';
+import { useLocale } from '../lib/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBold, faItalic, faStrikethrough, faListUl, faListOl,
@@ -35,6 +36,7 @@ function parseContent(raw: string): any {
 }
 
 export default function RichEditor({ content, onChange, placeholder, compact }: Props) {
+  const { t } = useLocale();
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -43,7 +45,7 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
       }),
       Image.configure({ inline: true, allowBase64: true }),
       Youtube.configure({ width: 480, height: 270 }),
-      Placeholder.configure({ placeholder: placeholder || 'Write something...' }),
+      Placeholder.configure({ placeholder: placeholder || t('editor.writeSomething') }),
     ],
     content: parseContent(content),
     onUpdate: ({ editor }) => {
@@ -68,13 +70,13 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
 
   const addImage = useCallback(() => {
     if (!editor) return;
-    const url = prompt('Image URL:');
+    const url = prompt(t('editor.imageUrl'));
     if (url) editor.chain().focus().setImage({ src: url }).run();
   }, [editor]);
 
   const addLink = useCallback(() => {
     if (!editor) return;
-    const raw = prompt('Link URL:');
+    const raw = prompt(t('editor.linkUrl'));
     if (!raw) return;
     const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
     editor.chain().focus().setLink({ href }).run();
@@ -82,7 +84,7 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
 
   const addVideo = useCallback(() => {
     if (!editor) return;
-    const url = prompt('YouTube or video URL:');
+    const url = prompt(t('editor.videoUrl'));
     if (url) editor.chain().focus().setYoutubeVideo({ src: url }).run();
   }, [editor]);
 

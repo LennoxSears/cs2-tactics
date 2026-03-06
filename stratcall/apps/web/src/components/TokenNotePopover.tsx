@@ -3,6 +3,7 @@ import RichEditor from './RichEditor';
 import CommentThread from './CommentThread';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   title: string;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function TokenNotePopover({ title, content, onChange, onClose, onDelete, position, containerSize, strategyId, tokenId }: Props) {
+  const { t } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const [showComments, setShowComments] = useState(false);
 
@@ -63,11 +65,11 @@ export default function TokenNotePopover({ title, content, onChange, onClose, on
         <RichEditor
           content={content}
           onChange={onChange}
-          placeholder="Add notes for this token..."
+          placeholder={t('token.addNotes')}
           compact
         />
         <details className="token-comments-toggle" open={showComments} onToggle={e => setShowComments((e.target as HTMLDetailsElement).open)}>
-          <summary>Comments</summary>
+          <summary>{t('token.comments')}</summary>
           {showComments && (
             <CommentThread
               strategyId={strategyId}

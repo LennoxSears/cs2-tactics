@@ -4,6 +4,7 @@ import type { Session } from '../lib/auth';
 import { ROUND_SITUATIONS, STRAT_TYPES } from '../types';
 import { maps } from '../maps';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGlobe, faLock, faCodeFork, faStar, faBook, faMap } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function Profile({ session, onOpenStrategy }: Props) {
+  const { t } = useLocale();
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
@@ -47,23 +49,23 @@ export default function Profile({ session, onOpenStrategy }: Props) {
         <div className="profile-info">
           <h2 className="profile-name">{session.displayName}</h2>
           <div className="profile-stats">
-            <span><FontAwesomeIcon icon={faMap} /> {strategies.length} strategies</span>
-            <span><FontAwesomeIcon icon={faBook} /> {playbooks.length} playbooks</span>
-            <span><FontAwesomeIcon icon={faGlobe} /> {publicStrats.length} public</span>
-            <span><FontAwesomeIcon icon={faCodeFork} /> {forkedStrats.length} forked</span>
+            <span><FontAwesomeIcon icon={faMap} /> {t('profile.strategies', { count: strategies.length })}</span>
+            <span><FontAwesomeIcon icon={faBook} /> {t('profile.playbooks', { count: playbooks.length })}</span>
+            <span><FontAwesomeIcon icon={faGlobe} /> {t('profile.public', { count: publicStrats.length })}</span>
+            <span><FontAwesomeIcon icon={faCodeFork} /> {t('profile.forkedCount', { count: forkedStrats.length })}</span>
           </div>
         </div>
       </div>
 
       <div className="profile-tabs">
         <button className={`profile-tab ${tab === 'strategies' ? 'active' : ''}`} onClick={() => setTab('strategies')}>
-          Strategies ({strategies.length})
+          {t('profile.tabStrategies', { count: strategies.length })}
         </button>
         <button className={`profile-tab ${tab === 'playbooks' ? 'active' : ''}`} onClick={() => setTab('playbooks')}>
-          Playbooks ({playbooks.length})
+          {t('profile.tabPlaybooks', { count: playbooks.length })}
         </button>
         <button className={`profile-tab ${tab === 'starred' ? 'active' : ''}`} onClick={() => setTab('starred')}>
-          <FontAwesomeIcon icon={faStar} /> Starred ({starredStrats.length})
+          <FontAwesomeIcon icon={faStar} /> {t('profile.tabStarred', { count: starredStrats.length })}
         </button>
       </div>
 
@@ -71,7 +73,7 @@ export default function Profile({ session, onOpenStrategy }: Props) {
         {tab === 'strategies' && (
           <div className="strat-grid">
             {strategies.length === 0 ? (
-              <div className="strat-empty">No strategies yet.</div>
+              <div className="strat-empty">{t('profile.noStrategies')}</div>
             ) : (
               strategies.map(strat => (
                 <StratCard key={strat.id} strat={strat} onClick={() => onOpenStrategy(strat.id)} />
@@ -82,7 +84,7 @@ export default function Profile({ session, onOpenStrategy }: Props) {
         {tab === 'playbooks' && (
           <div className="pl-grid">
             {playbooks.length === 0 ? (
-              <div className="strat-empty">No playbooks yet.</div>
+              <div className="strat-empty">{t('profile.noPlaybooks')}</div>
             ) : (
               playbooks.map(pb => (
                 <div key={pb.id} className="pl-card">
@@ -104,7 +106,7 @@ export default function Profile({ session, onOpenStrategy }: Props) {
         {tab === 'starred' && (
           <div className="strat-grid">
             {starredStrats.length === 0 ? (
-              <div className="strat-empty">No starred strategies.</div>
+              <div className="strat-empty">{t('profile.noStarred')}</div>
             ) : (
               starredStrats.map(strat => (
                 <StratCard key={strat.id} strat={strat} onClick={() => onOpenStrategy(strat.id)} />

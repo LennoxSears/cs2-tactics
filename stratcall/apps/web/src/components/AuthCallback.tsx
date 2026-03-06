@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { handleSteamCallback, type Session } from '../lib/auth';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   onSuccess: (session: Session) => void;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function AuthCallback({ onSuccess }: Props) {
+  const { t } = useLocale();
   const [status, setStatus] = useState<'loading' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -27,7 +29,6 @@ export default function AuthCallback({ onSuccess }: Props) {
         console.error('Auth error:', err);
         setStatus('error');
         setErrorMsg(err.message || 'Authentication failed');
-        // Don't auto-redirect on error — let user see the message
       });
   }, []);
 
@@ -36,13 +37,13 @@ export default function AuthCallback({ onSuccess }: Props) {
       {status === 'loading' && (
         <div className="auth-loading">
           <div className="auth-spinner" />
-          <p>Signing in with Steam...</p>
+          <p>{t('auth.signingIn')}</p>
         </div>
       )}
       {status === 'error' && (
         <div className="auth-error">
-          <p>Login failed: {errorMsg}</p>
-          <button onClick={() => window.location.href = '/'}>Back to home</button>
+          <p>{t('auth.loginFailed', { error: errorMsg })}</p>
+          <button onClick={() => window.location.href = '/'}>{t('auth.backToHome')}</button>
         </div>
       )}
     </div>

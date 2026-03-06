@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Playbook, Strategy } from '../types';
 import { ROUND_SITUATIONS } from '../types';
 import { maps } from '../maps';
+import { useLocale } from '../lib/i18n';
 import { api } from '../lib/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props) {
+  const { t } = useLocale();
   const [pbStrategies, setPbStrategies] = useState<Strategy[]>([]);
   const [allStrategies, setAllStrategies] = useState<Strategy[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -47,29 +49,29 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
       <div className="pb-main-header">
         <div className="pb-header-left">
           <button className="back-btn" onClick={onBack}>
-            <FontAwesomeIcon icon={faArrowLeft} /> Back
+            <FontAwesomeIcon icon={faArrowLeft} /> {t('back')}
           </button>
           <div className="pb-name">{playbook.name}</div>
-          <span className="strat-count">{pbStrategies.length} strategies</span>
+          <span className="strat-count">{t('strats.count', { count: pbStrategies.length })}</span>
         </div>
         <div className="pb-main-actions">
           <button className="new-strat-btn" onClick={() => setShowAdd(!showAdd)}>
-            <FontAwesomeIcon icon={faPlus} /> Add Strategy
+            <FontAwesomeIcon icon={faPlus} /> {t('pb.addStrategy')}
           </button>
         </div>
       </div>
 
       {showAdd && (
         <div className="add-to-pb">
-          <div className="add-to-pb-label">Add from your strategies:</div>
+          <div className="add-to-pb-label">{t('pb.addFromYours')}</div>
           {available.length === 0 ? (
-            <div className="add-to-pb-empty">All your strategies are already in this playbook.</div>
+            <div className="add-to-pb-empty">{t('pb.allAdded')}</div>
           ) : (
             <div className="add-to-pb-list">
               {available.map(s => (
                 <button key={s.id} className="add-to-pb-item" onClick={() => handleAdd(s.id)}>
                   <FontAwesomeIcon icon={faPlus} />
-                  <span>{s.name || 'Untitled'}</span>
+                  <span>{s.name || t('untitled')}</span>
                   <span className="add-to-pb-map">{maps.find(m => m.name === s.map)?.displayName}</span>
                 </button>
               ))}
@@ -81,7 +83,7 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
       <div className="strat-list">
         {pbStrategies.length === 0 ? (
           <div className="strat-empty">
-            This playbook is empty. Add strategies to build your collection.
+            {t('pb.emptyPlaybook')}
           </div>
         ) : (
           pbStrategies.map(strat => {
@@ -90,18 +92,18 @@ export default function PlaybookView({ playbook, onBack, onOpenStrategy }: Props
             return (
               <div key={strat.id} className="strat-card" onClick={() => onOpenStrategy(strat.id)}>
                 <div className="strat-card-info">
-                  <div className="strat-card-name">{strat.name || 'Untitled'}</div>
+                  <div className="strat-card-name">{strat.name || t('untitled')}</div>
                   <div className="strat-card-meta">
                     <span className={`side-badge ${strat.side}`}>{strat.side.toUpperCase()}</span>
                     <span className="map-badge">{mapDisplay}</span>
                     <span className="situation-badge">{situationLabel}</span>
-                    <span className="phase-count">{strat.phases.length} phases</span>
+                    <span className="phase-count">{t('pb.phases', { count: strat.phases.length })}</span>
                   </div>
                 </div>
                 <button
                   className="strat-card-delete"
                   onClick={e => { e.stopPropagation(); handleRemove(strat.id); }}
-                  title="Remove from playbook"
+                  title={t('pb.removeFromPlaybook')}
                 >
                   <FontAwesomeIcon icon={faMinus} />
                 </button>

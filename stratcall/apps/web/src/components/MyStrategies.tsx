@@ -6,6 +6,7 @@ import { mapImages } from '../assets/mapImages';
 import ConfirmDialog from './ConfirmDialog';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faFilter, faGlobe, faLock, faCodeFork } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   strategies: Strategy[];
@@ -18,6 +19,7 @@ interface Props {
 export default function MyStrategies({
   strategies, onOpenStrategy, onCreateStrategy, onDeleteStrategy,
 }: Props) {
+  const { t } = useLocale();
   const [filterMap, setFilterMap] = useState<MapName | 'all'>('all');
   const [filterSide, setFilterSide] = useState<Side | 'all'>('all');
   const [filterSituation, setFilterSituation] = useState<RoundSituation | 'all'>('all');
@@ -45,8 +47,8 @@ export default function MyStrategies({
     <div className="my-strategies">
       <div className="ms-header">
         <div className="ms-header-left">
-          <h2>My Strategies</h2>
-          <span className="strat-count">{strategies.length} strategies</span>
+          <h2>{t('strats.title')}</h2>
+          <span className="strat-count">{t('strats.count', { count: strategies.length })}</span>
         </div>
         <div className="ms-header-actions">
           <button
@@ -57,7 +59,7 @@ export default function MyStrategies({
             {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
           </button>
           <button className="new-strat-btn" onClick={() => setShowNewStrat(true)}>
-            <FontAwesomeIcon icon={faPlus} /> New Strategy
+            <FontAwesomeIcon icon={faPlus} /> {t('strats.newStrategy')}
           </button>
         </div>
       </div>
@@ -65,25 +67,25 @@ export default function MyStrategies({
       {showFilters && (
         <div className="pb-filter-bar">
           <select value={filterMap} onChange={e => setFilterMap(e.target.value as MapName | 'all')}>
-            <option value="all">Any Map</option>
+            <option value="all">{t('filter.anyMap')}</option>
             {maps.filter(m => m.hasNavMesh).map(m => (
               <option key={m.name} value={m.name}>{m.displayName}</option>
             ))}
           </select>
           <select value={filterSide} onChange={e => setFilterSide(e.target.value as Side | 'all')}>
-            <option value="all">Any Side</option>
-            <option value="t">T-Side</option>
-            <option value="ct">CT-Side</option>
+            <option value="all">{t('filter.anySide')}</option>
+            <option value="t">{t('filter.tSide')}</option>
+            <option value="ct">{t('filter.ctSide')}</option>
           </select>
           <select value={filterSituation} onChange={e => setFilterSituation(e.target.value as RoundSituation | 'all')}>
-            <option value="all">Any Situation</option>
+            <option value="all">{t('filter.anySituation')}</option>
             {ROUND_SITUATIONS.map(s => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
           {activeFilterCount > 0 && (
             <button className="clear-filters" onClick={() => { setFilterMap('all'); setFilterSide('all'); setFilterSituation('all'); }}>
-              Clear
+              {t('clear')}
             </button>
           )}
         </div>
@@ -93,7 +95,7 @@ export default function MyStrategies({
         <div className="new-strat-form">
           <input
             className="strat-input"
-            placeholder="Strategy name..."
+            placeholder={t('strats.namePlaceholder')}
             value={newStratName}
             onChange={e => setNewStratName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCreate()}
@@ -104,8 +106,8 @@ export default function MyStrategies({
               <option key={m.name} value={m.name}>{m.displayName}</option>
             ))}
           </select>
-          <button className="create-btn confirm" onClick={handleCreate}>Create</button>
-          <button className="create-btn cancel" onClick={() => { setShowNewStrat(false); setNewStratName(''); }}>Cancel</button>
+          <button className="create-btn confirm" onClick={handleCreate}>{t('create')}</button>
+          <button className="create-btn cancel" onClick={() => { setShowNewStrat(false); setNewStratName(''); }}>{t('cancel')}</button>
         </div>
       )}
 
@@ -113,8 +115,8 @@ export default function MyStrategies({
         {filtered.length === 0 ? (
           <div className="strat-empty">
             {strategies.length === 0
-              ? 'No strategies yet. Create your first one!'
-              : 'No strategies match the current filters.'}
+              ? t('strats.emptyFirst')
+              : t('strats.emptyFiltered')}
           </div>
         ) : (
           filtered.map(strat => {
@@ -132,12 +134,12 @@ export default function MyStrategies({
                 )}
                 <div className="strat-repo-body">
                   <div className="strat-repo-name">
-                    {strat.name || 'Untitled'}
+                    {strat.name || t('untitled')}
                     <span className="visibility-icon">
                       <FontAwesomeIcon icon={strat.isPublic ? faGlobe : faLock} />
                     </span>
                     {strat.forkedFrom && (
-                      <span className="forked-badge"><FontAwesomeIcon icon={faCodeFork} /> forked</span>
+                      <span className="forked-badge"><FontAwesomeIcon icon={faCodeFork} /> {t('strats.forked')}</span>
                     )}
                   </div>
                   {strat.description && (
@@ -161,7 +163,7 @@ export default function MyStrategies({
                 </div>
                 <button
                   className="strat-card-delete"
-                  onClick={e => { e.stopPropagation(); setConfirmDelete({ id: strat.id, name: strat.name || 'Untitled' }); }}
+                  onClick={e => { e.stopPropagation(); setConfirmDelete({ id: strat.id, name: strat.name || t('untitled') }); }}
                 >
                   ✕
                 </button>
@@ -173,8 +175,8 @@ export default function MyStrategies({
 
       {confirmDelete && (
         <ConfirmDialog
-          title="Delete Strategy?"
-          message={`"${confirmDelete.name}" will be permanently deleted.`}
+          title={t('strats.deleteTitle')}
+          message={t('strats.deleteMsg', { name: confirmDelete.name })}
           onConfirm={() => { onDeleteStrategy(confirmDelete.id); setConfirmDelete(null); }}
           onCancel={() => setConfirmDelete(null)}
         />

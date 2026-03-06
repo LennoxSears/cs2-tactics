@@ -1,115 +1,115 @@
-import { useState } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBook, faChessBoard, faLayerGroup, faCrosshairs,
   faArrowRight, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 interface Props {
   onClose: () => void;
 }
 
-const STEPS = [
-  {
-    icon: faBook,
-    title: 'How StratCall Organizes Tactics',
-    content: (
-      <>
+export default function Tutorial({ onClose }: Props) {
+  const { t } = useLocale();
+  const [step, setStep] = useState(0);
+
+  const steps: { icon: IconDefinition; title: string; content: ReactNode }[] = useMemo(() => [
+    {
+      icon: faBook,
+      title: t('tut.step1Title'),
+      content: (
         <div className="tut-hierarchy">
           <div className="tut-level">
             <div className="tut-level-icon playbook"><FontAwesomeIcon icon={faBook} /></div>
             <div className="tut-level-text">
-              <strong>Playbook</strong>
-              <span>A collection of strategies — your team's game plan for a match or map pool.</span>
+              <strong>{t('tut.playbook')}</strong>
+              <span>{t('tut.playbookDesc')}</span>
             </div>
           </div>
           <div className="tut-arrow"><FontAwesomeIcon icon={faArrowRight} /></div>
           <div className="tut-level">
             <div className="tut-level-icon strategy"><FontAwesomeIcon icon={faChessBoard} /></div>
             <div className="tut-level-text">
-              <strong>Strategy</strong>
-              <span>A single tactical play for a specific map and side. Classified by 4 axes (see next).</span>
+              <strong>{t('tut.strategy')}</strong>
+              <span>{t('tut.strategyDesc')}</span>
             </div>
           </div>
           <div className="tut-arrow"><FontAwesomeIcon icon={faArrowRight} /></div>
           <div className="tut-level">
             <div className="tut-level-icon phase"><FontAwesomeIcon icon={faLayerGroup} /></div>
             <div className="tut-level-text">
-              <strong>Phase</strong>
-              <span>One step in a strategy — setup, utility, entry, post-plant. Each has its own board state.</span>
+              <strong>{t('tut.phase')}</strong>
+              <span>{t('tut.phaseDesc')}</span>
             </div>
           </div>
         </div>
-      </>
-    ),
-  },
-  {
-    icon: faCrosshairs,
-    title: 'The 4-Axis Strategy Model',
-    content: (
-      <>
-        <p className="tut-intro">Every strategy is classified along 4 axes so you can filter and find the right play instantly.</p>
-        <div className="tut-axes">
-          <div className="tut-axis-card">
-            <div className="tut-axis-name">Side</div>
-            <div className="tut-axis-desc">T-Side or CT-Side. Determines which side of the map the strategy is designed for.</div>
-            <div className="tut-axis-values">T-Side, CT-Side</div>
+      ),
+    },
+    {
+      icon: faCrosshairs,
+      title: t('tut.step2Title'),
+      content: (
+        <>
+          <p className="tut-intro">{t('tut.step2Intro')}</p>
+          <div className="tut-axes">
+            <div className="tut-axis-card">
+              <div className="tut-axis-name">{t('axis.side')}</div>
+              <div className="tut-axis-desc">{t('tut.sideDesc')}</div>
+              <div className="tut-axis-values">{t('tut.sideValues')}</div>
+            </div>
+            <div className="tut-axis-card">
+              <div className="tut-axis-name">{t('axis.situation')}</div>
+              <div className="tut-axis-desc">{t('tut.situationDesc')}</div>
+              <div className="tut-axis-values">{t('tut.situationValues')}</div>
+            </div>
+            <div className="tut-axis-card">
+              <div className="tut-axis-name">{t('axis.type')}</div>
+              <div className="tut-axis-desc">{t('tut.typeDesc')}</div>
+              <div className="tut-axis-values">{t('tut.typeValues')}</div>
+            </div>
+            <div className="tut-axis-card">
+              <div className="tut-axis-name">{t('axis.tempo')}</div>
+              <div className="tut-axis-desc">{t('tut.tempoDesc')}</div>
+              <div className="tut-axis-values">{t('tut.tempoValues')}</div>
+            </div>
           </div>
-          <div className="tut-axis-card">
-            <div className="tut-axis-name">Situation</div>
-            <div className="tut-axis-desc">The economy state of the round. A pistol round strat is very different from a full-buy execute.</div>
-            <div className="tut-axis-values">Pistol, Eco, Force Buy, Full Buy, Save, Anti-Eco, Default, Retake</div>
-          </div>
-          <div className="tut-axis-card">
-            <div className="tut-axis-name">Type</div>
-            <div className="tut-axis-desc">The style of play. Are you executing onto a site, faking, splitting, or playing default?</div>
-            <div className="tut-axis-values">Execute, Default, Rush, Fake, Split, Retake, Stack, Rotate</div>
-          </div>
-          <div className="tut-axis-card">
-            <div className="tut-axis-name">Tempo</div>
-            <div className="tut-axis-desc">When the play happens in the round. Fast plays hit early, slow plays wait for information.</div>
-            <div className="tut-axis-values">Fast, Mid-Round, Slow</div>
-          </div>
-        </div>
-      </>
-    ),
-  },
-  {
-    icon: faChessBoard,
-    title: 'Using the Tactical Board',
-    content: (
-      <>
+        </>
+      ),
+    },
+    {
+      icon: faChessBoard,
+      title: t('tut.step3Title'),
+      content: (
         <div className="tut-board-tips">
           <div className="tut-tip">
-            <div className="tut-tip-label">Players</div>
-            <div className="tut-tip-text">Select a player tool (CT/T) from the toolbar, then click the map to place. Drag to reposition. Drag off the board to delete.</div>
+            <div className="tut-tip-label">{t('tut.tipPlayers')}</div>
+            <div className="tut-tip-text">{t('tut.tipPlayersText')}</div>
           </div>
           <div className="tut-tip">
-            <div className="tut-tip-label">Utilities</div>
-            <div className="tut-tip-text">Place smokes, flashes, molotovs, and HE grenades. Drag a utility onto a player to assign a thrower.</div>
+            <div className="tut-tip-label">{t('tut.tipUtilities')}</div>
+            <div className="tut-tip-text">{t('tut.tipUtilitiesText')}</div>
           </div>
           <div className="tut-tip">
-            <div className="tut-tip-label">Drawing</div>
-            <div className="tut-tip-text">Use the freehand tool to draw movement paths and annotations. Use the eraser to remove drawings.</div>
+            <div className="tut-tip-label">{t('tut.tipDrawing')}</div>
+            <div className="tut-tip-text">{t('tut.tipDrawingText')}</div>
           </div>
           <div className="tut-tip">
-            <div className="tut-tip-label">Phases</div>
-            <div className="tut-tip-text">Add phases to break a strategy into steps. Each phase has its own board state. Use Animate to play through them.</div>
+            <div className="tut-tip-label">{t('tut.tipPhases')}</div>
+            <div className="tut-tip-text">{t('tut.tipPhasesText')}</div>
           </div>
           <div className="tut-tip">
-            <div className="tut-tip-label">Right-click</div>
-            <div className="tut-tip-text">Right-click any player or utility token to add notes, assign roles, or set labels.</div>
+            <div className="tut-tip-label">{t('tut.tipRightClick')}</div>
+            <div className="tut-tip-text">{t('tut.tipRightClickText')}</div>
           </div>
         </div>
-      </>
-    ),
-  },
-];
+      ),
+    },
+  ], [t]);
 
-export default function Tutorial({ onClose }: Props) {
-  const [step, setStep] = useState(0);
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
 
   return (
     <div className="tut-overlay" onClick={onClose}>
@@ -126,7 +126,7 @@ export default function Tutorial({ onClose }: Props) {
         </div>
         <div className="tut-footer">
           <div className="tut-dots">
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <button
                 key={i}
                 className={`tut-dot${i === step ? ' active' : ''}`}
@@ -136,13 +136,13 @@ export default function Tutorial({ onClose }: Props) {
           </div>
           <div className="tut-nav">
             {step > 0 && (
-              <button className="tut-btn secondary" onClick={() => setStep(step - 1)}>Back</button>
+              <button className="tut-btn secondary" onClick={() => setStep(step - 1)}>{t('back')}</button>
             )}
             {isLast ? (
-              <button className="tut-btn primary" onClick={onClose}>Get Started</button>
+              <button className="tut-btn primary" onClick={onClose}>{t('tut.getStarted')}</button>
             ) : (
               <button className="tut-btn primary" onClick={() => setStep(step + 1)}>
-                Next <FontAwesomeIcon icon={faArrowRight} />
+                {t('next')} <FontAwesomeIcon icon={faArrowRight} />
               </button>
             )}
           </div>

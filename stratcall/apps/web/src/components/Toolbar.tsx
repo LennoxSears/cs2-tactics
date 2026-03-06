@@ -1,4 +1,5 @@
 import type { ToolType } from '../types';
+import { useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCloud,
@@ -9,6 +10,7 @@ import {
   faEraser,
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { useLocale } from '../lib/i18n';
 
 interface Props {
   activeTool: ToolType | null;
@@ -31,20 +33,21 @@ const TBadge = () => (
   <span className="circle-badge t-badge">T</span>
 );
 
-const tools: (ToolDef | 'divider')[] = [
-  { type: 'player-ct', label: 'Place CT', customIcon: <CTBadge />, color: '#4a9eff' },
-  { type: 'player-t', label: 'Place T', customIcon: <TBadge />, color: '#ff8c00' },
-  'divider',
-  { type: 'smoke', label: 'Smoke', faIcon: faCloud, color: '#aaaaaa' },
-  { type: 'flash', label: 'Flash', faIcon: faBolt, color: '#ffdd00' },
-  { type: 'molotov', label: 'Molotov', faIcon: faFire, color: '#ff4444' },
-  { type: 'he', label: 'HE Grenade', faIcon: faBomb, color: '#44cc44' },
-  'divider',
-  { type: 'freehand', label: 'Freehand', faIcon: faPen },
-  { type: 'eraser', label: 'Erase Drawing', faIcon: faEraser },
-];
-
 export default function Toolbar({ activeTool, onToolChange }: Props) {
+  const { t } = useLocale();
+
+  const tools: (ToolDef | 'divider')[] = useMemo(() => [
+    { type: 'player-ct', label: t('tool.placeCT'), customIcon: <CTBadge />, color: '#4a9eff' },
+    { type: 'player-t', label: t('tool.placeT'), customIcon: <TBadge />, color: '#ff8c00' },
+    'divider',
+    { type: 'smoke', label: t('tool.smoke'), faIcon: faCloud, color: '#aaaaaa' },
+    { type: 'flash', label: t('tool.flash'), faIcon: faBolt, color: '#ffdd00' },
+    { type: 'molotov', label: t('tool.molotov'), faIcon: faFire, color: '#ff4444' },
+    { type: 'he', label: t('tool.he'), faIcon: faBomb, color: '#44cc44' },
+    'divider',
+    { type: 'freehand', label: t('tool.freehand'), faIcon: faPen },
+    { type: 'eraser', label: t('tool.eraser'), faIcon: faEraser },
+  ], [t]);
   return (
     <div className="toolbar">
       {tools.map((tool, i) => {

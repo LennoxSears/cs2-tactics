@@ -27,6 +27,12 @@
   background-clip: text;
 }
 
+.hp-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .hp-nav-login {
   background: none;
   border: 1px solid var(--border);

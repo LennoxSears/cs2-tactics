@@ -9,6 +9,7 @@ import {
   faStar, faFilter, faDownload, faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 interface CommunityStrategy {
   strategy: {
@@ -32,6 +33,7 @@ interface CommunityStrategy {
 }
 
 export default function Community() {
+  const { t } = useLocale();
   const [results, setResults] = useState<CommunityStrategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export default function Community() {
       const data = await api.get<CommunityStrategy[]>(`/community/strategies?${params.toString()}`);
       setResults(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load strategies');
+      setError(err instanceof Error ? err.message : t('community.error'));
     } finally {
       setLoading(false);
     }
@@ -114,8 +116,8 @@ export default function Community() {
     <div className="community">
       <div className="community-header">
         <div className="community-header-left">
-          <h2>Community Strategies</h2>
-          <span className="community-count">{results.length} strategies</span>
+          <h2>{t('community.title')}</h2>
+          <span className="community-count">{t('community.count', { count: results.length })}</span>
         </div>
         <div className="community-actions">
           <button
@@ -131,24 +133,24 @@ export default function Community() {
       {showFilters && (
         <div className="pb-filter-bar">
           <select value={filterMap} onChange={e => setFilterMap(e.target.value as MapName | 'all')}>
-            <option value="all">Any Map</option>
+            <option value="all">{t('filter.anyMap')}</option>
             {maps.filter(m => m.hasNavMesh).map(m => (
               <option key={m.name} value={m.name}>{m.displayName}</option>
             ))}
           </select>
           <select value={filterSide} onChange={e => setFilterSide(e.target.value as Side | 'all')}>
-            <option value="all">Any Side</option>
-            <option value="t">T-Side</option>
-            <option value="ct">CT-Side</option>
+            <option value="all">{t('filter.anySide')}</option>
+            <option value="t">{t('filter.tSide')}</option>
+            <option value="ct">{t('filter.ctSide')}</option>
           </select>
           <select value={filterSituation} onChange={e => setFilterSituation(e.target.value as RoundSituation | 'all')}>
-            <option value="all">Any Situation</option>
+            <option value="all">{t('filter.anySituation')}</option>
             {ROUND_SITUATIONS.map(s => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
           <select value={filterTag} onChange={e => setFilterTag(e.target.value)}>
-            <option value="all">Any Tag</option>
+            <option value="all">{t('filter.anyTag')}</option>
             {allTags.map(t => (
               <option key={t} value={t}>{t}</option>
             ))}
@@ -166,7 +168,7 @@ export default function Community() {
       <div className="community-list">
         {loading && (
           <div className="community-loading">
-            <FontAwesomeIcon icon={faSpinner} spin /> Loading strategies...
+            <FontAwesomeIcon icon={faSpinner} spin /> {t('community.loading')}
           </div>
         )}
         {error && (
@@ -177,7 +179,7 @@ export default function Community() {
         )}
         {!loading && !error && results.length === 0 && (
           <div className="community-empty">
-            No public strategies found. Be the first to share one!
+            {t('community.empty')}
           </div>
         )}
         {results.map(item => {
@@ -217,7 +219,7 @@ export default function Community() {
                   <button
                     className={`star-btn ${starredIds.has(item.strategy.id) ? 'starred' : ''}`}
                     onClick={() => handleStar(item.strategy.id)}
-                    title={starredIds.has(item.strategy.id) ? 'Unstar' : 'Star'}
+                    title={starredIds.has(item.strategy.id) ? t('community.unstar') : t('community.star')}
                   >
                     <FontAwesomeIcon icon={starredIds.has(item.strategy.id) ? faStar : faStarOutline} />
                     <span className="star-count">{item.voteCount}</span>
@@ -229,7 +231,7 @@ export default function Community() {
                   disabled={importedIds.has(item.strategy.id)}
                 >
                   <FontAwesomeIcon icon={faDownload} />
-                  {importedIds.has(item.strategy.id) ? 'Imported' : 'Import'}
+                  {importedIds.has(item.strategy.id) ? t('community.imported') : t('community.import')}
                 </button>
               </div>
             </div>

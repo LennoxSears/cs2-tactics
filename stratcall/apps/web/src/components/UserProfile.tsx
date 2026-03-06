@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Strategy } from '../types';
 import type { Session } from '../lib/auth';
 import { api } from '../lib/api';
+import { useLocale } from '../lib/i18n';
 import { maps } from '../maps';
 import { mapImages } from '../assets/mapImages';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function UserProfile({ userId, session, onBack, onOpenStrategy }: Props) {
+  const { t } = useLocale();
   const [data, setData] = useState<ProfileData | null>(null);
   const [followLoading, setFollowLoading] = useState(false);
   const [tab, setTab] = useState<'strategies' | 'followers' | 'following'>('strategies');
@@ -67,7 +69,7 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
     setFollowing(rows);
   };
 
-  if (!data) return <div className="user-profile-loading">Loading...</div>;
+  if (!data) return <div className="user-profile-loading">{t('loading')}</div>;
 
   const isOwnProfile = session?.userId === userId;
 
@@ -75,7 +77,7 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
     <div className="user-profile">
       <div className="user-profile-header">
         <button className="back-btn" onClick={onBack}>
-          <FontAwesomeIcon icon={faArrowLeft} /> Back
+          <FontAwesomeIcon icon={faArrowLeft} /> {t('back')}
         </button>
       </div>
 
@@ -88,13 +90,13 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
           {data.user.bio && <p className="user-profile-bio">{data.user.bio}</p>}
           <div className="user-profile-stats">
             <button className="stat-btn" onClick={loadFollowers}>
-              <strong>{data.followerCount}</strong> followers
+              <strong>{data.followerCount}</strong> {t('userProfile.followers')}
             </button>
             <button className="stat-btn" onClick={loadFollowing}>
-              <strong>{data.followingCount}</strong> following
+              <strong>{data.followingCount}</strong> {t('userProfile.following')}
             </button>
             <span className="stat-item">
-              <strong>{data.strategies.length}</strong> public strategies
+              <strong>{data.strategies.length}</strong> {t('userProfile.publicStrategies')}
             </span>
           </div>
         </div>
@@ -105,20 +107,20 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
             disabled={followLoading}
           >
             <FontAwesomeIcon icon={data.isFollowing ? faUserMinus : faUserPlus} />
-            {data.isFollowing ? 'Unfollow' : 'Follow'}
+            {data.isFollowing ? t('userProfile.unfollow') : t('userProfile.follow')}
           </button>
         )}
       </div>
 
       <div className="user-profile-tabs">
         <button className={`up-tab ${tab === 'strategies' ? 'active' : ''}`} onClick={() => setTab('strategies')}>
-          Strategies
+          {t('userProfile.tabStrategies')}
         </button>
         <button className={`up-tab ${tab === 'followers' ? 'active' : ''}`} onClick={loadFollowers}>
-          Followers
+          {t('userProfile.tabFollowers')}
         </button>
         <button className={`up-tab ${tab === 'following' ? 'active' : ''}`} onClick={loadFollowing}>
-          Following
+          {t('userProfile.tabFollowing')}
         </button>
       </div>
 
@@ -144,7 +146,7 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
               );
             })}
             {data.strategies.length === 0 && (
-              <p className="up-empty">No public strategies yet.</p>
+              <p className="up-empty">{t('userProfile.noStrategies')}</p>
             )}
           </div>
         )}
@@ -157,7 +159,7 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
                 <span className="up-user-name">{u.displayName}</span>
               </div>
             ))}
-            {followers.length === 0 && <p className="up-empty">No followers yet.</p>}
+            {followers.length === 0 && <p className="up-empty">{t('userProfile.noFollowers')}</p>}
           </div>
         )}
 
@@ -169,7 +171,7 @@ export default function UserProfile({ userId, session, onBack, onOpenStrategy }:
                 <span className="up-user-name">{u.displayName}</span>
               </div>
             ))}
-            {following.length === 0 && <p className="up-empty">Not following anyone yet.</p>}
+            {following.length === 0 && <p className="up-empty">{t('userProfile.noFollowing')}</p>}
           </div>
         )}
       </div>
