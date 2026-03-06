@@ -52,9 +52,13 @@ export default function RichEditor({ content, onChange, placeholder, compact }: 
     },
   });
 
-  // Sync external content changes
+  // Sync external content changes (including clearing)
   useEffect(() => {
     if (!editor) return;
+    if (!content) {
+      editor.commands.clearContent(false);
+      return;
+    }
     const parsed = parseContent(content);
     const current = JSON.stringify(editor.getJSON());
     const incoming = JSON.stringify(parsed);
