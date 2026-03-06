@@ -388,7 +388,7 @@
   .header-actions { gap: 4px; }
   .header-btn { padding: 4px 8px; font-size: 0.7rem; }
   .back-btn { padding: 4px 8px; font-size: 0.75rem; }
-  .side-select, .situation-select { display: none; }
+  .side-select, .situation-select, .type-select, .tempo-select { display: none; }
 
   .board-body { flex-direction: column-reverse; height: calc(100vh - 180px); min-height: 280px; }
   .toolbar {

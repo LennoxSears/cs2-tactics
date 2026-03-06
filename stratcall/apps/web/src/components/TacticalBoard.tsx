@@ -502,6 +502,12 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
         <select className="situation-select" value={situation} onChange={e => setSituation(e.target.value as Strategy['situation'])}>
           {ROUND_SITUATIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
+        <select className="type-select" value={stratType} onChange={e => setStratType(e.target.value as Strategy['stratType'])}>
+          {STRAT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+        <select className="tempo-select" value={tempo} onChange={e => setTempo(e.target.value as Strategy['tempo'])}>
+          {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
         <div className="header-actions">
           <button className="header-btn icon-btn" onClick={handleUndo} disabled={undoStack.length === 0} title="Undo">
             <FontAwesomeIcon icon={faRotateLeft} />
@@ -537,20 +543,6 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
       {/* Metadata panel */}
       {showMeta && (
         <div className="meta-panel">
-          <div className="meta-section meta-axes">
-            <div className="meta-axis">
-              <label className="meta-label">Type</label>
-              <select value={stratType} onChange={e => setStratType(e.target.value as Strategy['stratType'])}>
-                {STRAT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
-            <div className="meta-axis">
-              <label className="meta-label">Tempo</label>
-              <select value={tempo} onChange={e => setTempo(e.target.value as Strategy['tempo'])}>
-                {STRAT_TEMPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
-          </div>
           <div className="meta-section">
             <label className="meta-label">Tags</label>
             <div className="tag-grid">
