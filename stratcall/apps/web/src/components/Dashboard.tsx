@@ -15,7 +15,8 @@ import PhaseLibrary from './PhaseLibrary';
 import { isDesktop } from '../lib/demoParser';
 import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark, faDesktop } from '@fortawesome/free-solid-svg-icons';
+import { faWindows } from '@fortawesome/free-brands-svg-icons';
 import { useLocale } from '../lib/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -147,14 +148,12 @@ export default function Dashboard({ session, onLogout }: Props) {
               >
                 <FontAwesomeIcon icon={faBook} /> <span>{t('nav.playbooks')}</span>
               </button>
-              {isDesktop() && (
-                <button
-                  className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
-                  onClick={() => setView({ screen: 'demo' })}
-                >
-                  <FontAwesomeIcon icon={faFilm} /> <span>{t('nav.demo')}</span>
-                </button>
-              )}
+              <button
+                className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
+                onClick={() => setView({ screen: 'demo' })}
+              >
+                <FontAwesomeIcon icon={faFilm} /> <span>{t('nav.demo')}</span>
+              </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'library' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'library' })}
@@ -176,6 +175,11 @@ export default function Dashboard({ session, onLogout }: Props) {
             </nav>
           </div>
           <div className="dash-topbar-user">
+            {!isDesktop() && (
+              <a href="/download" className="dash-desktop-link" title={t('dash.getDesktop')}>
+                <FontAwesomeIcon icon={faDesktop} /> <span>{t('dash.desktop')}</span>
+              </a>
+            )}
             <NotificationBell onViewUser={(id) => setView({ screen: 'userProfile', userId: id })} />
             <LanguageSwitcher />
             <button className="dash-help" onClick={() => setShowTutorial(true)} title={t('nav.helpTooltip')}>
@@ -225,7 +229,35 @@ export default function Dashboard({ session, onLogout }: Props) {
           />
         )}
         {view.screen === 'demo' && (
-          <DemoPlayer />
+          isDesktop() ? (
+            <DemoPlayer />
+          ) : (
+            <div className="demo-promo">
+              <div className="demo-promo-content">
+                <FontAwesomeIcon icon={faFilm} className="demo-promo-icon" />
+                <h2>{t('dash.demoPromoTitle')}</h2>
+                <p>{t('dash.demoPromoDesc')}</p>
+                <div className="demo-promo-features">
+                  <div className="demo-promo-feature">
+                    <strong>{t('dash.demoFeature1Title')}</strong>
+                    <span>{t('dash.demoFeature1Desc')}</span>
+                  </div>
+                  <div className="demo-promo-feature">
+                    <strong>{t('dash.demoFeature2Title')}</strong>
+                    <span>{t('dash.demoFeature2Desc')}</span>
+                  </div>
+                  <div className="demo-promo-feature">
+                    <strong>{t('dash.demoFeature3Title')}</strong>
+                    <span>{t('dash.demoFeature3Desc')}</span>
+                  </div>
+                </div>
+                <a href="/download" className="demo-promo-btn">
+                  <FontAwesomeIcon icon={faWindows} /> {t('dash.demoPromoCta')}
+                </a>
+                <p className="demo-promo-note">{t('dash.demoPromoNote')}</p>
+              </div>
+            </div>
+          )
         )}
         {view.screen === 'library' && (
           <PhaseLibrary />

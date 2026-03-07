@@ -66,6 +66,20 @@ const de: LocaleMap = {
   'nav.community': 'Community',
   'nav.profile': 'Profil',
 
+
+  // ── Dashboard promo ──
+  'dash.desktop': 'Desktop',
+  'dash.getDesktop': 'Get the desktop app',
+  'dash.demoPromoTitle': 'Demo Analysis',
+  'dash.demoPromoDesc': 'Open CS2 .dem files, replay rounds on the 2D map, and capture key moments as strategy phases — all locally on your machine.',
+  'dash.demoFeature1Title': 'Local Parsing',
+  'dash.demoFeature1Desc': 'Demo files never leave your computer. Fast, private, no upload.',
+  'dash.demoFeature2Title': 'Round Replay',
+  'dash.demoFeature2Desc': 'Scrub through any round tick-by-tick with player positions and grenades.',
+  'dash.demoFeature3Title': 'Phase Capture',
+  'dash.demoFeature3Desc': 'Snapshot any moment and save it as a strategy phase to your library.',
+  'dash.demoPromoCta': 'Download Desktop App',
+  'dash.demoPromoNote': 'Demo analysis requires the desktop app. Available for Windows.',
   'strats.title': 'Meine Strategien',
   'strats.count': '{count} Strategien',
   'strats.newStrategy': 'Neue Strategie',

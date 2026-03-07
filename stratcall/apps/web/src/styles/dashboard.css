@@ -207,6 +207,116 @@
   border-color: var(--accent-ct);
 }
 
+/* Desktop app link in topbar */
+.dash-desktop-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--accent-ct);
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(74, 158, 255, 0.25);
+  text-decoration: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.dash-desktop-link:hover {
+  background: rgba(74, 158, 255, 0.15);
+  border-color: var(--accent-ct);
+}
+
+/* Demo promo (shown on web when demo tab is clicked) */
+.demo-promo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow-y: auto;
+}
+
+.demo-promo-content {
+  text-align: center;
+  max-width: 480px;
+}
+
+.demo-promo-icon {
+  font-size: 2.5rem;
+  color: var(--accent-ct);
+  margin-bottom: 16px;
+}
+
+.demo-promo-content h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.demo-promo-content > p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.demo-promo-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.demo-promo-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.demo-promo-feature strong {
+  font-size: 0.82rem;
+}
+
+.demo-promo-feature span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.demo-promo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #1b2838, #2a475e);
+  border: 1px solid var(--accent-ct);
+  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.2);
+  transition: all 0.2s;
+}
+
+.demo-promo-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(74, 158, 255, 0.3);
+}
+
+.demo-promo-note {
+  margin-top: 12px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .dash-topbar {
@@ -235,6 +345,8 @@
     flex-shrink: 0;
   }
   .dash-username { display: none; }
+  .dash-desktop-link span { display: none; }
+  .dash-desktop-link { padding: 5px 8px; }
 }
 
 @media (max-width: 480px) {
