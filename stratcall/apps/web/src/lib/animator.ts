@@ -3,10 +3,32 @@ import type { NavMesh } from './navmesh';
 import type { MapInfo } from '../maps';
 import { findPath, interpolatePath } from './navmesh';
 
+export type UtilityEffectState = 'flying' | 'landing' | 'active' | 'fading';
+
+export interface AnimFramePlayer {
+  id: string;
+  side: string;
+  number: number;
+  role: string | null;
+  position: Position;
+}
+
+export interface AnimFrameUtility {
+  id: string;
+  type: string;
+  position: Position;
+  opacity: number;
+  effectState: UtilityEffectState;
+  /** 0-1 progress within the current effect state */
+  effectProgress: number;
+  /** Trajectory trail for flying grenades (positions from thrower to current) */
+  trail: Position[] | null;
+}
+
 export interface AnimationFrame {
   time: number;
-  players: { id: string; side: string; number: number; role: string | null; position: Position }[];
-  utilities: { id: string; type: string; position: Position; opacity: number }[];
+  players: AnimFramePlayer[];
+  utilities: AnimFrameUtility[];
   drawings: Drawing[];
 }
 
@@ -21,6 +43,11 @@ const PLAYER_SPEED = 215;   // AK-47 running speed (units/sec)
 const UTILITY_SPEED = 500;  // grenade throw speed (units/sec)
 const HOLD_FRAMES = 60;     // 1s hold per phase
 const MIN_TRANSITION_FRAMES = 30; // 0.5s minimum
+const LANDING_FRAMES = 18;  // 0.3s landing burst effect
+
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
 
 function normalizedToWorldDist(d: number, map: MapInfo): number {
   return d * map.radarSize * map.scale;
@@ -34,6 +61,42 @@ function pathLen(path: Position[]): number {
     len += Math.sqrt(dx * dx + dy * dy);
   }
   return len;
+}
+
+/** Catmull-Rom spline interpolation between p1 and p2 */
+function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number {
+  return 0.5 * (
+    2 * p1 +
+    (-p0 + p2) * t +
+    (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+    (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t
+  );
+}
+
+/** Smooth position along a path using Catmull-Rom spline at float index */
+function samplePathSmooth(path: Position[], rawIdx: number): Position {
+  if (path.length === 0) return { x: 0, y: 0 };
+  if (path.length === 1) return path[0];
+
+  const maxIdx = path.length - 1;
+  rawIdx = Math.max(0, Math.min(maxIdx, rawIdx));
+
+  const lo = Math.floor(rawIdx);
+  const hi = Math.min(lo + 1, maxIdx);
+  const frac = rawIdx - lo;
+
+  if (frac < 0.001) return path[lo];
+
+  // Catmull-Rom needs 4 control points: clamp at boundaries
+  const p0 = path[Math.max(lo - 1, 0)];
+  const p1 = path[lo];
+  const p2 = path[hi];
+  const p3 = path[Math.min(hi + 1, maxIdx)];
+
+  return {
+    x: catmullRom(p0.x, p1.x, p2.x, p3.x, frac),
+    y: catmullRom(p0.y, p1.y, p2.y, p3.y, frac),
+  };
 }
 
 function matchPlayers(from: PlayerToken[], to: PlayerToken[]) {
@@ -99,7 +162,11 @@ interface Transition {
 
 export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: MapInfo): AnimationTimeline {
   if (phases.length === 0) {
-    return { totalFrames: 0, phaseBoundaries: [], getFrame: () => ({ time: 0, players: [], utilities: [], drawings: [] }) };
+    return {
+      totalFrames: 0,
+      phaseBoundaries: [],
+      getFrame: () => ({ time: 0, players: [], utilities: [], drawings: [] }),
+    };
   }
 
   const transitions: Transition[] = [];
@@ -111,13 +178,10 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
 
     let maxPlayerFrames = 0;
     const playerAnims: PlayerAnim[] = moving.map(m => {
-      // Straight-line distance in normalized coords
       const dx = m.to.position.x - m.from.position.x;
       const dy = m.to.position.y - m.from.position.y;
       const straightDist = Math.sqrt(dx * dx + dy * dy);
 
-      // Only use nav mesh for longer moves (>15% of map) where wall avoidance matters.
-      // Short moves use straight lines to avoid centroid zigzag.
       let raw: Position[];
       if (navMesh && straightDist > 0.15) {
         raw = findPath(navMesh, m.from.position, m.to.position);
@@ -150,7 +214,6 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
           return { utility: u, fromPos: { ...thrower.position }, toPos: u.position, frames, isThrow: true };
         }
       }
-      // No thrower — fade in
       const frames = 30;
       maxUtilFrames = Math.max(maxUtilFrames, frames);
       return { utility: u, fromPos: u.position, toPos: u.position, frames, isThrow: false };
@@ -183,8 +246,13 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
         const bs = phases[i].boardState;
         return {
           time: 0,
-          players: bs.players.map(p => ({ ...p })),
-          utilities: bs.utilities.map(u => ({ id: u.id, type: u.type, position: u.position, opacity: 1 })),
+          players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position })),
+          utilities: bs.utilities.map(u => ({
+            id: u.id, type: u.type, position: u.position, opacity: 1,
+            effectState: 'active' as UtilityEffectState,
+            effectProgress: 1,
+            trail: null,
+          })),
           drawings: bs.drawings,
         };
       }
@@ -195,40 +263,93 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
         const transEnd = elapsed + trans.transitionFrames;
 
         if (f < transEnd) {
-          const fi = f - elapsed; // frame index within transition
+          const fi = f - elapsed; // float frame index within transition
           const t = fi / trans.transitionFrames;
-          const players: AnimationFrame['players'] = [];
+
+          // --- Players with smooth Catmull-Rom + easing ---
+          const players: AnimFramePlayer[] = [];
 
           for (const a of trans.playerAnims) {
             if (fi < a.frames) {
-              const idx = Math.min(Math.floor((fi / a.frames) * a.path.length), a.path.length - 1);
-              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position: a.path[idx] });
+              const rawProgress = fi / a.frames;
+              const easedProgress = easeInOutCubic(rawProgress);
+              const rawIdx = easedProgress * (a.path.length - 1);
+              const position = samplePathSmooth(a.path, rawIdx);
+              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position });
             } else {
               players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position: a.to.position });
             }
           }
 
-          for (const p of trans.disappearingPlayers) { if (t < 0.3) players.push({ ...p }); }
-          for (const p of trans.appearingPlayers) { if (t > 0.7) players.push({ ...p }); }
+          for (const p of trans.disappearingPlayers) { if (t < 0.3) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position }); }
+          for (const p of trans.appearingPlayers) { if (t > 0.7) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position }); }
 
-          const utilities: AnimationFrame['utilities'] = [];
+          // --- Utilities with effect states ---
+          const utilities: AnimFrameUtility[] = [];
 
           for (const pu of trans.persistingUtils) {
-            utilities.push({ id: pu.to.id, type: pu.to.type, position: pu.to.position, opacity: 1 });
+            utilities.push({
+              id: pu.to.id, type: pu.to.type, position: pu.to.position, opacity: 1,
+              effectState: 'active', effectProgress: 1, trail: null,
+            });
           }
+
           for (const du of trans.disappearingUtils) {
-            utilities.push({ id: du.id, type: du.type, position: du.position, opacity: Math.max(0, 1 - t / 0.4) });
+            const fadeProgress = Math.min(t / 0.4, 1);
+            utilities.push({
+              id: du.id, type: du.type, position: du.position,
+              opacity: Math.max(0, 1 - fadeProgress),
+              effectState: 'fading', effectProgress: fadeProgress, trail: null,
+            });
           }
+
           for (const au of trans.appearingUtils) {
             const ut = Math.min(fi / au.frames, 1);
+
             if (au.isThrow) {
+              const landingStart = Math.max(0, au.frames - LANDING_FRAMES);
+              const curX = au.fromPos.x + (au.toPos.x - au.fromPos.x) * ut;
+              const curY = au.fromPos.y + (au.toPos.y - au.fromPos.y) * ut;
+
+              // Build trajectory trail
+              const trailCount = 5;
+              const trail: Position[] = [];
+              for (let ti = 0; ti <= trailCount; ti++) {
+                const tt = (ti / trailCount) * ut;
+                trail.push({
+                  x: au.fromPos.x + (au.toPos.x - au.fromPos.x) * tt,
+                  y: au.fromPos.y + (au.toPos.y - au.fromPos.y) * tt,
+                });
+              }
+
+              let effectState: UtilityEffectState;
+              let effectProgress: number;
+
+              if (fi >= au.frames) {
+                effectState = 'active';
+                effectProgress = 1;
+              } else if (fi >= landingStart) {
+                effectState = 'landing';
+                effectProgress = (fi - landingStart) / LANDING_FRAMES;
+              } else {
+                effectState = 'flying';
+                effectProgress = ut;
+              }
+
               utilities.push({
                 id: au.utility.id, type: au.utility.type,
-                position: { x: au.fromPos.x + (au.toPos.x - au.fromPos.x) * ut, y: au.fromPos.y + (au.toPos.y - au.fromPos.y) * ut },
+                position: { x: curX, y: curY },
                 opacity: Math.min(ut * 3, 1),
+                effectState, effectProgress,
+                trail: effectState === 'flying' ? trail : null,
               });
             } else {
-              utilities.push({ id: au.utility.id, type: au.utility.type, position: au.toPos, opacity: ut });
+              const effectState: UtilityEffectState = ut < 0.5 ? 'landing' : 'active';
+              utilities.push({
+                id: au.utility.id, type: au.utility.type, position: au.toPos,
+                opacity: ut,
+                effectState, effectProgress: ut, trail: null,
+              });
             }
           }
 
@@ -241,8 +362,13 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
     const bs = phases[phases.length - 1].boardState;
     return {
       time: 1,
-      players: bs.players.map(p => ({ ...p })),
-      utilities: bs.utilities.map(u => ({ id: u.id, type: u.type, position: u.position, opacity: 1 })),
+      players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position })),
+      utilities: bs.utilities.map(u => ({
+        id: u.id, type: u.type, position: u.position, opacity: 1,
+        effectState: 'active' as UtilityEffectState,
+        effectProgress: 1,
+        trail: null,
+      })),
       drawings: bs.drawings,
     };
   }

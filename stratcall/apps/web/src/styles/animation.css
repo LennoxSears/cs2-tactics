@@ -61,10 +61,6 @@
   padding: 10px;
 }
 
-.anim-token {
-  transition: none !important; /* disable CSS transitions during animation */
-}
-
 /* Controls */
 .anim-controls {
   padding: 10px 16px 14px;
