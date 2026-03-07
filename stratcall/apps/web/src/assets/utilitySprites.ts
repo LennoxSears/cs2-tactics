@@ -14,31 +14,37 @@ function loadSvg(key: string, svg: string): HTMLImageElement {
   return img;
 }
 
-// ── Smoke: fractal noise cloud with irregular edges ──
-// feTurbulence fractalNoise creates organic cloud texture,
-// composited with a soft radial gradient mask for natural falloff.
+// ── Smoke: thick grey cloud ──
+// Dense overlapping grey blobs with fractal noise texture for organic edges.
+// Looks like an opaque grey cloud blocking vision.
 const SMOKE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <filter id="sf" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" seed="2" result="noise"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="5" seed="3" result="noise"/>
       <feColorMatrix type="saturate" values="0" in="noise" result="grey"/>
       <feComponentTransfer in="grey" result="cloud">
-        <feFuncA type="table" tableValues="0 0 0.3 0.5 0.6 0.5 0.3 0"/>
+        <feFuncR type="linear" slope="0.6" intercept="0.35"/>
+        <feFuncG type="linear" slope="0.6" intercept="0.35"/>
+        <feFuncB type="linear" slope="0.6" intercept="0.38"/>
+        <feFuncA type="table" tableValues="0 0.2 0.6 0.8 0.85 0.8 0.6 0.2 0"/>
       </feComponentTransfer>
-      <feGaussianBlur in="cloud" stdDeviation="3" result="soft"/>
+      <feGaussianBlur in="cloud" stdDeviation="2.5" result="soft"/>
       <feComposite in="soft" in2="SourceGraphic" operator="in"/>
     </filter>
-    <radialGradient id="sg" cx="50%" cy="50%" r="45%">
-      <stop offset="0%" stop-color="#d0d0d0" stop-opacity="0.7"/>
-      <stop offset="40%" stop-color="#b0b0b0" stop-opacity="0.5"/>
-      <stop offset="75%" stop-color="#909090" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#808080" stop-opacity="0"/>
+    <radialGradient id="sg" cx="50%" cy="48%" r="44%">
+      <stop offset="0%" stop-color="#c8c8c8" stop-opacity="0.9"/>
+      <stop offset="35%" stop-color="#aaaaaa" stop-opacity="0.8"/>
+      <stop offset="65%" stop-color="#909090" stop-opacity="0.6"/>
+      <stop offset="85%" stop-color="#787878" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#666" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <circle cx="50" cy="50" r="44" fill="url(#sg)" filter="url(#sf)"/>
-  <circle cx="42" cy="44" r="22" fill="#bbb" opacity="0.18"/>
-  <circle cx="56" cy="48" r="20" fill="#ccc" opacity="0.15"/>
-  <circle cx="50" cy="56" r="18" fill="#aaa" opacity="0.12"/>
+  <circle cx="50" cy="50" r="46" fill="url(#sg)" filter="url(#sf)"/>
+  <circle cx="38" cy="42" r="20" fill="#b0b0b0" opacity="0.35"/>
+  <circle cx="58" cy="44" r="18" fill="#bcbcbc" opacity="0.3"/>
+  <circle cx="46" cy="56" r="19" fill="#a8a8a8" opacity="0.3"/>
+  <circle cx="54" cy="38" r="14" fill="#c0c0c0" opacity="0.25"/>
+  <circle cx="42" cy="52" r="16" fill="#b5b5b5" opacity="0.25"/>
 </svg>`;
 
 // ── Flash: bright starburst with radial spikes ──
@@ -96,17 +102,18 @@ const MOLOTOV_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10
   </g>
 </svg>`;
 
-// ── HE Grenade: explosion with jagged burst and debris ──
-// Irregular star polygon with warm center, distorted by turbulence,
-// plus scattered debris particles.
+// ── HE Grenade: yellow-white explosion burst with debris ──
+// Bright yellow/white center fading to pale yellow edges.
+// Distinct from molotov's orange-red fire look.
 const HE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <radialGradient id="hg" cx="50%" cy="50%" r="48%">
-      <stop offset="0%" stop-color="#ffee44" stop-opacity="0.95"/>
-      <stop offset="20%" stop-color="#ffaa00" stop-opacity="0.8"/>
-      <stop offset="45%" stop-color="#dd5500" stop-opacity="0.5"/>
-      <stop offset="70%" stop-color="#882200" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#441100" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#ffffee" stop-opacity="0.95"/>
+      <stop offset="15%" stop-color="#ffff66" stop-opacity="0.9"/>
+      <stop offset="35%" stop-color="#ffee22" stop-opacity="0.7"/>
+      <stop offset="55%" stop-color="#eecc00" stop-opacity="0.4"/>
+      <stop offset="75%" stop-color="#ccaa00" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#998800" stop-opacity="0"/>
     </radialGradient>
     <filter id="hf" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" seed="8" result="noise"/>
@@ -115,10 +122,10 @@ const HE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   </defs>
   <g filter="url(#hf)">
     <polygon points="50,6 56,30 78,14 64,36 96,38 68,48 90,70 60,58 66,88 50,64 34,88 40,58 10,70 32,48 4,38 36,36 22,14 44,30" fill="url(#hg)"/>
-    <circle cx="50" cy="50" r="14" fill="#ffcc22" opacity="0.7"/>
-    <circle cx="50" cy="50" r="7" fill="#fff" opacity="0.5"/>
+    <circle cx="50" cy="50" r="14" fill="#ffff88" opacity="0.8"/>
+    <circle cx="50" cy="50" r="7" fill="#fff" opacity="0.7"/>
   </g>
-  <g fill="#ff8800" opacity="0.6">
+  <g fill="#ffdd44" opacity="0.5">
     <circle cx="26" cy="22" r="2"/>
     <circle cx="78" cy="26" r="1.5"/>
     <circle cx="18" cy="62" r="1.8"/>
