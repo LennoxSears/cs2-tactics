@@ -47,8 +47,8 @@ if [ -d "$RESOURCES/icons" ]; then
   cp -r "$RESOURCES/icons" "$RES_OUT/icons"
 fi
 
-# Inject bridge scripts at the top of <head>, before any module scripts
-sed -i '/<head>/a <script src="js/neutralino.js"></script>\n<script src="js/desktop-bridge.js"></script>' "$RES_OUT/index.html"
+# Inject bridge scripts at the top of <head> with absolute paths
+sed -i '/<head>/a <script src="/js/neutralino.js"></script>\n<script src="/js/desktop-bridge.js"></script>' "$RES_OUT/index.html"
 
 # ── 3. Bundle demo parser with portable Node.js for Windows ──
 echo "==> Downloading portable Node.js ${NODE_VERSION} for Windows..."
