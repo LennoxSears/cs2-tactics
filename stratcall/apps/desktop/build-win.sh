@@ -33,8 +33,8 @@ cp "$SCRIPT_DIR/neutralino.config.json" "$DIST/neutralino.config.json"
 echo "==> Building resources.neu..."
 TMPRES=$(mktemp -d)
 
-# Copy web dist
-cp -r "$WEB_DIR/dist"/* "$TMPRES/"
+# Copy web dist (exclude downloads/ — that's the desktop zip itself)
+rsync -a --exclude='downloads/' "$WEB_DIR/dist/" "$TMPRES/"
 
 # Add Neutralino client library + desktop bridge
 mkdir -p "$TMPRES/js"

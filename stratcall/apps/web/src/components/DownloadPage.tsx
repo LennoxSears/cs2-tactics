@@ -8,7 +8,6 @@ import {
   faLayerGroup,
   faBook,
   faArrowLeft,
-  faAppleWhole,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
 
@@ -65,13 +64,7 @@ export default function DownloadPage({ onBack }: Props) {
           <span className="dl-btn-meta">{VERSION} · {FILE_SIZE}</span>
         </a>
 
-        <div className="dl-other-platforms">
-          <div className="dl-platform-badge dl-platform-soon">
-            <FontAwesomeIcon icon={faAppleWhole} />
-            <span>macOS</span>
-            <span className="dl-soon">{t('dl.comingSoon')}</span>
-          </div>
-        </div>
+
       </section>
 
       <section className="dl-features">

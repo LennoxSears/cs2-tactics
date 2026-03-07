@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "defaultMode": "window",
   "port": 0,
-  "documentRoot": "/resources/",
+  "documentRoot": "/",
   "url": "/",
   "enableServer": true,
   "enableNativeAPI": true,
@@ -32,7 +32,7 @@
       "minWidth": 900,
       "minHeight": 600,
       "center": true,
-      "icon": "/resources/icons/appIcon.png",
+      "icon": "/icons/appIcon.png",
       "enableInspector": false,
       "resizable": true,
       "exitProcessOnClose": true
@@ -40,9 +40,9 @@
   },
   "cli": {
     "binaryName": "stratcall",
-    "resourcesPath": "/resources/",
+    "resourcesPath": "/",
     "extensionsPath": "/extensions/",
-    "clientLibrary": "/resources/js/neutralino.js",
+    "clientLibrary": "/js/neutralino.js",
     "binaryVersion": "6.5.0",
     "clientVersion": "6.5.0"
   }

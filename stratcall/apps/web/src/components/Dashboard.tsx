@@ -15,7 +15,7 @@ import PhaseLibrary from './PhaseLibrary';
 import { isDesktop } from '../lib/demoParser';
 import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark, faDesktop } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark, faDesktop, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faWindows } from '@fortawesome/free-brands-svg-icons';
 import { useLocale } from '../lib/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -234,6 +234,9 @@ export default function Dashboard({ session, onLogout }: Props) {
           ) : (
             <div className="demo-promo">
               <div className="demo-promo-content">
+                <button className="demo-promo-close" onClick={() => setView({ screen: 'strategies' })} title={t('back')}>
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
                 <FontAwesomeIcon icon={faFilm} className="demo-promo-icon" />
                 <h2>{t('dash.demoPromoTitle')}</h2>
                 <p>{t('dash.demoPromoDesc')}</p>
