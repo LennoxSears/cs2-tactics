@@ -29,32 +29,26 @@ cp "$SCRIPT_DIR/bin/neutralino-win_x64.exe" "$DIST/stratcall-win_x64.exe"
 # Neutralino looks for neutralino.config.json next to the binary
 cp "$SCRIPT_DIR/neutralino.config.json" "$DIST/neutralino.config.json"
 
-# ── 2. Build resources.neu (zipped resources directory) ──
-# Neutralino expects files under resources/ inside the archive
-echo "==> Building resources.neu..."
-TMPRES=$(mktemp -d)
-mkdir -p "$TMPRES/resources"
+# ── 2. Build resources/ directory (loose files next to binary) ──
+echo "==> Building resources directory..."
+RES_OUT="$DIST/resources"
+mkdir -p "$RES_OUT"
 
 # Copy web dist (exclude downloads/ — that's the desktop zip itself)
-rsync -a --exclude='downloads/' "$WEB_DIR/dist/" "$TMPRES/resources/"
+rsync -a --exclude='downloads/' "$WEB_DIR/dist/" "$RES_OUT/"
 
 # Add Neutralino client library + desktop bridge
-mkdir -p "$TMPRES/resources/js"
-cp "$RESOURCES/js/neutralino.js" "$TMPRES/resources/js/"
-cp "$RESOURCES/js/desktop-bridge.js" "$TMPRES/resources/js/"
+mkdir -p "$RES_OUT/js"
+cp "$RESOURCES/js/neutralino.js" "$RES_OUT/js/"
+cp "$RESOURCES/js/desktop-bridge.js" "$RES_OUT/js/"
 
 # Copy icons if present
 if [ -d "$RESOURCES/icons" ]; then
-  cp -r "$RESOURCES/icons" "$TMPRES/resources/icons"
+  cp -r "$RESOURCES/icons" "$RES_OUT/icons"
 fi
 
 # Inject scripts into index.html (before </head>)
-sed -i 's|</head>|<script src="js/neutralino.js"></script>\n<script src="js/desktop-bridge.js"></script>\n</head>|' "$TMPRES/resources/index.html"
-
-cd "$TMPRES"
-zip -r -q "$DIST/resources.neu" .
-cd "$SCRIPT_DIR"
-rm -rf "$TMPRES"
+sed -i 's|</head>|<script src="js/neutralino.js"></script>\n<script src="js/desktop-bridge.js"></script>\n</head>|' "$RES_OUT/index.html"
 
 # ── 3. Bundle demo parser with portable Node.js for Windows ──
 echo "==> Downloading portable Node.js ${NODE_VERSION} for Windows..."
