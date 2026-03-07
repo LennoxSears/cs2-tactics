@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSession, clearSession, getSteamLoginUrl, type Session } from './lib/auth';
+import { isDesktop } from './lib/demoParser';
 import Homepage from './components/Homepage';
 import AuthCallback from './components/AuthCallback';
 import Dashboard from './components/Dashboard';
@@ -65,6 +66,11 @@ function App() {
   }
 
   if (route === 'download') {
+    // Desktop app doesn't need the download page
+    if (isDesktop()) {
+      navigate(session ? '/dashboard' : '/');
+      return null;
+    }
     return (
       <div className="app">
         <DownloadPage onBack={() => navigate('/')} />
