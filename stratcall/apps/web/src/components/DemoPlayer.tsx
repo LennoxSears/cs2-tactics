@@ -44,13 +44,15 @@ export default function DemoPlayer() {
   const mapName = demoData?.mapName;
   const mapInfo = mapName ? getMapInfo(mapName) : null;
 
-  // Get ticks for current round
+  // Get ticks for current round — skip freeze time
   const roundTicks = useCallback(() => {
     if (!demoData) return [];
     if (demoData.rounds.length === 0) return demoData.ticks;
     const round = demoData.rounds[selectedRound];
     if (!round) return demoData.ticks;
-    return demoData.ticks.filter(t => t.tick >= round.startTick && t.tick <= round.endTick);
+    // Start from freeze end (when players can move), end at round end
+    const freezeEnd = round.freezeEndTick || round.startTick;
+    return demoData.ticks.filter(t => t.tick >= freezeEnd && t.tick <= round.endTick);
   }, [demoData, selectedRound]);
 
   const ticks = roundTicks();
@@ -86,11 +88,15 @@ export default function DemoPlayer() {
     const speed = SPEEDS[speedIdx];
     lastTimeRef.current = performance.now();
 
+    // Samples per second = tickRate / sampleInterval (e.g. 64/16 = 4 samples/sec)
+    const tickRate = demoData?.tickRate || 64;
+    const samplesPerSec = tickRate / 16;
+
     const tick = (now: number) => {
       const delta = now - lastTimeRef.current;
       lastTimeRef.current = now;
-      // Advance by speed * delta, scaled to ~32 ticks per second (sample rate)
-      const advance = (delta / 1000) * 32 * speed;
+      // Advance index by real-time samples per second * speed
+      const advance = (delta / 1000) * samplesPerSec * speed;
 
       setCurrentTickIdx(prev => {
         let next = prev + advance;
@@ -240,6 +246,21 @@ export default function DemoPlayer() {
     })));
   };
 
+  // ── Round timer ──
+  const roundTimer = (() => {
+    if (!demoData || !currentTick) return '';
+    const round = demoData.rounds[selectedRound];
+    if (!round) return '';
+    const tickRate = demoData.tickRate || 64;
+    const freezeEnd = round.freezeEndTick || round.startTick;
+    const timelimit = round.timelimit || 115; // default competitive 1:55
+    const elapsed = (currentTick.tick - freezeEnd) / tickRate;
+    const remaining = Math.max(0, timelimit - elapsed);
+    const mins = Math.floor(remaining / 60);
+    const secs = Math.floor(remaining % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  })();
+
   // ── Scrubber ──
   const progress = ticks.length > 0 ? Math.floor(currentTickIdx) / (ticks.length - 1) : 0;
   const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -384,6 +405,7 @@ export default function DemoPlayer() {
           </div>
 
           <div className="demo-tick-info">
+            {roundTimer && <span className="demo-round-timer">{roundTimer}</span>}
             {currentTick && (
               <span>{t('demo.tickInfo', { tick: currentTick.tick, alive: currentTick.players.filter(p => p.isAlive).length })}</span>
             )}

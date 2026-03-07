@@ -8,7 +8,7 @@ const { parseHeader, parseEvent, parseTicks, parseGrenades } = require('@laihoe/
 
 // Usage: stratcall-demo-parser <path-to-demo.dem>
 // Writes parsed data to a temp file, outputs the file path to stdout.
-// Format: line 1 = JSON metadata, remaining lines = TSV tick data.
+// Format: line 1 = JSON metadata, then G\t lines (grenades), then T\t lines (ticks).
 
 const args = process.argv.slice(2);
 
@@ -24,7 +24,7 @@ if (!fs.existsSync(demoPath)) {
   process.exit(1);
 }
 
-const SAMPLE_INTERVAL = 32;
+const SAMPLE_INTERVAL = 16; // ~4 samples/sec at 64 tick — smooth enough for replay
 
 try {
   const buf = fs.readFileSync(demoPath);
@@ -32,20 +32,24 @@ try {
   // Header
   const header = parseHeader(buf);
 
-  // Rounds
+  // Round events
   const roundStarts = parseEvent(buf, 'round_start') || [];
   const roundEnds = parseEvent(buf, 'round_end') || [];
+  const freezeEnds = parseEvent(buf, 'round_freeze_end') || [];
 
   const rounds = [];
   for (let i = 0; i < roundStarts.length; i++) {
+    const rs = roundStarts[i];
     rounds.push({
       roundNum: i + 1,
-      startTick: roundStarts[i]?.tick ?? 0,
+      startTick: rs?.tick ?? 0,
+      freezeEndTick: freezeEnds[i]?.tick ?? (rs?.tick ?? 0),
       endTick: roundEnds[i]?.tick ?? (roundStarts[i + 1]?.tick ?? 0),
+      timelimit: rs?.timelimit ?? 115,
     });
   }
 
-  // Player positions — only needed fields
+  // Player positions
   const tickData = parseTicks(buf, [
     'X', 'Y', 'health', 'team_num', 'is_alive', 'player_name', 'player_steamid',
   ]);
@@ -60,21 +64,14 @@ try {
     ? Math.round((header.playback_ticks || 0) / (header.playback_time || 1))
     : 64;
 
-  // Compact grenades: type\tx\ty\ttick\tthrower
-  const grenadeLines = [];
-  if (Array.isArray(grenadeData)) {
-    for (const g of grenadeData) {
-      grenadeLines.push([
-        g.grenade_type || '',
-        Math.round((g.entity_x ?? g.X ?? 0) * 10) / 10,
-        Math.round((g.entity_y ?? g.Y ?? 0) * 10) / 10,
-        g.destroy_tick ?? g.tick ?? 0,
-        (g.thrower_name || g.player_name || '').replace(/\t/g, ' '),
-      ].join('\t'));
-    }
+  // Normalize grenade type names (parser may return *_projectile suffix)
+  function normalizeGrenadeType(t) {
+    if (!t) return '';
+    t = t.replace(/_projectile$/, '');
+    return t;
   }
 
-  // Write to temp file: metadata JSON + TSV tick rows
+  // Write to temp file
   const outPath = path.join(os.tmpdir(), `stratcall-demo-${Date.now()}.tsv`);
   const fd = fs.openSync(outPath, 'w');
 
@@ -83,17 +80,25 @@ try {
     mapName: header?.map_name || '',
     tickRate,
     rounds,
-    grenadeCount: grenadeLines.length,
   };
   fs.writeSync(fd, JSON.stringify(meta) + '\n');
 
-  // Grenade lines (prefixed with G\t)
-  for (const line of grenadeLines) {
-    fs.writeSync(fd, 'G\t' + line + '\n');
+  // Grenade lines: G\ttype\tx\ty\ttick\tthrower
+  if (Array.isArray(grenadeData)) {
+    for (const g of grenadeData) {
+      const gtype = normalizeGrenadeType(g.grenade_type);
+      if (!gtype) continue;
+      fs.writeSync(fd, 'G\t' +
+        gtype + '\t' +
+        (Math.round((g.entity_x ?? g.X ?? 0) * 10) / 10) + '\t' +
+        (Math.round((g.entity_y ?? g.Y ?? 0) * 10) / 10) + '\t' +
+        (g.destroy_tick ?? g.tick ?? 0) + '\t' +
+        ((g.thrower_name || g.player_name || '').replace(/\t/g, ' ')) + '\n'
+      );
+    }
   }
 
   // Tick data lines: T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
-  // Downsampled to every SAMPLE_INTERVAL ticks
   if (Array.isArray(tickData)) {
     for (const row of tickData) {
       const tick = row.tick;
@@ -115,7 +120,6 @@ try {
 
   fs.closeSync(fd);
 
-  // Output only the file path to stdout
   process.stdout.write(outPath);
   process.exit(0);
 } catch (err) {

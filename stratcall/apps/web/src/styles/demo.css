@@ -223,6 +223,17 @@
   font-size: 11px;
   color: var(--text-secondary);
   text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.demo-round-timer {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
 }
 
 /* Responsive — demo is desktop-only but handle smaller windows */

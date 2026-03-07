@@ -29,7 +29,9 @@ export interface DemoTick {
 export interface DemoRound {
   roundNum: number;
   startTick: number;
+  freezeEndTick: number;
   endTick: number;
+  timelimit: number; // round time in seconds (e.g. 115 = 1:55)
 }
 
 export interface DemoData {
@@ -96,11 +98,11 @@ export async function pickAndParseDemoFile(
   // Build tick map from raw tick data
   const tickMap = new Map<number, DemoTick>();
 
+  // Parser already downsamples to every 16th tick — no client-side filter needed
   if (Array.isArray(data.tickData)) {
     for (const row of data.tickData) {
       const tick = row.tick;
       if (tick == null) continue;
-      if (tick % 32 !== 0) continue;
 
       if (!tickMap.has(tick)) {
         tickMap.set(tick, { tick, players: [], grenades: [] });
@@ -133,7 +135,8 @@ export async function pickAndParseDemoFile(
       if (!gType) continue;
 
       const tick = g.destroy_tick ?? g.tick ?? 0;
-      const snapped = Math.round(tick / 32) * 32;
+      // Snap to nearest sampled tick (interval=16)
+      const snapped = Math.round(tick / 16) * 16;
       const dt = tickMap.get(snapped);
       if (!dt) continue;
 
