@@ -202,8 +202,10 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
 
     const appearingUtils: UtilityAnim[] = utilMatch.appearing.map(u => {
       if (u.thrownBy != null && u.side != null) {
-        const thrower = toState.players.find(p => p.number === u.thrownBy && p.side === u.side)
-          || fromState.players.find(p => p.number === u.thrownBy && p.side === u.side);
+        // Use fromState first — the throw originates from where the player
+        // was before moving, not where they end up
+        const thrower = fromState.players.find(p => p.number === u.thrownBy && p.side === u.side)
+          || toState.players.find(p => p.number === u.thrownBy && p.side === u.side);
         if (thrower) {
           const dx = u.position.x - thrower.position.x;
           const dy = u.position.y - thrower.position.y;
