@@ -10,21 +10,22 @@ cd "$SCRIPT_DIR/../.."
 pnpm build --filter=@stratcall/web
 
 echo "==> Copying web dist into Neutralino resources..."
-# Keep the Neutralino JS client and icons
-mkdir -p "$RESOURCES/js"
-cp "$RESOURCES/js/neutralino.js" /tmp/_neutralino.js 2>/dev/null || true
-cp -r "$RESOURCES/icons" /tmp/_icons 2>/dev/null || true
+# Preserve Neutralino-specific files before clearing
+TMPDIR=$(mktemp -d)
+cp "$RESOURCES/js/neutralino.js" "$TMPDIR/" 2>/dev/null || true
+cp "$RESOURCES/js/desktop-bridge.js" "$TMPDIR/" 2>/dev/null || true
+cp -r "$RESOURCES/icons" "$TMPDIR/icons" 2>/dev/null || true
 
 # Clear and copy web dist
 rm -rf "$RESOURCES"/*
 cp -r "$WEB_DIST"/* "$RESOURCES/"
 
-# Restore Neutralino client and icons
+# Restore Neutralino-specific files
 mkdir -p "$RESOURCES/js"
-cp /tmp/_neutralino.js "$RESOURCES/js/neutralino.js" 2>/dev/null || true
-cp -r /tmp/_icons "$RESOURCES/icons" 2>/dev/null || true
-rm -f /tmp/_neutralino.js
-rm -rf /tmp/_icons
+cp "$TMPDIR/neutralino.js" "$RESOURCES/js/" 2>/dev/null || true
+cp "$TMPDIR/desktop-bridge.js" "$RESOURCES/js/" 2>/dev/null || true
+cp -r "$TMPDIR/icons" "$RESOURCES/icons" 2>/dev/null || true
+rm -rf "$TMPDIR"
 
 # Inject Neutralino client script + desktop bridge into index.html
 # The bridge script must load before the app so it can set window.__STRATCALL_DESKTOP__

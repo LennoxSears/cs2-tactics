@@ -7,9 +7,9 @@
   // Parse a demo file using the bundled stratcall-demo-parser binary
   // The binary is shipped alongside the Neutralino app in the same directory
   window.__parseDemoFile__ = async function(filePath) {
-    // Determine parser binary path relative to the app
-    const appDir = await Neutralino.os.getPath('app');
-    const isWin = NL_OS === 'Windows';
+    // NL_PATH is the app directory (set by Neutralino runtime)
+    const appDir = typeof NL_PATH !== 'undefined' ? NL_PATH : '.';
+    const isWin = typeof NL_OS !== 'undefined' ? NL_OS === 'Windows' : navigator.platform.includes('Win');
     const parserName = isWin ? 'stratcall-demo-parser.exe' : 'stratcall-demo-parser';
     const parserPath = `${appDir}/${parserName}`;
 
