@@ -26,6 +26,7 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
   const { t } = useLocale();
   const mapInfo = getMapInfo(mapName);
   const [navMesh, setNavMesh] = useState<NavMesh | null>(null);
+  const [navMeshReady, setNavMeshReady] = useState(false);
   const [timeline, setTimeline] = useState<AnimationTimeline | null>(null);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -50,16 +51,21 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
 
   // Load nav mesh
   useEffect(() => {
-    loadNavMesh(mapName).then(nm => setNavMesh(nm));
+    setNavMeshReady(false);
+    loadNavMesh(mapName).then(nm => {
+      setNavMesh(nm);
+      setNavMeshReady(true);
+    });
   }, [mapName]);
 
-  // Build timeline
+  // Build timeline only after navmesh load completes
   useEffect(() => {
+    if (!navMeshReady) return;
     const tl = buildTimeline(phases, navMesh, mapInfo);
     setTimeline(tl);
     setCurrentFrame(0);
     setPlaying(tl.totalFrames > 0);
-  }, [phases, navMesh]);
+  }, [phases, navMeshReady]);
 
   // Measure container
   useEffect(() => {
