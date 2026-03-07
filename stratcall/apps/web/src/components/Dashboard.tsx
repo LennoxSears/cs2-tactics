@@ -12,6 +12,7 @@ import Tutorial from './Tutorial';
 import UserProfile from './UserProfile';
 import DemoPlayer from './DemoPlayer';
 import PhaseLibrary from './PhaseLibrary';
+import { isDesktop } from '../lib/demoParser';
 import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -146,12 +147,14 @@ export default function Dashboard({ session, onLogout }: Props) {
               >
                 <FontAwesomeIcon icon={faBook} /> <span>{t('nav.playbooks')}</span>
               </button>
-              <button
-                className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
-                onClick={() => setView({ screen: 'demo' })}
-              >
-                <FontAwesomeIcon icon={faFilm} /> <span>Demo</span>
-              </button>
+              {isDesktop() && (
+                <button
+                  className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
+                  onClick={() => setView({ screen: 'demo' })}
+                >
+                  <FontAwesomeIcon icon={faFilm} /> <span>Demo</span>
+                </button>
+              )}
               <button
                 className={`dash-nav-btn ${view.screen === 'library' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'library' })}

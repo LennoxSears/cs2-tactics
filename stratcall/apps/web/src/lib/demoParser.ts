@@ -1,7 +1,6 @@
 import type { MapName, Position } from '../types';
 import { maps, worldToPixel } from '../maps';
 import type { MapInfo } from '../maps';
-import { getAuthHeaders } from './auth';
 
 // ── Types ──
 
@@ -37,13 +36,25 @@ export interface DemoData {
   mapName: MapName | null;
   tickRate: number;
   rounds: DemoRound[];
-  ticks: DemoTick[];       // sampled ticks (every Nth tick)
+  ticks: DemoTick[];
   totalTicks: number;
 }
 
-// ── Server-side parsing ──
+// ── Desktop detection ──
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+declare global {
+  interface Window {
+    __STRATCALL_DESKTOP__?: boolean;
+    __parseDemoFile__?: (filePath: string) => Promise<any>;
+    __pickDemoFile__?: () => Promise<string | null>;
+  }
+}
+
+export function isDesktop(): boolean {
+  return !!window.__STRATCALL_DESKTOP__;
+}
+
+// ── Parsing (desktop only, via local binary) ──
 
 const GRENADE_MAP: Record<string, DemoGrenade['type']> = {
   smokegrenade: 'smoke',
@@ -62,34 +73,23 @@ function detectMap(mapStr: string): MapName | null {
   return null;
 }
 
-export async function parseDemo(
-  buffer: ArrayBuffer,
+export async function pickAndParseDemoFile(
   onProgress?: (msg: string) => void,
 ): Promise<DemoData> {
-  onProgress?.('Uploading demo to server...');
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/octet-stream',
-    ...getAuthHeaders(),
-  };
-  if (import.meta.env.DEV && !headers['Authorization']) {
-    headers['X-User-Id'] = 'local-dev-user';
+  if (!window.__pickDemoFile__ || !window.__parseDemoFile__) {
+    throw new Error('Demo parsing is only available in the desktop app');
   }
 
-  const res = await fetch(`${API_BASE}/demo/parse`, {
-    method: 'POST',
-    headers,
-    body: buffer,
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Server error' }));
-    throw new Error(err.error || `Parse failed (${res.status})`);
+  onProgress?.('Select a demo file...');
+  const filePath = await window.__pickDemoFile__();
+  if (!filePath) {
+    throw new Error('No file selected');
   }
+
+  onProgress?.('Parsing demo file...');
+  const data = await window.__parseDemoFile__(filePath);
 
   onProgress?.('Processing results...');
-  const data = await res.json();
-
   const mapName = detectMap(data.mapName || '');
   const mapInfo = mapName ? maps.find(m => m.name === mapName) : null;
 

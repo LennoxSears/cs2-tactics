@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
-    "@laihoe/demoparser2": "^0.41.1",
     "@stratcall/db": "workspace:*",
     "@stratcall/types": "workspace:*",
     "drizzle-orm": "^0.44.0",

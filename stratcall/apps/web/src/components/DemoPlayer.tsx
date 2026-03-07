@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DemoData, DemoTick } from '../lib/demoParser';
-import { parseDemo, demoTickToBoardState } from '../lib/demoParser';
+import { pickAndParseDemoFile, demoTickToBoardState } from '../lib/demoParser';
 import { drawPlayer, drawUtility } from '../lib/canvasRenderer';
 import { getMapInfo } from '../maps';
 import { mapImages } from '../assets/mapImages';
@@ -164,9 +164,7 @@ export default function DemoPlayer() {
   }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo]);
 
   // ── File upload ──
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleOpenDemo = async () => {
     setError('');
     setLoading(true);
     setCaptured([]);
@@ -174,8 +172,7 @@ export default function DemoPlayer() {
     setSelectedRound(0);
 
     try {
-      const buffer = await file.arrayBuffer();
-      const data = await parseDemo(buffer, setLoadMsg);
+      const data = await pickAndParseDemoFile(setLoadMsg);
       if (!data.mapName) {
         setError('Could not detect map from demo file');
         setLoading(false);
@@ -189,7 +186,11 @@ export default function DemoPlayer() {
       setDemoData(data);
       setPlaying(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to parse demo file');
+      if (err.message === 'No file selected') {
+        // User cancelled — not an error
+      } else {
+        setError(err.message || 'Failed to parse demo file');
+      }
     }
     setLoading(false);
   };
@@ -250,14 +251,13 @@ export default function DemoPlayer() {
       <div className="demo-player">
         <div className="demo-upload-area">
           <h2>Demo 2D Player</h2>
-          <p>Upload a CS2 .dem file to replay it on the 2D tactical map</p>
+          <p>Open a CS2 .dem file to replay it on the 2D tactical map</p>
           {loading && <p className="demo-loading">{loadMsg || 'Parsing...'}</p>}
           {error && <p className="demo-error">{error}</p>}
           {!loading && (
-            <label className="demo-upload-btn">
-              <input type="file" accept=".dem" onChange={handleFileUpload} hidden />
-              Choose .dem file
-            </label>
+            <button className="demo-upload-btn" onClick={handleOpenDemo}>
+              Open .dem file
+            </button>
           )}
         </div>
       </div>
