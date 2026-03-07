@@ -12,6 +12,7 @@ import {
   faRotateRight, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
+import { getUtilitySprite } from '../assets/utilitySprites';
 
 interface Props {
   mapName: MapName;
@@ -386,76 +387,26 @@ function drawUtilityLanding(
   u: AnimFrameUtility,
   x: number, y: number,
   size: number,
-  colors: { fill: string; stroke: string; glow: string },
+  _colors: { fill: string; stroke: string; glow: string },
 ) {
   const progress = u.effectProgress; // 0-1
+  if (progress < 0.01) return;
 
-  switch (u.type) {
-    case 'smoke': {
-      // Expanding smoke cloud
-      const maxRadius = size * 0.035;
-      const radius = maxRadius * progress;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = colors.fill;
-      ctx.fill();
-      ctx.strokeStyle = colors.stroke;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      break;
-    }
-    case 'flash': {
-      // White burst expanding then fading
-      const maxRadius = size * 0.04;
-      const radius = maxRadius * progress;
-      const alpha = 1 - progress * 0.5;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
-      ctx.fill();
-      // Bright glow
-      ctx.save();
-      ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 15 * (1 - progress);
-      ctx.beginPath();
-      ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      ctx.fill();
-      ctx.restore();
-      break;
-    }
-    case 'he': {
-      // Orange burst expanding
-      const maxRadius = size * 0.03;
-      const radius = maxRadius * progress;
-      const alpha = 1 - progress * 0.6;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,140,0,${alpha * 0.6})`;
-      ctx.fill();
-      ctx.save();
-      ctx.shadowColor = '#ff8c00';
-      ctx.shadowBlur = 12 * (1 - progress);
-      ctx.beginPath();
-      ctx.arc(x, y, radius * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,100,0,${alpha})`;
-      ctx.fill();
-      ctx.restore();
-      break;
-    }
-    case 'molotov': {
-      // Fire spreading
-      const maxRadius = size * 0.025;
-      const radius = maxRadius * progress;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,68,68,${0.4 + progress * 0.2})`;
-      ctx.fill();
-      ctx.strokeStyle = colors.stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      break;
-    }
+  // Scale sprite from 0 to full size during landing
+  const spriteSize = getSpriteSize(u.type, size) * progress;
+  const sprite = getUtilitySprite(u.type);
+
+  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(progress * 2, 1) * (ctx.globalAlpha || 1);
+    ctx.drawImage(sprite, x - spriteSize / 2, y - spriteSize / 2, spriteSize, spriteSize);
+    ctx.restore();
+  } else {
+    // Fallback circle while sprite loads
+    ctx.beginPath();
+    ctx.arc(x, y, spriteSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,200,200,${progress * 0.5})`;
+    ctx.fill();
   }
 }
 
@@ -466,68 +417,34 @@ function drawUtilityActive(
   size: number,
   _colors: { fill: string; stroke: string; glow: string },
 ) {
-  switch (u.type) {
-    case 'smoke': {
-      const baseRadius = size * 0.035;
-      ctx.beginPath();
-      ctx.arc(x, y, baseRadius, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(136,136,136,0.45)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(136,136,136,0.7)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+  const spriteSize = getSpriteSize(u.type, size);
+  const sprite = getUtilitySprite(u.type);
 
-      // Inner haze gradient
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, baseRadius);
-      grad.addColorStop(0, 'rgba(180,180,180,0.3)');
-      grad.addColorStop(1, 'rgba(136,136,136,0)');
-      ctx.beginPath();
-      ctx.arc(x, y, baseRadius, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-      break;
-    }
-    case 'flash': {
-      const radius = size * 0.015;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      break;
-    }
-    case 'he': {
-      const radius = size * 0.012;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,140,0,0.25)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,100,0,0.4)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      break;
-    }
-    case 'molotov': {
-      const baseRadius = size * 0.025;
-      const pulse = 0.85 + 0.15 * Math.sin(Date.now() * 0.008);
-      const radius = baseRadius * pulse;
+  // Molotov pulses
+  const scale = u.type === 'molotov'
+    ? 0.9 + 0.1 * Math.sin(Date.now() * 0.008)
+    : 1;
+  const drawSize = spriteSize * scale;
 
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      grad.addColorStop(0, 'rgba(255,200,50,0.6)');
-      grad.addColorStop(0.5, 'rgba(255,100,30,0.4)');
-      grad.addColorStop(1, 'rgba(255,50,10,0.15)');
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
+  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+    ctx.drawImage(sprite, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+  } else {
+    // Fallback circle
+    ctx.beginPath();
+    ctx.arc(x, y, drawSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200,200,200,0.4)';
+    ctx.fill();
+  }
+}
 
-      ctx.strokeStyle = 'rgba(255,68,68,0.5)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      break;
-    }
+/** Sprite render size per utility type (diameter in pixels) */
+function getSpriteSize(type: string, canvasSize: number): number {
+  switch (type) {
+    case 'smoke': return canvasSize * 0.07;   // smoke cloud is large
+    case 'flash': return canvasSize * 0.05;   // flash burst
+    case 'molotov': return canvasSize * 0.055; // fire spread
+    case 'he': return canvasSize * 0.05;       // explosion
+    default: return canvasSize * 0.04;
   }
 }
 

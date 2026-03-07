@@ -11,8 +11,19 @@ export interface NavArea {
 
 export interface NavMesh {
   areas: NavArea[];
-  // Lookup maps built after loading
   areaById: Map<number, NavArea>;
+}
+
+/**
+ * Overlay format for custom navmesh modifications.
+ * Loaded from /navmesh/{map}.overlay.json (optional).
+ *
+ * - extraAreas: new nav areas (e.g., jump/boost landing spots)
+ * - extraConnections: bidirectional links between existing area IDs
+ */
+export interface NavMeshOverlay {
+  extraAreas?: NavArea[];
+  extraConnections?: [number, number][];
 }
 
 // Cache loaded nav meshes
@@ -31,11 +42,50 @@ export async function loadNavMesh(mapName: MapName): Promise<NavMesh | null> {
       areaById.set(area.id, area);
     }
 
+    // Apply overlay if available
+    try {
+      const overlayRes = await fetch(`/navmesh/${mapName}.overlay.json`);
+      if (overlayRes.ok) {
+        const overlay = await overlayRes.json() as NavMeshOverlay;
+        applyOverlay(data.areas, areaById, overlay);
+      }
+    } catch {
+      // No overlay — that's fine
+    }
+
     const navMesh: NavMesh = { areas: data.areas, areaById };
     cache.set(mapName, navMesh);
     return navMesh;
   } catch {
     return null;
+  }
+}
+
+function applyOverlay(
+  areas: NavArea[],
+  areaById: Map<number, NavArea>,
+  overlay: NavMeshOverlay,
+) {
+  // Add extra areas
+  if (overlay.extraAreas) {
+    for (const area of overlay.extraAreas) {
+      if (!areaById.has(area.id)) {
+        areas.push(area);
+        areaById.set(area.id, area);
+      }
+    }
+  }
+
+  // Add extra bidirectional connections
+  if (overlay.extraConnections) {
+    for (const [aId, bId] of overlay.extraConnections) {
+      const aArea = areaById.get(aId);
+      const bArea = areaById.get(bId);
+      if (aArea && bArea) {
+        if (!aArea.c.includes(bId)) aArea.c.push(bId);
+        if (!bArea.c.includes(aId)) bArea.c.push(aId);
+      }
+    }
   }
 }
 
