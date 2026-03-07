@@ -30,24 +30,26 @@ cp "$SCRIPT_DIR/bin/neutralino-win_x64.exe" "$DIST/stratcall-win_x64.exe"
 cp "$SCRIPT_DIR/neutralino.config.json" "$DIST/neutralino.config.json"
 
 # ── 2. Build resources.neu (zipped resources directory) ──
+# Neutralino expects files under resources/ inside the archive
 echo "==> Building resources.neu..."
 TMPRES=$(mktemp -d)
+mkdir -p "$TMPRES/resources"
 
 # Copy web dist (exclude downloads/ — that's the desktop zip itself)
-rsync -a --exclude='downloads/' "$WEB_DIR/dist/" "$TMPRES/"
+rsync -a --exclude='downloads/' "$WEB_DIR/dist/" "$TMPRES/resources/"
 
 # Add Neutralino client library + desktop bridge
-mkdir -p "$TMPRES/js"
-cp "$RESOURCES/js/neutralino.js" "$TMPRES/js/"
-cp "$RESOURCES/js/desktop-bridge.js" "$TMPRES/js/"
+mkdir -p "$TMPRES/resources/js"
+cp "$RESOURCES/js/neutralino.js" "$TMPRES/resources/js/"
+cp "$RESOURCES/js/desktop-bridge.js" "$TMPRES/resources/js/"
 
 # Copy icons if present
 if [ -d "$RESOURCES/icons" ]; then
-  cp -r "$RESOURCES/icons" "$TMPRES/icons"
+  cp -r "$RESOURCES/icons" "$TMPRES/resources/icons"
 fi
 
 # Inject scripts into index.html (before </head>)
-sed -i 's|</head>|<script src="js/neutralino.js"></script>\n<script src="js/desktop-bridge.js"></script>\n</head>|' "$TMPRES/index.html"
+sed -i 's|</head>|<script src="js/neutralino.js"></script>\n<script src="js/desktop-bridge.js"></script>\n</head>|' "$TMPRES/resources/index.html"
 
 cd "$TMPRES"
 zip -r -q "$DIST/resources.neu" .
