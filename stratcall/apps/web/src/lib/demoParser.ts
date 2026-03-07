@@ -42,25 +42,24 @@ export interface DemoData {
 
 // ── WASM init ──
 
-let wasmReady = false;
-let initPromise: Promise<void> | null = null;
-let cachedMod: any = null;
+let cachedWasm: any = null;
 
-// Import the .wasm file as a URL asset via Vite
+// Vite resolves this to the hashed asset URL
 import wasmUrl from 'demoparser2/demoparser2_bg.wasm?url';
 
 async function ensureWasm(): Promise<any> {
-  if (cachedMod) return cachedMod;
+  if (cachedWasm) return cachedWasm;
+
   // @ts-expect-error demoparser2 uses declare namespace, not ES module exports
   const mod = await import('demoparser2');
-  if (!wasmReady) {
-    if (!initPromise) {
-      initPromise = (mod as any).default(wasmUrl).then(() => { wasmReady = true; });
-    }
-    await initPromise;
-  }
-  cachedMod = mod;
-  return mod;
+  const wbg = mod.default || mod;
+
+  // Fetch the WASM binary and init synchronously to avoid async race issues
+  const wasmBytes = await fetch(wasmUrl).then(r => r.arrayBuffer());
+  wbg.initSync(wasmBytes);
+
+  cachedWasm = wbg;
+  return wbg;
 }
 
 // ── Parsing ──

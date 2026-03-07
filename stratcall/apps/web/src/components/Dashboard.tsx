@@ -138,37 +138,37 @@ export default function Dashboard({ session, onLogout }: Props) {
                 className={`dash-nav-btn ${view.screen === 'strategies' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'strategies' })}
               >
-                <FontAwesomeIcon icon={faMap} /> {t('nav.myStrategies')}
+                <FontAwesomeIcon icon={faMap} /> <span>{t('nav.myStrategies')}</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'playbooks' || view.screen === 'playbook' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'playbooks' })}
               >
-                <FontAwesomeIcon icon={faBook} /> {t('nav.playbooks')}
+                <FontAwesomeIcon icon={faBook} /> <span>{t('nav.playbooks')}</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'demo' })}
               >
-                <FontAwesomeIcon icon={faFilm} /> Demo
+                <FontAwesomeIcon icon={faFilm} /> <span>Demo</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'library' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'library' })}
               >
-                <FontAwesomeIcon icon={faBookmark} /> Library
+                <FontAwesomeIcon icon={faBookmark} /> <span>Library</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'community' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'community' })}
               >
-                <FontAwesomeIcon icon={faGlobe} /> {t('nav.community')}
+                <FontAwesomeIcon icon={faGlobe} /> <span>{t('nav.community')}</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'profile' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'profile' })}
               >
-                <FontAwesomeIcon icon={faUser} /> {t('nav.profile')}
+                <FontAwesomeIcon icon={faUser} /> <span>{t('nav.profile')}</span>
               </button>
             </nav>
           </div>
