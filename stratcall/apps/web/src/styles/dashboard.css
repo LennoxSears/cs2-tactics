@@ -212,18 +212,20 @@
   .dash-topbar {
     padding: 8px 10px;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
   }
   .dash-topbar-left {
     gap: 10px;
-    flex: 1;
-    min-width: 0;
   }
   .dash-nav {
+    order: 3;
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     gap: 2px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
   }
   .dash-nav::-webkit-scrollbar { display: none; }
   .dash-nav-btn {

@@ -1,6 +1,7 @@
 import type { MapName, Position } from '../types';
 import { maps, worldToPixel } from '../maps';
 import type { MapInfo } from '../maps';
+import { getAuthHeaders } from './auth';
 
 // ── Types ──
 
@@ -40,29 +41,9 @@ export interface DemoData {
   totalTicks: number;
 }
 
-// ── WASM init ──
+// ── Server-side parsing ──
 
-let cachedWasm: any = null;
-
-// Vite resolves this to the hashed asset URL
-import wasmUrl from 'demoparser2/demoparser2_bg.wasm?url';
-
-async function ensureWasm(): Promise<any> {
-  if (cachedWasm) return cachedWasm;
-
-  // @ts-expect-error demoparser2 uses declare namespace, not ES module exports
-  const mod = await import('demoparser2');
-  const wbg = mod.default || mod;
-
-  // Fetch the WASM binary and init synchronously to avoid async race issues
-  const wasmBytes = await fetch(wasmUrl).then(r => r.arrayBuffer());
-  wbg.initSync(wasmBytes);
-
-  cachedWasm = wbg;
-  return wbg;
-}
-
-// ── Parsing ──
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const GRENADE_MAP: Record<string, DemoGrenade['type']> = {
   smokegrenade: 'smoke',
@@ -85,51 +66,40 @@ export async function parseDemo(
   buffer: ArrayBuffer,
   onProgress?: (msg: string) => void,
 ): Promise<DemoData> {
-  onProgress?.('Loading WASM parser...');
-  const wasm = await ensureWasm();
+  onProgress?.('Uploading demo to server...');
 
-  const bytes = new Uint8Array(buffer);
-
-  // Parse header for map name
-  onProgress?.('Parsing header...');
-  const header = wasm.parseHeader(bytes);
-  const mapName = detectMap(header?.map_name || '');
-
-  // Parse round events
-  onProgress?.('Parsing round events...');
-  const roundStarts = wasm.parseEvent(bytes, 'round_start') || [];
-  const roundEnds = wasm.parseEvent(bytes, 'round_end') || [];
-
-  const rounds: DemoRound[] = [];
-  for (let i = 0; i < roundStarts.length; i++) {
-    rounds.push({
-      roundNum: i + 1,
-      startTick: roundStarts[i]?.tick ?? 0,
-      endTick: roundEnds[i]?.tick ?? (roundStarts[i + 1]?.tick ?? 0),
-    });
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/octet-stream',
+    ...getAuthHeaders(),
+  };
+  if (import.meta.env.DEV && !headers['Authorization']) {
+    headers['X-User-Id'] = 'local-dev-user';
   }
 
-  // Parse player positions — sample every 32 ticks (~0.5s at 64 tick)
-  onProgress?.('Parsing player positions...');
-  const tickData = wasm.parseTicks(bytes, [
-    'X', 'Y', 'Z', 'health', 'team_num', 'is_alive', 'player_name', 'player_steamid',
-  ]);
+  const res = await fetch(`${API_BASE}/demo/parse`, {
+    method: 'POST',
+    headers,
+    body: buffer,
+  });
 
-  // Parse grenades
-  onProgress?.('Parsing grenades...');
-  const grenadeData = wasm.parseGrenades(bytes) || [];
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Server error' }));
+    throw new Error(err.error || `Parse failed (${res.status})`);
+  }
 
-  // Build tick map
-  onProgress?.('Building timeline...');
+  onProgress?.('Processing results...');
+  const data = await res.json();
+
+  const mapName = detectMap(data.mapName || '');
   const mapInfo = mapName ? maps.find(m => m.name === mapName) : null;
+
+  // Build tick map from raw tick data
   const tickMap = new Map<number, DemoTick>();
 
-  if (Array.isArray(tickData)) {
-    for (const row of tickData) {
+  if (Array.isArray(data.tickData)) {
+    for (const row of data.tickData) {
       const tick = row.tick;
       if (tick == null) continue;
-
-      // Sample every 32 ticks
       if (tick % 32 !== 0) continue;
 
       if (!tickMap.has(tick)) {
@@ -157,8 +127,8 @@ export async function parseDemo(
   }
 
   // Add grenades to nearest tick
-  if (Array.isArray(grenadeData) && mapInfo) {
-    for (const g of grenadeData) {
+  if (Array.isArray(data.grenadeData) && mapInfo) {
+    for (const g of data.grenadeData) {
       const gType = GRENADE_MAP[g.grenade_type];
       if (!gType) continue;
 
@@ -179,14 +149,15 @@ export async function parseDemo(
   const ticks = Array.from(tickMap.values()).sort((a, b) => a.tick - b.tick);
   const totalTicks = ticks.length > 0 ? ticks[ticks.length - 1].tick : 0;
 
-  // Estimate tick rate from header or default
-  const tickRate = header?.tickrate || header?.playback_ticks
-    ? Math.round((header.playback_ticks || 0) / (header.playback_time || 1))
-    : 64;
-
   onProgress?.('Done');
 
-  return { mapName, tickRate, rounds, ticks, totalTicks };
+  return {
+    mapName,
+    tickRate: data.tickRate || 64,
+    rounds: data.rounds || [],
+    ticks,
+    totalTicks,
+  };
 }
 
 // ── Convert demo tick to BoardState ──
@@ -205,7 +176,6 @@ export function demoTickToBoardState(
   }>;
   drawings: never[];
 } {
-  // Assign numbers per side
   const ctPlayers = tick.players.filter(p => p.side === 'ct' && p.isAlive);
   const tPlayers = tick.players.filter(p => p.side === 't' && p.isAlive);
 
