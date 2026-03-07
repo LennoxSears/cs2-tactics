@@ -574,10 +574,21 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
       <PhaseBar
         phases={phases}
         activeIndex={activePhaseIdx}
+        mapName={strategy.map}
         onSelect={switchToPhase}
         onAdd={addPhase}
         onDelete={deletePhase}
         onRename={renamePhase}
+        onImportPhases={(imported) => {
+          const newPhases: Phase[] = imported.map((p, i) => ({
+            id: generateId(),
+            name: p.name,
+            sortOrder: phases.length + i,
+            boardState: p.boardState,
+            notes: '',
+          }));
+          setPhases(prev => [...prev, ...newPhases]);
+        }}
       />
 
       {/* Metadata panel */}

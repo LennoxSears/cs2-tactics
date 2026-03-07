@@ -10,9 +10,11 @@ import Community from './Community';
 import Profile from './Profile';
 import Tutorial from './Tutorial';
 import UserProfile from './UserProfile';
+import DemoPlayer from './DemoPlayer';
+import PhaseLibrary from './PhaseLibrary';
 import NotificationBell from './NotificationBell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faGlobe, faBook, faMap, faUser, faCircleQuestion, faFilm, faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -23,7 +25,9 @@ type View =
   | { screen: 'editor'; strategyId: string }
   | { screen: 'community' }
   | { screen: 'profile' }
-  | { screen: 'userProfile'; userId: string };
+  | { screen: 'userProfile'; userId: string }
+  | { screen: 'demo' }
+  | { screen: 'library' };
 
 interface Props {
   session: Session;
@@ -143,6 +147,18 @@ export default function Dashboard({ session, onLogout }: Props) {
                 <FontAwesomeIcon icon={faBook} /> {t('nav.playbooks')}
               </button>
               <button
+                className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
+                onClick={() => setView({ screen: 'demo' })}
+              >
+                <FontAwesomeIcon icon={faFilm} /> Demo
+              </button>
+              <button
+                className={`dash-nav-btn ${view.screen === 'library' ? 'active' : ''}`}
+                onClick={() => setView({ screen: 'library' })}
+              >
+                <FontAwesomeIcon icon={faBookmark} /> Library
+              </button>
+              <button
                 className={`dash-nav-btn ${view.screen === 'community' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'community' })}
               >
@@ -204,6 +220,12 @@ export default function Dashboard({ session, onLogout }: Props) {
             onBack={() => setView({ screen: 'strategies' })}
             onSave={handleSaveStrategy}
           />
+        )}
+        {view.screen === 'demo' && (
+          <DemoPlayer />
+        )}
+        {view.screen === 'library' && (
+          <PhaseLibrary />
         )}
         {view.screen === 'community' && (
           <Community />

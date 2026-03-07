@@ -1,22 +1,27 @@
 import { useState } from 'react';
-import type { Phase } from '../types';
+import type { Phase, MapName } from '../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faBookmark, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
+import { api } from '../lib/api';
+import { exportPhasesToFile, importPhasesFromFile } from '../lib/phaseIO';
 
 interface Props {
   phases: Phase[];
   activeIndex: number;
+  mapName: MapName;
   onSelect: (index: number) => void;
   onAdd: () => void;
   onDelete: (index: number) => void;
   onRename: (index: number, name: string) => void;
+  onImportPhases?: (phases: Array<{ name: string; boardState: any }>) => void;
 }
 
-export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelete, onRename }: Props) {
+export default function PhaseBar({ phases, activeIndex, mapName, onSelect, onAdd, onDelete, onRename, onImportPhases }: Props) {
   const { t } = useLocale();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
 
   const startRename = (idx: number) => {
     setEditingIdx(idx);
@@ -28,6 +33,38 @@ export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelet
       onRename(editingIdx, editName.trim());
     }
     setEditingIdx(null);
+  };
+
+  const savePhaseToLibrary = async (idx: number) => {
+    const phase = phases[idx];
+    setSavingIdx(idx);
+    try {
+      await api.post('/phases', {
+        name: phase.name,
+        mapName,
+        boardState: phase.boardState,
+        source: 'manual',
+        tags: [],
+      });
+    } catch (err) {
+      console.error('Failed to save phase to library:', err);
+    } finally {
+      setSavingIdx(null);
+    }
+  };
+
+  const handleExportPhases = () => {
+    exportPhasesToFile(
+      mapName,
+      phases.map(p => ({ name: p.name, boardState: p.boardState })),
+    );
+  };
+
+  const handleImportPhases = async () => {
+    const data = await importPhasesFromFile();
+    if (data && onImportPhases) {
+      onImportPhases(data.phases);
+    }
   };
 
   return (
@@ -58,6 +95,14 @@ export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelet
                 {phase.name}
               </span>
             )}
+            <button
+              className="phase-save-lib"
+              title="Save to library"
+              disabled={savingIdx === idx}
+              onClick={e => { e.stopPropagation(); savePhaseToLibrary(idx); }}
+            >
+              <FontAwesomeIcon icon={faBookmark} />
+            </button>
             {phases.length > 1 && (
               <button
                 className="phase-delete"
@@ -70,6 +115,14 @@ export default function PhaseBar({ phases, activeIndex, onSelect, onAdd, onDelet
         ))}
         <button className="phase-add" onClick={onAdd} title={t('phases.addPhase')}>
           <FontAwesomeIcon icon={faPlus} />
+        </button>
+      </div>
+      <div className="phase-bar-actions">
+        <button className="phase-action-btn" onClick={handleExportPhases} title="Export phases">
+          <FontAwesomeIcon icon={faDownload} /> Export
+        </button>
+        <button className="phase-action-btn" onClick={handleImportPhases} title="Import phases">
+          <FontAwesomeIcon icon={faUpload} /> Import
         </button>
       </div>
     </div>

@@ -152,6 +152,45 @@ export const comments = sqliteTable('comments', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+// ── Phase Library (standalone reusable phases) ──
+
+export const phaseLibrary = sqliteTable('phase_library', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  mapName: text('map_name').notNull(),
+  boardState: text('board_state', { mode: 'json' }).notNull().$type<{
+    players: Array<{
+      id: string;
+      side: string;
+      number: number;
+      role: string | null;
+      position: { x: number; y: number };
+      label?: string;
+    }>;
+    utilities: Array<{
+      id: string;
+      type: string;
+      position: { x: number; y: number };
+      thrownBy?: number | null;
+      side?: string | null;
+      label?: string;
+    }>;
+    drawings: Array<{
+      id: string;
+      type: string;
+      color: string;
+      start?: { x: number; y: number };
+      end?: { x: number; y: number };
+      points?: Array<{ x: number; y: number }>;
+    }>;
+  }>(),
+  source: text('source', { enum: ['manual', 'demo'] }).notNull().default('manual'),
+  tags: text('tags', { mode: 'json' }).notNull().$type<string[]>().default([]),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 // ── Shared links ──
 
 export const sharedLinks = sqliteTable('shared_links', {

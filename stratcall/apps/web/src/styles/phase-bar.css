@@ -104,3 +104,47 @@
   color: var(--accent-ct);
   background: rgba(74, 158, 255, 0.1);
 }
+
+.phase-save-lib {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.phase-tab:hover .phase-save-lib { opacity: 1; }
+.phase-save-lib:hover { color: var(--accent-ct); }
+.phase-save-lib:disabled { opacity: 0.4; cursor: default; }
+
+.phase-bar-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.phase-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.phase-action-btn:hover {
+  border-color: var(--accent-ct);
+  color: var(--accent-ct);
+  background: rgba(74, 158, 255, 0.1);
+}
