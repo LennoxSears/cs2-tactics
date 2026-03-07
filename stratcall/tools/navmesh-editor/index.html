@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StratCall NavMesh Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+
+/* ── Sidebar ── */
+.sidebar { width: 320px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-header { padding: 16px; border-bottom: 1px solid #30363d; }
+.sidebar-header h1 { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; color: #58a6ff; }
+.sidebar-header p { font-size: 11px; color: #8b949e; margin-top: 4px; }
+
+.controls { padding: 12px 16px; border-bottom: 1px solid #30363d; }
+.controls label { font-size: 11px; color: #8b949e; display: block; margin-bottom: 4px; }
+.controls select { width: 100%; padding: 6px 8px; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; font-size: 13px; }
+.controls select:focus { outline: none; border-color: #58a6ff; }
+
+.mode-btns { display: flex; gap: 6px; margin-top: 10px; }
+.mode-btn { flex: 1; padding: 6px; background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 6px; font-size: 11px; cursor: pointer; text-align: center; transition: all 0.15s; }
+.mode-btn:hover { border-color: #58a6ff; color: #e6edf3; }
+.mode-btn.active { background: rgba(88,166,255,0.15); border-color: #58a6ff; color: #58a6ff; }
+
+.toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.toggle-row label { font-size: 12px; color: #e6edf3; margin-bottom: 0; cursor: pointer; }
+.toggle-row input { cursor: pointer; }
+
+/* ── Info panel ── */
+.info { padding: 12px 16px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+.info h3 { font-size: 11px; color: #8b949e; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.info-item { font-size: 12px; margin-bottom: 3px; }
+.info-item span { color: #58a6ff; }
+
+.selection-info { min-height: 60px; }
+
+/* ── Overlay list ── */
+.overlay-section { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.overlay-section h3 { font-size: 11px; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.overlay-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 4px; font-size: 12px; }
+.overlay-item .conn-label { color: #e6edf3; }
+.overlay-item .remove-btn { background: none; border: none; color: #f85149; cursor: pointer; font-size: 14px; padding: 0 4px; }
+.overlay-item .remove-btn:hover { color: #ff7b72; }
+.empty-msg { font-size: 12px; color: #484f58; font-style: italic; }
+
+/* ── Export/Import ── */
+.actions { padding: 12px 16px; border-top: 1px solid #30363d; display: flex; flex-direction: column; gap: 6px; }
+.action-btn { padding: 8px; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+.btn-primary { background: rgba(88,166,255,0.15); border-color: #58a6ff; color: #58a6ff; }
+.btn-primary:hover { background: rgba(88,166,255,0.25); }
+.btn-secondary { background: #21262d; color: #e6edf3; }
+.btn-secondary:hover { border-color: #58a6ff; }
+.btn-danger { background: rgba(248,81,73,0.1); border-color: #f85149; color: #f85149; }
+.btn-danger:hover { background: rgba(248,81,73,0.2); }
+
+/* ── Canvas area ── */
+.canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; position: relative; }
+canvas { border-radius: 8px; cursor: crosshair; }
+
+/* ── Status bar ── */
+.status-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(22,27,34,0.9); border: 1px solid #30363d; border-radius: 6px; padding: 6px 14px; font-size: 11px; color: #8b949e; pointer-events: none; }
+
+/* ── Toast ── */
+.toast { position: fixed; top: 20px; right: 20px; background: #238636; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>NavMesh Editor</h1>
+    <p>Add jump/boost connections for StratCall animation paths</p>
+  </div>
+
+  <div class="controls">
+    <label>Map</label>
+    <select id="mapSelect">
+      <option value="mirage">Mirage</option>
+      <option value="inferno">Inferno</option>
+      <option value="dust2">Dust II</option>
+      <option value="train">Train</option>
+      <option value="nuke">Nuke</option>
+      <option value="overpass">Overpass</option>
+      <option value="ancient">Ancient</option>
+      <option value="cache">Cache</option>
+      <option value="vertigo">Vertigo</option>
+      <option value="anubis">Anubis</option>
+      <option value="cobblestone">Cobblestone</option>
+    </select>
+
+    <div class="mode-btns">
+      <button class="mode-btn active" data-mode="add" id="modeAdd">+ Add Connection</button>
+      <button class="mode-btn" data-mode="remove" id="modeRemove">- Remove</button>
+    </div>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="showAreas" checked>
+      <label for="showAreas">Show nav areas</label>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="showBaseConns">
+      <label for="showBaseConns">Show base connections</label>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="showOverlay" checked>
+      <label for="showOverlay">Show overlay connections</label>
+    </div>
+  </div>
+
+  <div class="info selection-info">
+    <h3>Selection</h3>
+    <div id="selectionInfo">
+      <p class="empty-msg">Click an area on the map</p>
+    </div>
+  </div>
+
+  <div class="overlay-section">
+    <h3>Overlay Connections (<span id="connCount">0</span>)</h3>
+    <div id="overlayList">
+      <p class="empty-msg">No custom connections yet</p>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="action-btn btn-primary" id="exportBtn">Export overlay JSON</button>
+    <button class="action-btn btn-secondary" id="importBtn">Import overlay JSON</button>
+    <button class="action-btn btn-danger" id="clearBtn">Clear all</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+</div>
+
+<div class="canvas-area">
+  <canvas id="canvas"></canvas>
+  <div class="status-bar" id="statusBar">Loading...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let navMesh = null;        // { areas: NavArea[] }
+let areaById = new Map();
+let mapImg = null;
+let canvasSize = 800;
+let mode = 'add';          // 'add' | 'remove'
+let selectedAreaId = null;  // first click in add mode
+let hoveredAreaId = null;
+let overlayConnections = []; // [number, number][]
+let currentMap = 'mirage';
+
+// Display toggles
+let showAreas = true;
+let showBaseConns = false;
+let showOverlay = true;
+
+// ── DOM ──
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const mapSelect = document.getElementById('mapSelect');
+const statusBar = document.getElementById('statusBar');
+const selectionInfo = document.getElementById('selectionInfo');
+const overlayList = document.getElementById('overlayList');
+const connCount = document.getElementById('connCount');
+const toast = document.getElementById('toast');
+
+// ── Map loading ──
+async function loadMap(mapName) {
+  currentMap = mapName;
+  selectedAreaId = null;
+  hoveredAreaId = null;
+  statusBar.textContent = `Loading ${mapName}...`;
+
+  // Load navmesh
+  try {
+    const res = await fetch(`/data/navmesh/${mapName}.json`);
+    const data = await res.json();
+    navMesh = data;
+    areaById = new Map();
+    for (const area of data.areas) {
+      areaById.set(area.id, area);
+    }
+  } catch (e) {
+    statusBar.textContent = `Failed to load navmesh for ${mapName}`;
+    return;
+  }
+
+  // Load existing overlay
+  overlayConnections = [];
+  try {
+    const res = await fetch(`/data/navmesh/${mapName}.overlay.json`);
+    if (res.ok) {
+      const overlay = await res.json();
+      if (overlay.extraConnections) {
+        overlayConnections = overlay.extraConnections;
+      }
+    }
+  } catch {}
+
+  // Load map image
+  mapImg = new Image();
+  mapImg.onload = () => {
+    statusBar.textContent = `${mapName} — ${navMesh.areas.length} areas`;
+    updateOverlayList();
+    draw();
+  };
+  mapImg.src = `/data/maps/${mapName}.png`;
+}
+
+// ── Canvas sizing ──
+function resize() {
+  const area = document.querySelector('.canvas-area');
+  const rect = area.getBoundingClientRect();
+  canvasSize = Math.floor(Math.min(rect.width - 32, rect.height - 32));
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvasSize * dpr;
+  canvas.height = canvasSize * dpr;
+  canvas.style.width = canvasSize + 'px';
+  canvas.style.height = canvasSize + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+// ── Drawing ──
+function draw() {
+  if (!navMesh || !mapImg || !mapImg.complete) return;
+  const s = canvasSize;
+
+  ctx.clearRect(0, 0, s, s);
+
+  // Map image
+  ctx.drawImage(mapImg, 0, 0, s, s);
+
+  // Base connections
+  if (showBaseConns) {
+    ctx.strokeStyle = 'rgba(100,100,100,0.15)';
+    ctx.lineWidth = 0.5;
+    for (const area of navMesh.areas) {
+      for (const nId of area.c) {
+        const neighbor = areaById.get(nId);
+        if (neighbor && area.id < nId) { // draw each edge once
+          ctx.beginPath();
+          ctx.moveTo(area.cx * s, area.cy * s);
+          ctx.lineTo(neighbor.cx * s, neighbor.cy * s);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // Nav areas
+  if (showAreas) {
+    for (const area of navMesh.areas) {
+      const x = area.cx * s;
+      const y = area.cy * s;
+      const isSelected = area.id === selectedAreaId;
+      const isHovered = area.id === hoveredAreaId;
+
+      if (isSelected) {
+        ctx.fillStyle = 'rgba(88,166,255,0.6)';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (isHovered) {
+        ctx.fillStyle = 'rgba(88,166,255,0.4)';
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(200,200,200,0.12)';
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Overlay connections
+  if (showOverlay) {
+    for (const [aId, bId] of overlayConnections) {
+      const a = areaById.get(aId);
+      const b = areaById.get(bId);
+      if (!a || !b) continue;
+
+      ctx.strokeStyle = '#3fb950';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(a.cx * s, a.cy * s);
+      ctx.lineTo(b.cx * s, b.cy * s);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Endpoints
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath();
+      ctx.arc(a.cx * s, a.cy * s, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(b.cx * s, b.cy * s, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Draw line from selected to cursor when in add mode
+  if (selectedAreaId !== null && hoveredAreaId !== null && hoveredAreaId !== selectedAreaId && mode === 'add') {
+    const a = areaById.get(selectedAreaId);
+    const b = areaById.get(hoveredAreaId);
+    if (a && b) {
+      ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(a.cx * s, a.cy * s);
+      ctx.lineTo(b.cx * s, b.cy * s);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+// ── Hit testing ──
+function findAreaAt(mx, my) {
+  if (!navMesh) return null;
+  const s = canvasSize;
+  let best = null;
+  let bestDist = Infinity;
+  const threshold = 8 / s; // 8px radius
+
+  for (const area of navMesh.areas) {
+    const dx = area.cx - mx / s;
+    const dy = area.cy - my / s;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < threshold && d < bestDist) {
+      bestDist = d;
+      best = area;
+    }
+  }
+  return best;
+}
+
+// ── Mouse events ──
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const area = findAreaAt(mx, my);
+  const newHovered = area ? area.id : null;
+
+  if (newHovered !== hoveredAreaId) {
+    hoveredAreaId = newHovered;
+    draw();
+  }
+
+  // Update status bar with coordinates
+  const nx = (mx / canvasSize).toFixed(4);
+  const ny = (my / canvasSize).toFixed(4);
+  if (area) {
+    statusBar.textContent = `Area ${area.id} (${area.cx.toFixed(4)}, ${area.cy.toFixed(4)}) — ${area.c.length} connections`;
+  } else {
+    statusBar.textContent = `(${nx}, ${ny})`;
+  }
+});
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const area = findAreaAt(mx, my);
+
+  if (!area) {
+    selectedAreaId = null;
+    updateSelectionInfo();
+    draw();
+    return;
+  }
+
+  if (mode === 'add') {
+    if (selectedAreaId === null) {
+      // First click — select area A
+      selectedAreaId = area.id;
+      updateSelectionInfo();
+    } else if (area.id === selectedAreaId) {
+      // Clicked same area — deselect
+      selectedAreaId = null;
+      updateSelectionInfo();
+    } else {
+      // Second click — create connection
+      addConnection(selectedAreaId, area.id);
+      selectedAreaId = null;
+      updateSelectionInfo();
+    }
+  } else if (mode === 'remove') {
+    // Find and remove any overlay connection involving this area
+    if (selectedAreaId === null) {
+      selectedAreaId = area.id;
+      updateSelectionInfo();
+    } else {
+      removeConnection(selectedAreaId, area.id);
+      selectedAreaId = null;
+      updateSelectionInfo();
+    }
+  }
+
+  draw();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredAreaId = null;
+  draw();
+});
+
+// ── Connection management ──
+function addConnection(aId, bId) {
+  // Normalize order
+  const conn = aId < bId ? [aId, bId] : [bId, aId];
+  // Check duplicate
+  const exists = overlayConnections.some(c => c[0] === conn[0] && c[1] === conn[1]);
+  if (exists) {
+    showToast('Connection already exists', '#e3b341');
+    return;
+  }
+  overlayConnections.push(conn);
+  updateOverlayList();
+  showToast(`Added: ${conn[0]} ↔ ${conn[1]}`);
+}
+
+function removeConnection(aId, bId) {
+  const conn = aId < bId ? [aId, bId] : [bId, aId];
+  const idx = overlayConnections.findIndex(c => c[0] === conn[0] && c[1] === conn[1]);
+  if (idx >= 0) {
+    overlayConnections.splice(idx, 1);
+    updateOverlayList();
+    showToast(`Removed: ${conn[0]} ↔ ${conn[1]}`, '#f85149');
+  } else {
+    showToast('No overlay connection between these areas', '#e3b341');
+  }
+}
+
+function removeConnectionByIndex(idx) {
+  const conn = overlayConnections[idx];
+  overlayConnections.splice(idx, 1);
+  updateOverlayList();
+  draw();
+  showToast(`Removed: ${conn[0]} ↔ ${conn[1]}`, '#f85149');
+}
+
+// ── UI updates ──
+function updateSelectionInfo() {
+  if (selectedAreaId === null) {
+    selectionInfo.innerHTML = '<p class="empty-msg">Click an area on the map</p>';
+    return;
+  }
+  const area = areaById.get(selectedAreaId);
+  if (!area) return;
+  selectionInfo.innerHTML = `
+    <div class="info-item">Area: <span>${area.id}</span></div>
+    <div class="info-item">Position: <span>(${area.cx.toFixed(4)}, ${area.cy.toFixed(4)})</span></div>
+    <div class="info-item">Connections: <span>${area.c.length}</span></div>
+    <div class="info-item" style="color:#58a6ff;margin-top:4px">Click another area to ${mode === 'add' ? 'connect' : 'disconnect'}</div>
+  `;
+}
+
+function updateOverlayList() {
+  connCount.textContent = overlayConnections.length;
+  if (overlayConnections.length === 0) {
+    overlayList.innerHTML = '<p class="empty-msg">No custom connections yet</p>';
+    return;
+  }
+  overlayList.innerHTML = overlayConnections.map((conn, i) => {
+    const a = areaById.get(conn[0]);
+    const b = areaById.get(conn[1]);
+    const aLabel = a ? `${conn[0]}` : `${conn[0]}?`;
+    const bLabel = b ? `${conn[1]}` : `${conn[1]}?`;
+    return `<div class="overlay-item">
+      <span class="conn-label">${aLabel} ↔ ${bLabel}</span>
+      <button class="remove-btn" onclick="removeConnectionByIndex(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Export / Import ──
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const overlay = {};
+  if (overlayConnections.length > 0) {
+    overlay.extraConnections = overlayConnections;
+  }
+  const json = JSON.stringify(overlay, null, 2);
+  const blob = new Blob([json + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentMap}.overlay.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${currentMap}.overlay.json`);
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.extraConnections && Array.isArray(data.extraConnections)) {
+        overlayConnections = data.extraConnections;
+        updateOverlayList();
+        draw();
+        showToast(`Imported ${overlayConnections.length} connections`);
+      }
+    } catch {
+      showToast('Invalid JSON file', '#f85149');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (overlayConnections.length === 0) return;
+  if (!confirm(`Clear all ${overlayConnections.length} overlay connections?`)) return;
+  overlayConnections = [];
+  updateOverlayList();
+  draw();
+  showToast('Cleared all connections', '#f85149');
+});
+
+// ── Mode buttons ──
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    selectedAreaId = null;
+    updateSelectionInfo();
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    draw();
+  });
+});
+
+// ── Toggle checkboxes ──
+document.getElementById('showAreas').addEventListener('change', (e) => { showAreas = e.target.checked; draw(); });
+document.getElementById('showBaseConns').addEventListener('change', (e) => { showBaseConns = e.target.checked; draw(); });
+document.getElementById('showOverlay').addEventListener('change', (e) => { showOverlay = e.target.checked; draw(); });
+
+// ── Map select ──
+mapSelect.addEventListener('change', () => loadMap(mapSelect.value));
+
+// ── Toast ──
+function showToast(msg, color = '#238636') {
+  toast.textContent = msg;
+  toast.style.background = color;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ── Init ──
+window.addEventListener('resize', resize);
+resize();
+loadMap('mirage');
+</script>
+</body>
+</html>
