@@ -4,6 +4,7 @@ import {
   faUsers,
   faShareNodes,
   faChessBoard,
+  faDesktop,
 } from '@fortawesome/free-solid-svg-icons';
 import { faSteam } from '@fortawesome/free-brands-svg-icons';
 import { useLocale } from '../lib/i18n';
@@ -11,9 +12,10 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 interface Props {
   onLogin: () => void;
+  onDownload: () => void;
 }
 
-export default function Homepage({ onLogin }: Props) {
+export default function Homepage({ onLogin, onDownload }: Props) {
   const { t } = useLocale();
 
   const features = [
@@ -28,6 +30,9 @@ export default function Homepage({ onLogin }: Props) {
       <nav className="hp-nav">
         <div className="hp-nav-logo">StratCall</div>
         <div className="hp-nav-right">
+          <button className="hp-nav-link" onClick={onDownload}>
+            <FontAwesomeIcon icon={faDesktop} /> <span>{t('dl.navDownload')}</span>
+          </button>
           <LanguageSwitcher />
           <button className="hp-nav-login" onClick={onLogin}>
             <FontAwesomeIcon icon={faSteam} /> {t('hp.signInSteam')}

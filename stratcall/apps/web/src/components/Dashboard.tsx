@@ -152,14 +152,14 @@ export default function Dashboard({ session, onLogout }: Props) {
                   className={`dash-nav-btn ${view.screen === 'demo' ? 'active' : ''}`}
                   onClick={() => setView({ screen: 'demo' })}
                 >
-                  <FontAwesomeIcon icon={faFilm} /> <span>Demo</span>
+                  <FontAwesomeIcon icon={faFilm} /> <span>{t('nav.demo')}</span>
                 </button>
               )}
               <button
                 className={`dash-nav-btn ${view.screen === 'library' ? 'active' : ''}`}
                 onClick={() => setView({ screen: 'library' })}
               >
-                <FontAwesomeIcon icon={faBookmark} /> <span>Library</span>
+                <FontAwesomeIcon icon={faBookmark} /> <span>{t('nav.library')}</span>
               </button>
               <button
                 className={`dash-nav-btn ${view.screen === 'community' ? 'active' : ''}`}
@@ -178,7 +178,7 @@ export default function Dashboard({ session, onLogout }: Props) {
           <div className="dash-topbar-user">
             <NotificationBell onViewUser={(id) => setView({ screen: 'userProfile', userId: id })} />
             <LanguageSwitcher />
-            <button className="dash-help" onClick={() => setShowTutorial(true)} title="How StratCall works">
+            <button className="dash-help" onClick={() => setShowTutorial(true)} title={t('nav.helpTooltip')}>
               <FontAwesomeIcon icon={faCircleQuestion} />
             </button>
             {session.avatarUrl && (

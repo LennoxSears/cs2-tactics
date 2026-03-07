@@ -16,6 +16,7 @@
 @import './styles/notifications.css';
 @import './styles/demo.css';
 @import './styles/phase-library.css';
+@import './styles/download.css';
 
 .app {
   width: 100%;

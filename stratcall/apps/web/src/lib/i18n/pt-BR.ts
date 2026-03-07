@@ -33,12 +33,36 @@ const ptBR: LocaleMap = {
   'hp.mapList': 'Mirage · Inferno · Dust II · Nuke · Overpass · Ancient · Anubis · Vertigo · Train · Cache · Cobblestone',
   'hp.footer': 'Plataforma Tática CS2',
 
+
+  // ── Download ──
+  'dl.title': 'StratCall Desktop',
+  'dl.subtitle': 'Full strategy editor with local demo analysis. No upload needed — your demos stay on your machine.',
+  'dl.downloadWin': 'Download for Windows',
+  'dl.comingSoon': 'Coming soon',
+  'dl.whyDesktop': 'Why Desktop?',
+  'dl.featureStrats': 'Full Strategy Editor',
+  'dl.featureStratsDesc': 'Create multi-phase strategies with the same tactical board as the web app.',
+  'dl.featurePlaybooks': 'Playbook Management',
+  'dl.featurePlaybooksDesc': 'Organize strategies into playbooks. Sync with your team via the cloud.',
+  'dl.featureDemo': 'Local Demo Analysis',
+  'dl.featureDemoDesc': 'Parse CS2 .dem files locally. Replay rounds, capture snapshots as strategy phases.',
+  'dl.howToInstall': 'How to Install',
+  'dl.step1Title': 'Download & Extract',
+  'dl.step1Desc': 'Download the zip file and extract it to any folder.',
+  'dl.step2Title': 'Run StratCall',
+  'dl.step2Desc': 'Open the extracted folder and double-click stratcall-win_x64.exe.',
+  'dl.step3Title': 'Sign in with Steam',
+  'dl.step3Desc': 'Log in with your Steam account to sync strategies and access community features.',
+  'dl.navDownload': 'Desktop App',
   'auth.signingIn': 'Entrando com Steam...',
   'auth.loginFailed': 'Falha no login: {error}',
   'auth.backToHome': 'Voltar ao início',
 
   'nav.myStrategies': 'Minhas Estratégias',
   'nav.playbooks': 'Playbooks',
+  'nav.demo': 'Demo',
+  'nav.library': 'Library',
+  'nav.helpTooltip': 'How StratCall works',
   'nav.community': 'Comunidade',
   'nav.profile': 'Perfil',
 
@@ -139,12 +163,18 @@ const ptBR: LocaleMap = {
 
   'phases.label': 'Fases',
   'phases.addPhase': 'Adicionar fase',
+  'phases.saveToLibrary': 'Save to library',
+  'phases.exportPhases': 'Export phases',
+  'phases.importPhases': 'Import phases',
 
   'token.player': 'Jogador {number} ({side})',
   'token.clearNote': 'Limpar nota',
   'token.addNotes': 'Adicionar notas...',
   'token.comments': 'Comentários',
 
+
+  // ── Board tooltips ──
+  'board.playAnimation': 'Play animation',
   'anim.title': 'Reprodução da Animação',
   'anim.phase': 'Fase {number}',
   'anim.prevPhase': 'Fase anterior',
@@ -241,6 +271,42 @@ const ptBR: LocaleMap = {
   'editor.linkUrl': 'URL do link:',
   'editor.videoUrl': 'URL do YouTube ou vídeo:',
 
+
+  // ── Demo Player ──
+  'demo.title': 'Demo 2D Player',
+  'demo.openDesc': 'Open a CS2 .dem file to replay it on the 2D tactical map',
+  'demo.parsing': 'Parsing...',
+  'demo.openFile': 'Open .dem file',
+  'demo.sidebarTitle': 'Demo Player',
+  'demo.round': 'Round',
+  'demo.roundN': 'Round {num}',
+  'demo.capturedPhases': 'Captured Phases ({count})',
+  'demo.exportToFile': 'Export to file',
+  'demo.saveToLibrary': 'Save to library',
+  'demo.saveAll': 'Save All',
+  'demo.captureEmpty': 'Pause and capture phases from the demo',
+  'demo.loadDifferent': 'Load Different Demo',
+  'demo.captureTooltip': 'Capture current frame as phase',
+  'demo.capture': 'Capture',
+  'demo.tickInfo': 'Tick {tick} | {alive} alive',
+  'demo.errorNoMap': 'Could not detect map from demo file',
+  'demo.errorNoData': 'No player position data found in demo',
+  'demo.errorParse': 'Failed to parse demo file',
+  'demo.savedCount': 'Saved {count} phases to library',
+  'demo.saveFailed': 'Failed to save',
+
+  // ── Phase Library ──
+  'lib.title': 'Phase Library',
+  'lib.import': 'Import',
+  'lib.export': 'Export ({count})',
+  'lib.deleteCount': 'Delete ({count})',
+  'lib.allMaps': 'All Maps',
+  'lib.selectAll': 'Select all',
+  'lib.emptyTitle': 'No saved phases yet',
+  'lib.emptyDesc': 'Capture phases from the Demo Player or save them from the Tactical Board',
+  'lib.rename': 'Rename',
+  'lib.confirmDelete': 'Delete {count} phases?',
+  'lib.importedCount': 'Imported {count} phases',
   'lang.label': 'Idioma',
 };
 

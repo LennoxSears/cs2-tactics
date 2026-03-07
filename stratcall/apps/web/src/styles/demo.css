@@ -224,3 +224,10 @@
   color: var(--text-secondary);
   text-align: center;
 }
+
+/* Responsive — demo is desktop-only but handle smaller windows */
+@media (max-width: 768px) {
+  .demo-player { flex-direction: column; height: auto; min-height: 100vh; }
+  .demo-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; overflow-y: auto; }
+  .demo-main { min-height: 50vh; }
+}

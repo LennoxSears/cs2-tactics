@@ -528,7 +528,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
               <FontAwesomeIcon icon={faRotateRight} />
             </button>
             {phases.length > 1 && (
-              <button className="header-btn animate-btn" onClick={() => setShowAnimation(true)} title="Play animation">
+              <button className="header-btn animate-btn" onClick={() => setShowAnimation(true)} title={t('board.playAnimation')}>
                 <FontAwesomeIcon icon={faPlay} /> {t('board.animate')}
               </button>
             )}

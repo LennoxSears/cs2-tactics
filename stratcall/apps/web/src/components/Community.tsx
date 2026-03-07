@@ -174,7 +174,7 @@ export default function Community() {
         {error && (
           <div className="community-error">
             {error}
-            <button onClick={fetchStrategies}>Retry</button>
+            <button onClick={fetchStrategies}>{t('retry')}</button>
           </div>
         )}
         {!loading && !error && results.length === 0 && (

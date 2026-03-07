@@ -3,14 +3,16 @@ import { getSession, clearSession, getSteamLoginUrl, type Session } from './lib/
 import Homepage from './components/Homepage';
 import AuthCallback from './components/AuthCallback';
 import Dashboard from './components/Dashboard';
+import DownloadPage from './components/DownloadPage';
 import './App.css';
 
-type Route = 'home' | 'auth-callback' | 'dashboard';
+type Route = 'home' | 'auth-callback' | 'dashboard' | 'download';
 
 function getRoute(): Route {
   const path = window.location.pathname;
   if (path.startsWith('/auth/callback')) return 'auth-callback';
   if (path.startsWith('/dashboard')) return 'dashboard';
+  if (path.startsWith('/download')) return 'download';
   return 'home';
 }
 
@@ -62,6 +64,14 @@ function App() {
     );
   }
 
+  if (route === 'download') {
+    return (
+      <div className="app">
+        <DownloadPage onBack={() => navigate('/')} />
+      </div>
+    );
+  }
+
   if (route === 'dashboard' && session) {
     return (
       <div className="app">
@@ -73,7 +83,7 @@ function App() {
   // Not logged in or on home
   return (
     <div className="app">
-      <Homepage onLogin={handleLogin} />
+      <Homepage onLogin={handleLogin} onDownload={() => navigate('/download')} />
     </div>
   );
 }

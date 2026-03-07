@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTrash, faDownload, faUpload, faPen, faCheck, faXmark, faFilter,
 } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 
 interface PhaseRow {
@@ -21,6 +22,7 @@ interface PhaseRow {
 }
 
 export default function PhaseLibrary() {
+  const { t } = useLocale();
   const [phases, setPhases] = useState<PhaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapFilter, setMapFilter] = useState<string>('');
@@ -101,13 +103,13 @@ export default function PhaseLibrary() {
       });
       count++;
     }
-    alert(`Imported ${count} phases`);
+    alert(t('lib.importedCount', { count }));
     fetchPhases();
   };
 
   const deleteSelected = async () => {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} phases?`)) return;
+    if (!confirm(t('lib.confirmDelete', { count: selected.size }))) return;
     for (const id of selected) {
       await api.delete(`/phases/${id}`);
     }
@@ -118,18 +120,18 @@ export default function PhaseLibrary() {
   return (
     <div className="phase-library">
       <div className="phase-library-header">
-        <h2>Phase Library</h2>
+        <h2>{t('lib.title')}</h2>
         <div className="phase-library-actions">
           <button className="phase-lib-btn" onClick={handleImport}>
-            <FontAwesomeIcon icon={faUpload} /> Import
+            <FontAwesomeIcon icon={faUpload} /> {t('lib.import')}
           </button>
           {selected.size > 0 && (
             <>
               <button className="phase-lib-btn" onClick={exportSelected}>
-                <FontAwesomeIcon icon={faDownload} /> Export ({selected.size})
+                <FontAwesomeIcon icon={faDownload} /> {t('lib.export', { count: selected.size })}
               </button>
               <button className="phase-lib-btn danger" onClick={deleteSelected}>
-                <FontAwesomeIcon icon={faTrash} /> Delete ({selected.size})
+                <FontAwesomeIcon icon={faTrash} /> {t('lib.deleteCount', { count: selected.size })}
               </button>
             </>
           )}
@@ -139,7 +141,7 @@ export default function PhaseLibrary() {
       <div className="phase-library-filters">
         <FontAwesomeIcon icon={faFilter} />
         <select value={mapFilter} onChange={(e) => setMapFilter(e.target.value)}>
-          <option value="">All Maps</option>
+          <option value="">{t('lib.allMaps')}</option>
           {maps.map(m => (
             <option key={m.name} value={m.name}>{m.displayName}</option>
           ))}
@@ -150,16 +152,16 @@ export default function PhaseLibrary() {
             checked={phases.length > 0 && selected.size === phases.length}
             onChange={selectAll}
           />
-          Select all
+          {t('lib.selectAll')}
         </label>
       </div>
 
-      {loading && <p className="phase-loading">Loading...</p>}
+      {loading && <p className="phase-loading">{t('loading')}</p>}
 
       {!loading && phases.length === 0 && (
         <div className="phase-empty">
-          <p>No saved phases yet</p>
-          <p>Capture phases from the Demo Player or save them from the Tactical Board</p>
+          <p>{t('lib.emptyTitle')}</p>
+          <p>{t('lib.emptyDesc')}</p>
         </div>
       )}
 
@@ -209,10 +211,10 @@ export default function PhaseLibrary() {
               )}
             </div>
             <div className="phase-card-actions">
-              <button onClick={() => startEdit(phase)} title="Rename">
+              <button onClick={() => startEdit(phase)} title={t('lib.rename')}>
                 <FontAwesomeIcon icon={faPen} />
               </button>
-              <button onClick={() => deletePhase(phase.id)} title="Delete" className="danger">
+              <button onClick={() => deletePhase(phase.id)} title={t('delete')} className="danger">
                 <FontAwesomeIcon icon={faTrash} />
               </button>
             </div>

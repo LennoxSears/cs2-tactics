@@ -16,3 +16,6 @@ apps/web/ios/
 # Turso
 *.db
 *.db-journal
+
+# Desktop app downloads (built artifacts, not source)
+apps/web/public/downloads/

@@ -11,10 +11,12 @@ import {
   faPlay, faPause, faCamera, faDownload,
   faPlus, faTrash, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { useLocale } from '../lib/i18n';
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 4];
 
 export default function DemoPlayer() {
+  const { t } = useLocale();
   const [demoData, setDemoData] = useState<DemoData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadMsg, setLoadMsg] = useState('');
@@ -174,12 +176,12 @@ export default function DemoPlayer() {
     try {
       const data = await pickAndParseDemoFile(setLoadMsg);
       if (!data.mapName) {
-        setError('Could not detect map from demo file');
+        setError(t('demo.errorNoMap'));
         setLoading(false);
         return;
       }
       if (data.ticks.length === 0) {
-        setError('No player position data found in demo');
+        setError(t('demo.errorNoData'));
         setLoading(false);
         return;
       }
@@ -189,7 +191,7 @@ export default function DemoPlayer() {
       if (err.message === 'No file selected') {
         // User cancelled — not an error
       } else {
-        setError(err.message || 'Failed to parse demo file');
+        setError(err.message || t('demo.errorParse'));
       }
     }
     setLoading(false);
@@ -223,9 +225,9 @@ export default function DemoPlayer() {
           tags: [],
         });
       }
-      alert(`Saved ${captured.length} phases to library`);
+      alert(t('demo.savedCount', { count: captured.length }));
     } catch (err: any) {
-      alert(err.message || 'Failed to save');
+      alert(err.message || t('demo.saveFailed'));
     }
   };
 
@@ -250,13 +252,13 @@ export default function DemoPlayer() {
     return (
       <div className="demo-player">
         <div className="demo-upload-area">
-          <h2>Demo 2D Player</h2>
-          <p>Open a CS2 .dem file to replay it on the 2D tactical map</p>
-          {loading && <p className="demo-loading">{loadMsg || 'Parsing...'}</p>}
+          <h2>{t('demo.title')}</h2>
+          <p>{t('demo.openDesc')}</p>
+          {loading && <p className="demo-loading">{loadMsg || t('demo.parsing')}</p>}
           {error && <p className="demo-error">{error}</p>}
           {!loading && (
             <button className="demo-upload-btn" onClick={handleOpenDemo}>
-              Open .dem file
+              {t('demo.openFile')}
             </button>
           )}
         </div>
@@ -268,14 +270,14 @@ export default function DemoPlayer() {
     <div className="demo-player">
       <div className="demo-sidebar">
         <div className="demo-sidebar-header">
-          <h3>Demo Player</h3>
+          <h3>{t('demo.sidebarTitle')}</h3>
           <span className="demo-map-label">{mapName}</span>
         </div>
 
         {/* Round selector */}
         {demoData.rounds.length > 0 && (
           <div className="demo-rounds">
-            <label>Round</label>
+            <label>{t('demo.round')}</label>
             <select
               value={selectedRound}
               onChange={(e) => {
@@ -285,7 +287,7 @@ export default function DemoPlayer() {
               }}
             >
               {demoData.rounds.map((r, i) => (
-                <option key={i} value={i}>Round {r.roundNum}</option>
+                <option key={i} value={i}>{t('demo.roundN', { num: r.roundNum })}</option>
               ))}
             </select>
           </div>
@@ -294,21 +296,21 @@ export default function DemoPlayer() {
         {/* Captured phases */}
         <div className="demo-captured">
           <div className="demo-captured-header">
-            <h4>Captured Phases ({captured.length})</h4>
+            <h4>{t('demo.capturedPhases', { count: captured.length })}</h4>
             {captured.length > 0 && (
               <div className="demo-captured-actions">
-                <button className="demo-small-btn" onClick={exportCaptured} title="Export to file">
+                <button className="demo-small-btn" onClick={exportCaptured} title={t('demo.exportToFile')}>
                   <FontAwesomeIcon icon={faDownload} />
                 </button>
-                <button className="demo-small-btn primary" onClick={saveToLibrary} title="Save to library">
-                  <FontAwesomeIcon icon={faPlus} /> Save All
+                <button className="demo-small-btn primary" onClick={saveToLibrary} title={t('demo.saveToLibrary')}>
+                  <FontAwesomeIcon icon={faPlus} /> {t('demo.saveAll')}
                 </button>
               </div>
             )}
           </div>
           <div className="demo-captured-list">
             {captured.length === 0 && (
-              <p className="demo-empty">Pause and capture phases from the demo</p>
+              <p className="demo-empty">{t('demo.captureEmpty')}</p>
             )}
             {captured.map((c, i) => (
               <div key={i} className="demo-captured-item">
@@ -327,7 +329,7 @@ export default function DemoPlayer() {
             className="demo-small-btn"
             onClick={() => { setDemoData(null); setCaptured([]); setError(''); }}
           >
-            <FontAwesomeIcon icon={faXmark} /> Load Different Demo
+            <FontAwesomeIcon icon={faXmark} /> {t('demo.loadDifferent')}
           </button>
         </div>
       </div>
@@ -357,9 +359,9 @@ export default function DemoPlayer() {
               className="demo-btn capture-btn"
               onClick={capturePhase}
               disabled={playing}
-              title="Capture current frame as phase"
+              title={t('demo.captureTooltip')}
             >
-              <FontAwesomeIcon icon={faCamera} /> Capture
+              <FontAwesomeIcon icon={faCamera} /> {t('demo.capture')}
             </button>
             <button
               className="demo-btn speed-btn"
@@ -383,7 +385,7 @@ export default function DemoPlayer() {
 
           <div className="demo-tick-info">
             {currentTick && (
-              <span>Tick {currentTick.tick} | {currentTick.players.filter(p => p.isAlive).length} alive</span>
+              <span>{t('demo.tickInfo', { tick: currentTick.tick, alive: currentTick.players.filter(p => p.isAlive).length })}</span>
             )}
           </div>
         </div>

@@ -97,7 +97,7 @@ export default function PhaseBar({ phases, activeIndex, mapName, onSelect, onAdd
             )}
             <button
               className="phase-save-lib"
-              title="Save to library"
+              title={t('phases.saveToLibrary')}
               disabled={savingIdx === idx}
               onClick={e => { e.stopPropagation(); savePhaseToLibrary(idx); }}
             >
@@ -118,11 +118,11 @@ export default function PhaseBar({ phases, activeIndex, mapName, onSelect, onAdd
         </button>
       </div>
       <div className="phase-bar-actions">
-        <button className="phase-action-btn" onClick={handleExportPhases} title="Export phases">
-          <FontAwesomeIcon icon={faDownload} /> Export
+        <button className="phase-action-btn" onClick={handleExportPhases} title={t('phases.exportPhases')}>
+          <FontAwesomeIcon icon={faDownload} /> {t('phases.exportPhases')}
         </button>
-        <button className="phase-action-btn" onClick={handleImportPhases} title="Import phases">
-          <FontAwesomeIcon icon={faUpload} /> Import
+        <button className="phase-action-btn" onClick={handleImportPhases} title={t('phases.importPhases')}>
+          <FontAwesomeIcon icon={faUpload} /> {t('phases.importPhases')}
         </button>
       </div>
     </div>

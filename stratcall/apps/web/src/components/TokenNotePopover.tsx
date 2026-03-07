@@ -56,7 +56,7 @@ export default function TokenNotePopover({ title, content, onChange, onClose, on
     >
       <div className="token-note-header">
         <span>{title}</span>
-        <button className="token-note-delete" onClick={() => { onDelete(); onClose(); }} title="Clear note">
+        <button className="token-note-delete" onClick={() => { onDelete(); onClose(); }} title={t('token.clearNote')}>
           <FontAwesomeIcon icon={faTrash} />
         </button>
         <button className="token-note-close" onClick={onClose}>✕</button>

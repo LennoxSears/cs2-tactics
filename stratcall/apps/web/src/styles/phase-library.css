@@ -172,3 +172,14 @@
 }
 .phase-card-actions button:hover { color: var(--text-primary); background: var(--bg-primary); }
 .phase-card-actions button.danger:hover { color: #f85149; }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .phase-library { padding: 16px 10px; }
+  .phase-library-header { flex-wrap: wrap; gap: 8px; }
+  .phase-library-actions { flex-wrap: wrap; }
+  .phase-library-filters { flex-wrap: wrap; gap: 6px; }
+  .phase-select-all { margin-left: 0; }
+  .phase-card { flex-wrap: wrap; }
+  .phase-card-meta { flex-wrap: wrap; }
+}

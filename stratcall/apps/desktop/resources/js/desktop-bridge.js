@@ -4,24 +4,35 @@
 (function() {
   window.__STRATCALL_DESKTOP__ = true;
 
-  // Parse a demo file using the bundled stratcall-demo-parser binary
-  // The binary is shipped alongside the Neutralino app in the same directory
+  // Parse a demo file using the bundled demo parser.
+  // On Windows: uses bundled node.exe + parser script (cross-compiled from Linux).
+  // On Linux/macOS: uses Node.js SEA binary if available, otherwise node + script.
   window.__parseDemoFile__ = async function(filePath) {
-    // NL_PATH is the app directory (set by Neutralino runtime)
-    const appDir = typeof NL_PATH !== 'undefined' ? NL_PATH : '.';
-    const isWin = typeof NL_OS !== 'undefined' ? NL_OS === 'Windows' : navigator.platform.includes('Win');
-    const parserName = isWin ? 'stratcall-demo-parser.exe' : 'stratcall-demo-parser';
-    const parserPath = `${appDir}/${parserName}`;
+    var appDir = typeof NL_PATH !== 'undefined' ? NL_PATH : '.';
+    var isWin = typeof NL_OS !== 'undefined' ? NL_OS === 'Windows' : navigator.platform.includes('Win');
+
+    // Build the command to invoke the parser
+    var cmd;
+    if (isWin) {
+      // Windows: bundled node.exe + parser script + native addon in parser/ subdirectory
+      var nodeExe = appDir + '/parser/node.exe';
+      var script = appDir + '/parser/index.js';
+      cmd = '"' + nodeExe + '" "' + script + '" "' + filePath + '"';
+    } else {
+      // Linux/macOS: try SEA binary first, fall back to node + script
+      var seaBin = appDir + '/stratcall-demo-parser';
+      cmd = '"' + seaBin + '" "' + filePath + '"';
+    }
 
     try {
-      const result = await Neutralino.os.execCommand(`"${parserPath}" "${filePath}"`, {
+      var result = await Neutralino.os.execCommand(cmd, {
         background: false,
       });
 
       if (result.exitCode !== 0) {
-        let errMsg = 'Parse failed';
+        var errMsg = 'Parse failed';
         try {
-          const errData = JSON.parse(result.stdErr || result.stdOut);
+          var errData = JSON.parse(result.stdErr || result.stdOut);
           errMsg = errData.error || errMsg;
         } catch (_) {
           errMsg = result.stdErr || result.stdOut || errMsg;
