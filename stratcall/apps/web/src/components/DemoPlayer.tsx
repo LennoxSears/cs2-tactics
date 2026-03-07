@@ -52,7 +52,7 @@ export default function DemoPlayer() {
   }, [demoData, selectedRound]);
 
   const ticks = roundTicks();
-  const currentTick: DemoTick | null = ticks[currentTickIdx] || null;
+  const currentTick: DemoTick | null = ticks[Math.floor(currentTickIdx)] || null;
 
   // Load map image when map detected
   useEffect(() => {
