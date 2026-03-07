@@ -44,16 +44,22 @@ export interface DemoData {
 
 let wasmReady = false;
 let initPromise: Promise<void> | null = null;
+let cachedMod: any = null;
+
+// Import the .wasm file as a URL asset via Vite
+import wasmUrl from 'demoparser2/demoparser2_bg.wasm?url';
 
 async function ensureWasm(): Promise<any> {
+  if (cachedMod) return cachedMod;
   // @ts-expect-error demoparser2 uses declare namespace, not ES module exports
   const mod = await import('demoparser2');
   if (!wasmReady) {
     if (!initPromise) {
-      initPromise = (mod as any).default().then(() => { wasmReady = true; });
+      initPromise = (mod as any).default(wasmUrl).then(() => { wasmReady = true; });
     }
     await initPromise;
   }
+  cachedMod = mod;
   return mod;
 }
 

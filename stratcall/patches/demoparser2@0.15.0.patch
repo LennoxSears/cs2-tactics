@@ -1,0 +1,16 @@
+diff --git a/demoparser2.js b/demoparser2.js
+index b842d69f66602087515dea593b81587c3a64a8e9..9512f7272d7c0d2f64a0ec473554b9441c882122 100644
+--- a/demoparser2.js
++++ b/demoparser2.js
+@@ -4,8 +4,10 @@ let wasm_bindgen;
+     let script_src;
+     if (typeof document === 'undefined') {
+         script_src = location.href;
+-    } else {
++    } else if (document.currentScript) {
+         script_src = new URL(document.currentScript.src, location.href).toString();
++    } else {
++        script_src = location.href;
+     }
+     let wasm;
+ 

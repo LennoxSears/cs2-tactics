@@ -1,5 +1,9 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+
 onlyBuiltDependencies:
   - esbuild
+
+patchedDependencies:
+  demoparser2@0.15.0: patches/demoparser2@0.15.0.patch
