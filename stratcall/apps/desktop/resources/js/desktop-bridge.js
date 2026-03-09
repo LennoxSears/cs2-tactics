@@ -56,9 +56,9 @@
         if (!line) continue;
 
         if (line.charCodeAt(0) === 85) { // 'U'
-          // U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid
+          // U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid\tthrowTick\tthrowX\tthrowY
           var up = line.split('\t');
-          utilities.push({
+          var ue = {
             type: up[1],
             x: parseFloat(up[2]),
             y: parseFloat(up[3]),
@@ -66,7 +66,11 @@
             durationTicks: parseInt(up[5], 10),
             thrower: up[6] || '',
             steamid: up[7] || '',
-          });
+          };
+          if (up[8]) ue.throwTick = parseInt(up[8], 10);
+          if (up[9]) ue.throwX = parseFloat(up[9]);
+          if (up[10]) ue.throwY = parseFloat(up[10]);
+          utilities.push(ue);
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
           var tp = line.split('\t');

@@ -19,6 +19,7 @@ export interface DemoUtilityEvent {
   position: Position;       // pixel coords (landing)
   worldPos: { x: number; y: number }; // world coords
   tick: number;             // detonation tick
+  throwTick?: number;       // exact tick when grenade was thrown
   durationTicks: number;    // how long the effect lasts
   throwerName: string;
   throwerSteamId: string;
@@ -126,38 +127,15 @@ export async function pickAndParseDemoFile(
   const ticks = Array.from(tickMap.values()).sort((a, b) => a.tick - b.tick);
 
   // Process utility events — convert world coords to pixel coords
-  // and find thrower position from tick data for throw animation
   const utilityEvents: DemoUtilityEvent[] = [];
   if (Array.isArray(data.utilityEvents) && mapInfo) {
-    // Build a lookup: steamId → tick → position (pixel coords)
-    // We only need positions near utility detonation ticks
-    const FLIGHT_TICKS = 96; // ~1.5s at 64 tick — approximate grenade flight time
-
     for (const u of data.utilityEvents) {
       const pos = worldToPixel(mapInfo, u.x ?? 0, u.y ?? 0);
-      const steamId = u.steamid || '';
 
-      // Find thrower position at throw time (detonation - flight time)
+      // Use exact throw origin from weapon_fire event if available
       let throwOrigin: Position | undefined;
-      if (steamId) {
-        const throwTick = u.tick - FLIGHT_TICKS;
-        // Find the closest sampled tick to throwTick
-        let bestTick: DemoTick | undefined;
-        let bestDist = Infinity;
-        for (const t of ticks) {
-          const d = Math.abs(t.tick - throwTick);
-          if (d < bestDist) {
-            bestDist = d;
-            bestTick = t;
-          }
-          if (t.tick > throwTick + 32) break; // past the target, stop searching
-        }
-        if (bestTick) {
-          const thrower = bestTick.players.find(p => p.steamId === steamId);
-          if (thrower) {
-            throwOrigin = thrower.position;
-          }
-        }
+      if (u.throwX != null && u.throwY != null) {
+        throwOrigin = worldToPixel(mapInfo, u.throwX, u.throwY);
       }
 
       utilityEvents.push({
@@ -165,9 +143,10 @@ export async function pickAndParseDemoFile(
         position: pos,
         worldPos: { x: u.x ?? 0, y: u.y ?? 0 },
         tick: u.tick ?? 0,
+        throwTick: u.throwTick ?? undefined,
         durationTicks: u.durationTicks ?? 0,
         throwerName: u.thrower || '',
-        throwerSteamId: steamId,
+        throwerSteamId: u.steamid || '',
         throwOrigin,
       });
     }
@@ -209,14 +188,16 @@ export function getActiveUtilities(
   const LANDING_TICKS = 8; // brief landing animation
 
   for (const u of utilityEvents) {
-    const flightStart = u.tick - FLIGHT_TICKS;
+    // Use exact throwTick if available, otherwise estimate
+    const flightStart = u.throwTick ?? (u.tick - FLIGHT_TICKS);
+    const flightDuration = u.tick - flightStart;
     const effectEnd = u.tick + u.durationTicks;
 
     if (currentTick < flightStart || currentTick > effectEnd) continue;
 
     if (currentTick < u.tick - LANDING_TICKS) {
       // Flying phase
-      const totalFlight = FLIGHT_TICKS - LANDING_TICKS;
+      const totalFlight = Math.max(1, flightDuration - LANDING_TICKS);
       const elapsed = currentTick - flightStart;
       const progress = Math.min(1, Math.max(0, elapsed / totalFlight));
       const origin = u.throwOrigin || u.position;

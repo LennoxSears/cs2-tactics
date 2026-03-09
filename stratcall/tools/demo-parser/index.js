@@ -82,6 +82,56 @@ try {
     } catch (_) {}
   }
 
+  // Parse weapon_fire events to get exact throw origins
+  const WEAPON_TO_UTIL = {
+    'weapon_smokegrenade': 'smoke',
+    'weapon_flashbang': 'flash',
+    'weapon_hegrenade': 'he',
+    'weapon_molotov': 'molotov',
+    'weapon_incgrenade': 'molotov',
+    'weapon_decoy': 'decoy',
+  };
+
+  try {
+    // Request player X,Y position at the time of weapon_fire
+    const fires = parseEvent(buf, 'weapon_fire', ['X', 'Y']) || [];
+    // Collect grenade throws: { type, tick, steamid, x, y }
+    const throws = [];
+    for (const f of fires) {
+      const weapon = f.weapon || f.weapon_name || '';
+      const utilType = WEAPON_TO_UTIL[weapon];
+      if (!utilType) continue;
+      throws.push({
+        type: utilType,
+        tick: f.tick ?? 0,
+        steamid: (f.player_steamid || f.userid_steamid || f.steamid || '').replace(/\t/g, ''),
+        x: f.X ?? f.x ?? 0,
+        y: f.Y ?? f.y ?? 0,
+      });
+    }
+
+    // Match each detonation to the closest prior weapon_fire by same player + type
+    for (const u of utilityEvents) {
+      let best = null;
+      let bestDist = Infinity;
+      for (const t of throws) {
+        if (t.type !== u.type) continue;
+        if (t.steamid !== u.steamid) continue;
+        const d = u.tick - t.tick;
+        if (d < 0 || d > 256) continue; // throw must be before detonation, within ~4s
+        if (d < bestDist) {
+          bestDist = d;
+          best = t;
+        }
+      }
+      if (best) {
+        u.throwTick = best.tick;
+        u.throwX = best.x;
+        u.throwY = best.y;
+      }
+    }
+  } catch (_) {}
+
   // Also parse inferno_expire to get accurate molotov end times
   try {
     const infernoExpires = parseEvent(buf, 'inferno_expire') || [];
@@ -118,7 +168,7 @@ try {
   };
   fs.writeSync(fd, JSON.stringify(meta) + '\n');
 
-  // Utility event lines: U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid
+  // Utility event lines: U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid\tthrowTick\tthrowX\tthrowY
   for (const u of utilityEvents) {
     fs.writeSync(fd, 'U\t' +
       u.type + '\t' +
@@ -127,7 +177,10 @@ try {
       u.tick + '\t' +
       u.durationTicks + '\t' +
       u.thrower + '\t' +
-      u.steamid + '\n'
+      u.steamid + '\t' +
+      (u.throwTick ?? '') + '\t' +
+      (u.throwX != null ? Math.round(u.throwX * 10) / 10 : '') + '\t' +
+      (u.throwY != null ? Math.round(u.throwY * 10) / 10 : '') + '\n'
     );
   }
 
