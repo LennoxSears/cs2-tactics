@@ -351,7 +351,7 @@ export default function DemoPlayer() {
           }
         }
 
-        const bombRadius = size * 0.012;
+        const bombRadius = size * 0.018;
         const bombIconSize = bombRadius * 0.8;
 
         // Draw bomb on ground (not yet planted)
@@ -361,7 +361,7 @@ export default function DemoPlayer() {
           ctx.fillStyle = 'rgba(255,50,50,0.9)';
           ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
           ctx.fillStyle = '#fff';
-          ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
+          ctx.font = `bold ${Math.max(8, size * 0.011)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('C4', bx, by);
@@ -433,7 +433,7 @@ export default function DemoPlayer() {
           ctx.fillStyle = 'rgba(255,50,50,0.9)';
           ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
           ctx.fillStyle = '#fff';
-          ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
+          ctx.font = `bold ${Math.max(8, size * 0.011)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('C4', bx, by);

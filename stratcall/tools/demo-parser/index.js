@@ -92,9 +92,11 @@ try {
     'weapon_decoy': 'decoy',
   };
 
+  // Hoist fires so gun fire section can also access it
+  let fires = [];
   try {
     // Request player X,Y position at the time of weapon_fire
-    const fires = parseEvent(buf, 'weapon_fire', ['X', 'Y']) || [];
+    fires = parseEvent(buf, 'weapon_fire', ['X', 'Y', 'yaw']) || [];
     // Collect grenade throws: { type, tick, steamid, x, y }
     const throws = [];
     for (const f of fires) {
