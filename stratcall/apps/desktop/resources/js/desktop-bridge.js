@@ -89,7 +89,7 @@
         } else if (line.charCodeAt(0) === 75) { // 'K'
           // K\ttick\tvictimName\tvictimSteamid\tvictimX\tvictimY\tattackerName\tattackerSteamid\tattackerX\tattackerY\tweapon\theadshot
           var kp = line.split('\t');
-          killEvts.push({
+          var ke = {
             tick: parseInt(kp[1], 10),
             victimName: kp[2] || '',
             victimSteamid: kp[3] || '',
@@ -101,7 +101,14 @@
             attackerY: parseFloat(kp[9]),
             weapon: kp[10] || '',
             headshot: kp[11] === '1',
-          });
+          };
+          if (kp[12]) {
+            ke.assisterName = kp[12];
+            ke.assisterSteamid = kp[13] || '';
+            if (kp[14]) ke.assisterX = parseFloat(kp[14]);
+            if (kp[15]) ke.assisterY = parseFloat(kp[15]);
+          }
+          killEvts.push(ke);
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
           var tp = line.split('\t');

@@ -51,6 +51,9 @@ export interface DemoKillEvent {
   attackerPos: Position;    // pixel coords
   weapon: string;
   headshot: boolean;
+  assisterName?: string;
+  assisterSteamId?: string;
+  assisterPos?: Position;   // pixel coords
 }
 
 export interface DemoTick {
@@ -202,7 +205,7 @@ export async function pickAndParseDemoFile(
   const killEvents: DemoKillEvent[] = [];
   if (Array.isArray(data.killEvents) && mapInfo) {
     for (const k of data.killEvents) {
-      killEvents.push({
+      const kill: DemoKillEvent = {
         tick: k.tick ?? 0,
         victimName: k.victimName || '',
         victimSteamId: k.victimSteamid || '',
@@ -212,7 +215,15 @@ export async function pickAndParseDemoFile(
         attackerPos: worldToPixel(mapInfo, k.attackerX ?? 0, k.attackerY ?? 0),
         weapon: k.weapon || '',
         headshot: k.headshot ?? false,
-      });
+      };
+      if (k.assisterName) {
+        kill.assisterName = k.assisterName;
+        kill.assisterSteamId = k.assisterSteamid || '';
+        if (k.assisterX != null && k.assisterY != null) {
+          kill.assisterPos = worldToPixel(mapInfo, k.assisterX, k.assisterY);
+        }
+      }
+      killEvents.push(kill);
     }
   }
 

@@ -259,7 +259,7 @@ try {
     for (const d of deaths) {
       // Skip world/fall damage kills with no attacker
       if (!d.attacker_name && !d.attacker_steamid) continue;
-      killEvents.push({
+      const kill = {
         tick: d.tick ?? 0,
         victimName: (d.user_name || '').replace(/\t/g, ' '),
         victimSteamid: (d.user_steamid || '').replace(/\t/g, ''),
@@ -271,7 +271,18 @@ try {
         attackerY: d.attacker_Y ?? 0,
         weapon: (d.weapon || '').replace(/\t/g, ''),
         headshot: d.headshot ?? false,
-      });
+        assisterName: '',
+        assisterSteamid: '',
+        assisterX: 0,
+        assisterY: 0,
+      };
+      if (d.assister_name) {
+        kill.assisterName = (d.assister_name || '').replace(/\t/g, ' ');
+        kill.assisterSteamid = (d.assister_steamid || '').replace(/\t/g, '');
+        kill.assisterX = d.assister_X ?? 0;
+        kill.assisterY = d.assister_Y ?? 0;
+      }
+      killEvents.push(kill);
     }
   } catch (_) {}
 
@@ -322,7 +333,7 @@ try {
     );
   }
 
-  // Kill event lines: K\ttick\tvictimName\tvictimSteamid\tvictimX\tvictimY\tattackerName\tattackerSteamid\tattackerX\tattackerY\tweapon\theadshot
+  // Kill event lines: K\ttick\tvictimName\tvictimSteamid\tvictimX\tvictimY\tattackerName\tattackerSteamid\tattackerX\tattackerY\tweapon\theadshot\tassisterName\tassisterSteamid\tassisterX\tassisterY
   for (const k of killEvents) {
     fs.writeSync(fd, 'K\t' +
       k.tick + '\t' +
@@ -335,7 +346,11 @@ try {
       (Math.round(k.attackerX * 10) / 10) + '\t' +
       (Math.round(k.attackerY * 10) / 10) + '\t' +
       k.weapon + '\t' +
-      (k.headshot ? '1' : '0') + '\n'
+      (k.headshot ? '1' : '0') + '\t' +
+      k.assisterName + '\t' +
+      k.assisterSteamid + '\t' +
+      (k.assisterX ? Math.round(k.assisterX * 10) / 10 : '') + '\t' +
+      (k.assisterY ? Math.round(k.assisterY * 10) / 10 : '') + '\n'
     );
   }
 

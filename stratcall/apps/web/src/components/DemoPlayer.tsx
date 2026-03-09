@@ -204,7 +204,8 @@ export default function DemoPlayer() {
     const ctPlayers = currentTick.players.filter(p => p.side === 'ct' && p.isAlive);
     const tPlayers = currentTick.players.filter(p => p.side === 't' && p.isAlive);
 
-    const nameFont = `bold ${Math.max(8, Math.round(size * 0.011))}px sans-serif`;
+    const nameFont = `bold ${Math.max(9, Math.round(size * 0.014))}px sans-serif`;
+    const hpFont = `${Math.max(8, Math.round(size * 0.011))}px sans-serif`;
     const allAlive = [...ctPlayers, ...tPlayers];
 
     ctPlayers.forEach((p, i) => {
@@ -214,20 +215,37 @@ export default function DemoPlayer() {
       drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
     });
 
-    // Draw player names above tokens
-    ctx.font = nameFont;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
+    // Draw player names + HP above tokens
+    const tokenR = size * 0.014;
     for (const p of allAlive) {
       const pos = lerpPos(p);
       const px = pos.x * size;
       const py = pos.y * size;
-      const tokenR = size * 0.014; // match drawPlayer token radius
-      // Shadow for readability
+
+      // Name
+      ctx.font = nameFont;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillText(p.name, px + 1, py - tokenR - 1);
       ctx.fillStyle = '#fff';
       ctx.fillText(p.name, px, py - tokenR - 2);
+
+      // HP (below name, color-coded)
+      if (p.health < 100) {
+        ctx.font = hpFont;
+        const hpY = py - tokenR - 2;
+        const nameW = ctx.measureText(p.name).width;
+        const hpText = ` ${p.health}`;
+        const hpColor = p.health > 50 ? 'rgba(100,255,100,0.85)'
+          : p.health > 25 ? 'rgba(255,200,50,0.85)'
+          : 'rgba(255,80,80,0.85)';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText(hpText, px + nameW / 2 + 1, hpY);
+        ctx.fillStyle = hpColor;
+        ctx.fillText(hpText, px + nameW / 2, hpY - 1);
+      }
     }
 
     // Only show dead X for players who were alive earlier this round
@@ -337,38 +355,35 @@ export default function DemoPlayer() {
         if (!bombPlanted && bombGroundPos) {
           const bx = bombGroundPos.x * size;
           const by = bombGroundPos.y * size;
-          // Yellow bomb icon on ground
-          ctx.fillStyle = 'rgba(255,200,0,0.85)';
-          ctx.beginPath();
-          ctx.arc(bx, by, bombIconSize, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(180,140,0,0.9)';
+          // Red square bomb icon on ground
+          const sq = bombIconSize;
+          ctx.fillStyle = 'rgba(255,50,50,0.85)';
+          ctx.fillRect(bx - sq, by - sq, sq * 2, sq * 2);
+          ctx.strokeStyle = 'rgba(180,30,30,0.9)';
           ctx.lineWidth = 1.5;
-          ctx.stroke();
+          ctx.strokeRect(bx - sq, by - sq, sq * 2, sq * 2);
           // "C4" label
-          ctx.fillStyle = '#000';
+          ctx.fillStyle = '#fff';
           ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('C4', bx, by);
         }
 
-        // Draw bomb carried by player (small icon next to carrier)
+        // Draw bomb carried by player (small red square next to carrier)
         if (!bombPlanted && bombCarrierSteamId) {
           const carrier = currentTick.players.find(p => p.steamId === bombCarrierSteamId && p.isAlive);
           if (carrier) {
             const pos = lerpPos(carrier);
             const cx = pos.x * size;
             const cy = pos.y * size;
-            // Small yellow dot offset from player
             const offset = size * 0.012;
-            ctx.fillStyle = 'rgba(255,200,0,0.9)';
-            ctx.beginPath();
-            ctx.arc(cx + offset, cy - offset, bombIconSize * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(180,140,0,0.9)';
+            const sq = bombIconSize * 0.55;
+            ctx.fillStyle = 'rgba(255,50,50,0.9)';
+            ctx.fillRect(cx + offset - sq, cy - offset - sq, sq * 2, sq * 2);
+            ctx.strokeStyle = 'rgba(180,30,30,0.9)';
             ctx.lineWidth = 1;
-            ctx.stroke();
+            ctx.strokeRect(cx + offset - sq, cy - offset - sq, sq * 2, sq * 2);
           }
         }
 
@@ -438,7 +453,7 @@ export default function DemoPlayer() {
 
           // Blue arc for defuse progress
           ctx.beginPath();
-          ctx.arc(bx, by, bombRadius * 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+          ctx.arc(bx, by, bombRadius * 1.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
           ctx.strokeStyle = 'rgba(74,158,255,0.9)';
           ctx.lineWidth = 2.5;
           ctx.stroke();
@@ -453,7 +468,7 @@ export default function DemoPlayer() {
           ctx.lineWidth = 1.5;
           ctx.setLineDash([3, 3]);
           ctx.beginPath();
-          ctx.arc(bx, by, bombRadius * 2, 0, Math.PI * 2);
+          ctx.arc(bx, by, bombRadius * 1.5, 0, Math.PI * 2);
           ctx.stroke();
           ctx.setLineDash([]);
         }
@@ -491,7 +506,7 @@ export default function DemoPlayer() {
               const alpha = Math.max(0.3, 1 - elapsed / 128);
               ctx.fillStyle = `rgba(74,158,255,${(alpha * 0.3).toFixed(2)})`;
               ctx.beginPath();
-              ctx.arc(bx, by, bombRadius * 2, 0, Math.PI * 2);
+              ctx.arc(bx, by, bombRadius * 1.5, 0, Math.PI * 2);
               ctx.fill();
             }
             // Defused bomb (dimmed)
@@ -506,8 +521,11 @@ export default function DemoPlayer() {
     if (demoData?.killEvents) {
       const round = demoData.rounds[selectedRound];
       if (round) {
-        const KILL_FADE_TICKS = 96; // ~1.5s fade
-        const KILL_FEED_MAX = 5;
+        const KILL_LINE_FADE = 96;  // kill line on map fades in ~1.5s
+        const KILL_FEED_HOLD = 320; // feed stays solid ~5s
+        const KILL_FEED_FADE = 128; // then fades over ~2s
+        const KILL_FEED_TOTAL = KILL_FEED_HOLD + KILL_FEED_FADE;
+        const KILL_FEED_MAX = 8;
         const roundKills = demoData.killEvents.filter(
           k => k.tick >= round.freezeEndTick && k.tick <= round.endTick
         );
@@ -515,8 +533,8 @@ export default function DemoPlayer() {
         // Draw kill lines (attacker → victim)
         for (const k of roundKills) {
           const elapsed = interpTick - k.tick;
-          if (elapsed < 0 || elapsed > KILL_FADE_TICKS) continue;
-          const alpha = 1 - elapsed / KILL_FADE_TICKS;
+          if (elapsed < 0 || elapsed > KILL_LINE_FADE) continue;
+          const alpha = 1 - elapsed / KILL_LINE_FADE;
           const isSelfKill = k.attackerSteamId === k.victimSteamId;
 
           const ax = k.attackerPos.x * size;
@@ -538,6 +556,20 @@ export default function DemoPlayer() {
           ctx.setLineDash([]);
           }
 
+          // Assist line (assister → victim)
+          if (!isSelfKill && k.assisterPos) {
+            const asx = k.assisterPos.x * size;
+            const asy = k.assisterPos.y * size;
+            ctx.beginPath();
+            ctx.moveTo(asx, asy);
+            ctx.lineTo(vx, vy);
+            ctx.strokeStyle = `rgba(255,160,100,${(alpha * 0.35).toFixed(2)})`;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
           // Skull marker at victim position
           if (elapsed < 32) {
             const burstAlpha = 1 - elapsed / 32;
@@ -548,20 +580,12 @@ export default function DemoPlayer() {
             ctx.fill();
           }
 
-          // Headshot indicator at victim
-          if (k.headshot && elapsed < 48) {
-            const hsAlpha = 1 - elapsed / 48;
-            ctx.fillStyle = `rgba(255,255,0,${(hsAlpha * 0.9).toFixed(2)})`;
-            ctx.font = `bold ${Math.max(10, size * 0.014)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('HS', vx, vy - size * 0.02);
-          }
+
         }
 
         // Kill feed overlay (top-right corner)
         const recentKills = roundKills.filter(
-          k => interpTick - k.tick >= 0 && interpTick - k.tick < KILL_FADE_TICKS * 2
+          k => interpTick - k.tick >= 0 && interpTick - k.tick < KILL_FEED_TOTAL
         ).slice(-KILL_FEED_MAX);
 
         if (recentKills.length > 0) {
@@ -574,12 +598,16 @@ export default function DemoPlayer() {
           for (let i = 0; i < recentKills.length; i++) {
             const k = recentKills[i];
             const elapsed = interpTick - k.tick;
-            const alpha = Math.max(0, 1 - elapsed / (KILL_FADE_TICKS * 2));
+            // Solid during hold period, then fade
+            const alpha = elapsed < KILL_FEED_HOLD
+              ? 1
+              : Math.max(0, 1 - (elapsed - KILL_FEED_HOLD) / KILL_FEED_FADE);
             const fy = 10 + i * lineH + lineH / 2;
 
             // Background
-            ctx.fillStyle = `rgba(0,0,0,${(alpha * 0.5).toFixed(2)})`;
-            const text = `${k.attackerName} [${k.weapon}${k.headshot ? ' HS' : ''}] ${k.victimName}`;
+            ctx.fillStyle = `rgba(0,0,0,${(alpha * 0.55).toFixed(2)})`;
+            const assist = k.assisterName ? ` + ${k.assisterName}` : '';
+            const text = `${k.attackerName}${assist} [${k.weapon}${k.headshot ? ' HS' : ''}] ${k.victimName}`;
             const tw = ctx.measureText(text).width;
             ctx.fillRect(feedX - tw - 12, fy - lineH / 2, tw + 12, lineH);
 
