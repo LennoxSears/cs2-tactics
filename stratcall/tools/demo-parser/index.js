@@ -252,6 +252,29 @@ try {
     bombEvents.sort((a, b) => a.tick - b.tick);
   } catch (_) {}
 
+  // Kill events
+  const killEvents = [];
+  try {
+    const deaths = parseEvent(buf, 'player_death', ['X', 'Y']) || [];
+    for (const d of deaths) {
+      // Skip world/fall damage kills with no attacker
+      if (!d.attacker_name && !d.attacker_steamid) continue;
+      killEvents.push({
+        tick: d.tick ?? 0,
+        victimName: (d.user_name || '').replace(/\t/g, ' '),
+        victimSteamid: (d.user_steamid || '').replace(/\t/g, ''),
+        victimX: d.user_X ?? 0,
+        victimY: d.user_Y ?? 0,
+        attackerName: (d.attacker_name || '').replace(/\t/g, ' '),
+        attackerSteamid: (d.attacker_steamid || '').replace(/\t/g, ''),
+        attackerX: d.attacker_X ?? 0,
+        attackerY: d.attacker_Y ?? 0,
+        weapon: (d.weapon || '').replace(/\t/g, ''),
+        headshot: d.headshot ?? false,
+      });
+    }
+  } catch (_) {}
+
   const tickRate = header?.tickrate
     || (header?.playback_ticks && header?.playback_time
       ? Math.round(header.playback_ticks / header.playback_time)
@@ -296,6 +319,23 @@ try {
       (Math.round((b.x ?? 0) * 10) / 10) + '\t' +
       (Math.round((b.y ?? 0) * 10) / 10) + '\t' +
       (b.hasKit ? '1' : '0') + '\n'
+    );
+  }
+
+  // Kill event lines: K\ttick\tvictimName\tvictimSteamid\tvictimX\tvictimY\tattackerName\tattackerSteamid\tattackerX\tattackerY\tweapon\theadshot
+  for (const k of killEvents) {
+    fs.writeSync(fd, 'K\t' +
+      k.tick + '\t' +
+      k.victimName + '\t' +
+      k.victimSteamid + '\t' +
+      (Math.round(k.victimX * 10) / 10) + '\t' +
+      (Math.round(k.victimY * 10) / 10) + '\t' +
+      k.attackerName + '\t' +
+      k.attackerSteamid + '\t' +
+      (Math.round(k.attackerX * 10) / 10) + '\t' +
+      (Math.round(k.attackerY * 10) / 10) + '\t' +
+      k.weapon + '\t' +
+      (k.headshot ? '1' : '0') + '\n'
     );
   }
 

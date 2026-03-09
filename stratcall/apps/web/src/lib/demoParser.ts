@@ -41,6 +41,18 @@ export interface DemoBombEvent {
   hasKit?: boolean;
 }
 
+export interface DemoKillEvent {
+  tick: number;
+  victimName: string;
+  victimSteamId: string;
+  victimPos: Position;      // pixel coords
+  attackerName: string;
+  attackerSteamId: string;
+  attackerPos: Position;    // pixel coords
+  weapon: string;
+  headshot: boolean;
+}
+
 export interface DemoTick {
   tick: number;
   players: DemoPlayer[];
@@ -61,6 +73,7 @@ export interface DemoData {
   ticks: DemoTick[];
   utilityEvents: DemoUtilityEvent[];
   bombEvents: DemoBombEvent[];
+  killEvents: DemoKillEvent[];
   totalTicks: number;
 }
 
@@ -185,6 +198,24 @@ export async function pickAndParseDemoFile(
     }
   }
 
+  // Process kill events
+  const killEvents: DemoKillEvent[] = [];
+  if (Array.isArray(data.killEvents) && mapInfo) {
+    for (const k of data.killEvents) {
+      killEvents.push({
+        tick: k.tick ?? 0,
+        victimName: k.victimName || '',
+        victimSteamId: k.victimSteamid || '',
+        victimPos: worldToPixel(mapInfo, k.victimX ?? 0, k.victimY ?? 0),
+        attackerName: k.attackerName || '',
+        attackerSteamId: k.attackerSteamid || '',
+        attackerPos: worldToPixel(mapInfo, k.attackerX ?? 0, k.attackerY ?? 0),
+        weapon: k.weapon || '',
+        headshot: k.headshot ?? false,
+      });
+    }
+  }
+
   const totalTicks = ticks.length > 0 ? ticks[ticks.length - 1].tick : 0;
 
   onProgress?.('Done');
@@ -196,6 +227,7 @@ export async function pickAndParseDemoFile(
     ticks,
     utilityEvents,
     bombEvents,
+    killEvents,
     totalTicks,
   };
 }

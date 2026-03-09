@@ -51,6 +51,7 @@
       var tickMap = {};
       var utilities = [];
       var bombEvts = [];
+      var killEvts = [];
 
       for (var i = 1; i < lines.length; i++) {
         var line = lines[i];
@@ -84,6 +85,22 @@
             x: parseFloat(bp[6]),
             y: parseFloat(bp[7]),
             hasKit: bp[8] === '1',
+          });
+        } else if (line.charCodeAt(0) === 75) { // 'K'
+          // K\ttick\tvictimName\tvictimSteamid\tvictimX\tvictimY\tattackerName\tattackerSteamid\tattackerX\tattackerY\tweapon\theadshot
+          var kp = line.split('\t');
+          killEvts.push({
+            tick: parseInt(kp[1], 10),
+            victimName: kp[2] || '',
+            victimSteamid: kp[3] || '',
+            victimX: parseFloat(kp[4]),
+            victimY: parseFloat(kp[5]),
+            attackerName: kp[6] || '',
+            attackerSteamid: kp[7] || '',
+            attackerX: parseFloat(kp[8]),
+            attackerY: parseFloat(kp[9]),
+            weapon: kp[10] || '',
+            headshot: kp[11] === '1',
           });
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
@@ -119,6 +136,7 @@
         rounds: meta.rounds,
         tickData: tickData,
         bombEvents: bombEvts,
+        killEvents: killEvts,
         utilityEvents: utilities,
       };
     } catch (err) {

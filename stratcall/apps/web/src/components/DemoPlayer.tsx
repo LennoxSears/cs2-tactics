@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DemoData, DemoTick, DemoBombEvent } from '../lib/demoParser';
+import type { Position } from '../types';
 import { pickAndParseDemoFile, demoTickToBoardState, getActiveUtilities } from '../lib/demoParser';
 import { drawPlayer, drawUtility } from '../lib/canvasRenderer';
 import { getMapInfo } from '../maps';
@@ -203,12 +204,31 @@ export default function DemoPlayer() {
     const ctPlayers = currentTick.players.filter(p => p.side === 'ct' && p.isAlive);
     const tPlayers = currentTick.players.filter(p => p.side === 't' && p.isAlive);
 
+    const nameFont = `bold ${Math.max(8, Math.round(size * 0.011))}px sans-serif`;
+    const allAlive = [...ctPlayers, ...tPlayers];
+
     ctPlayers.forEach((p, i) => {
       drawPlayer(ctx, { side: 'ct', number: i + 1, position: lerpPos(p) }, size);
     });
     tPlayers.forEach((p, i) => {
       drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
     });
+
+    // Draw player names above tokens
+    ctx.font = nameFont;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    for (const p of allAlive) {
+      const pos = lerpPos(p);
+      const px = pos.x * size;
+      const py = pos.y * size;
+      const tokenR = size * 0.014; // match drawPlayer token radius
+      // Shadow for readability
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillText(p.name, px + 1, py - tokenR - 1);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(p.name, px, py - tokenR - 2);
+    }
 
     // Only show dead X for players who were alive earlier this round
     // Track when each player died to fade out the X mark
@@ -258,7 +278,9 @@ export default function DemoPlayer() {
           b => b.tick >= round.startTick && b.tick <= round.endTick
         );
 
-        // Find current bomb state
+        // Track bomb state: carrier, ground position, planted, etc.
+        let bombCarrierSteamId: string | null = null;
+        let bombGroundPos: Position | null = null; // pixel coords where bomb was dropped
         let bombPlanted: DemoBombEvent | null = null;
         let bombPlanting: DemoBombEvent | null = null;
         let bombDefusing: DemoBombEvent | null = null;
@@ -270,6 +292,14 @@ export default function DemoPlayer() {
         for (const b of roundBombs) {
           if (b.tick > interpTick) break;
           switch (b.type) {
+            case 'pickup':
+              bombCarrierSteamId = b.playerSteamId;
+              bombGroundPos = null;
+              break;
+            case 'dropped':
+              bombCarrierSteamId = null;
+              bombGroundPos = b.position || null;
+              break;
             case 'plant_begin':
               bombPlanting = b;
               break;
@@ -280,6 +310,8 @@ export default function DemoPlayer() {
             case 'planted':
               bombPlanted = b;
               bombPlanting = null;
+              bombCarrierSteamId = null;
+              bombGroundPos = null;
               break;
             case 'defuse_begin':
               bombDefusing = b;
@@ -299,6 +331,46 @@ export default function DemoPlayer() {
         }
 
         const bombRadius = size * 0.012;
+        const bombIconSize = bombRadius * 0.8;
+
+        // Draw bomb on ground (not yet planted)
+        if (!bombPlanted && bombGroundPos) {
+          const bx = bombGroundPos.x * size;
+          const by = bombGroundPos.y * size;
+          // Yellow bomb icon on ground
+          ctx.fillStyle = 'rgba(255,200,0,0.85)';
+          ctx.beginPath();
+          ctx.arc(bx, by, bombIconSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(180,140,0,0.9)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          // "C4" label
+          ctx.fillStyle = '#000';
+          ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('C4', bx, by);
+        }
+
+        // Draw bomb carried by player (small icon next to carrier)
+        if (!bombPlanted && bombCarrierSteamId) {
+          const carrier = currentTick.players.find(p => p.steamId === bombCarrierSteamId && p.isAlive);
+          if (carrier) {
+            const pos = lerpPos(carrier);
+            const cx = pos.x * size;
+            const cy = pos.y * size;
+            // Small yellow dot offset from player
+            const offset = size * 0.012;
+            ctx.fillStyle = 'rgba(255,200,0,0.9)';
+            ctx.beginPath();
+            ctx.arc(cx + offset, cy - offset, bombIconSize * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(180,140,0,0.9)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
 
         // Draw planting progress
         if (bombPlanting && !bombPlanted && bombPlanting.position) {
@@ -425,6 +497,96 @@ export default function DemoPlayer() {
             // Defused bomb (dimmed)
             ctx.fillStyle = 'rgba(100,100,100,0.5)';
             ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
+          }
+        }
+      }
+    }
+
+    // Draw kill events: red line from attacker to victim + kill feed
+    if (demoData?.killEvents) {
+      const round = demoData.rounds[selectedRound];
+      if (round) {
+        const KILL_FADE_TICKS = 96; // ~1.5s fade
+        const KILL_FEED_MAX = 5;
+        const roundKills = demoData.killEvents.filter(
+          k => k.tick >= round.freezeEndTick && k.tick <= round.endTick
+        );
+
+        // Draw kill lines (attacker → victim)
+        for (const k of roundKills) {
+          const elapsed = interpTick - k.tick;
+          if (elapsed < 0 || elapsed > KILL_FADE_TICKS) continue;
+          const alpha = 1 - elapsed / KILL_FADE_TICKS;
+          const isSelfKill = k.attackerSteamId === k.victimSteamId;
+
+          const ax = k.attackerPos.x * size;
+          const ay = k.attackerPos.y * size;
+          const vx = k.victimPos.x * size;
+          const vy = k.victimPos.y * size;
+
+          // Kill line (skip for self-kills)
+          if (!isSelfKill) {
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(vx, vy);
+          ctx.strokeStyle = k.headshot
+            ? `rgba(255,50,50,${(alpha * 0.7).toFixed(2)})`
+            : `rgba(255,100,100,${(alpha * 0.5).toFixed(2)})`;
+          ctx.lineWidth = k.headshot ? 2 : 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          }
+
+          // Skull marker at victim position
+          if (elapsed < 32) {
+            const burstAlpha = 1 - elapsed / 32;
+            const burstR = size * 0.008 * (1 + elapsed / 32);
+            ctx.beginPath();
+            ctx.arc(vx, vy, burstR, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,50,50,${(burstAlpha * 0.4).toFixed(2)})`;
+            ctx.fill();
+          }
+
+          // Headshot indicator at victim
+          if (k.headshot && elapsed < 48) {
+            const hsAlpha = 1 - elapsed / 48;
+            ctx.fillStyle = `rgba(255,255,0,${(hsAlpha * 0.9).toFixed(2)})`;
+            ctx.font = `bold ${Math.max(10, size * 0.014)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('HS', vx, vy - size * 0.02);
+          }
+        }
+
+        // Kill feed overlay (top-right corner)
+        const recentKills = roundKills.filter(
+          k => interpTick - k.tick >= 0 && interpTick - k.tick < KILL_FADE_TICKS * 2
+        ).slice(-KILL_FEED_MAX);
+
+        if (recentKills.length > 0) {
+          const feedX = size - 10;
+          const lineH = Math.max(14, size * 0.018);
+          const feedFont = `${Math.max(9, Math.round(size * 0.012))}px sans-serif`;
+          ctx.font = feedFont;
+          ctx.textBaseline = 'middle';
+
+          for (let i = 0; i < recentKills.length; i++) {
+            const k = recentKills[i];
+            const elapsed = interpTick - k.tick;
+            const alpha = Math.max(0, 1 - elapsed / (KILL_FADE_TICKS * 2));
+            const fy = 10 + i * lineH + lineH / 2;
+
+            // Background
+            ctx.fillStyle = `rgba(0,0,0,${(alpha * 0.5).toFixed(2)})`;
+            const text = `${k.attackerName} [${k.weapon}${k.headshot ? ' HS' : ''}] ${k.victimName}`;
+            const tw = ctx.measureText(text).width;
+            ctx.fillRect(feedX - tw - 12, fy - lineH / 2, tw + 12, lineH);
+
+            // Text
+            ctx.textAlign = 'right';
+            ctx.fillStyle = `rgba(255,255,255,${(alpha * 0.9).toFixed(2)})`;
+            ctx.fillText(text, feedX - 6, fy);
           }
         }
       }
