@@ -158,8 +158,23 @@ getFlashSprite();
 getMolotovSprite();
 getHeSprite();
 
-/** Ensure all sprites are fully decoded before rendering */
+/** Ensure all sprites are fully rasterized before rendering.
+ *  decode() alone isn't enough for SVG filter pipelines —
+ *  drawing to an offscreen canvas forces the browser to
+ *  fully rasterize the feTurbulence/feDisplacementMap filters. */
 export async function preloadSprites(): Promise<void> {
   const sprites = [getSmokeSprite(), getFlashSprite(), getMolotovSprite(), getHeSprite()];
   await Promise.all(sprites.map(img => img.decode().catch(() => {})));
+  // Force rasterization by drawing each sprite to a throwaway canvas
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 100;
+  offscreen.height = 100;
+  const ctx = offscreen.getContext('2d');
+  if (ctx) {
+    for (const img of sprites) {
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, 0, 0, 100, 100);
+      }
+    }
+  }
 }
