@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { DemoData, DemoTick } from '../lib/demoParser';
+import type { DemoData, DemoTick, DemoBombEvent } from '../lib/demoParser';
 import { pickAndParseDemoFile, demoTickToBoardState, getActiveUtilities } from '../lib/demoParser';
 import { drawPlayer, drawUtility } from '../lib/canvasRenderer';
 import { getMapInfo } from '../maps';
@@ -136,14 +136,31 @@ export default function DemoPlayer() {
       ctx.drawImage(mapImgRef.current, 0, 0, size, size);
     }
 
+    // Interpolation variables (shared by utilities, players, and bomb events)
+    const floorIdx = Math.floor(currentTickIdx);
+    const frac = currentTickIdx - floorIdx;
+    const nextTick = ticks[Math.min(floorIdx + 1, ticks.length - 1)];
+    const interpTick = nextTick
+      ? currentTick.tick + (nextTick.tick - currentTick.tick) * frac
+      : currentTick.tick;
+
     // Draw utilities (flying, landing, active)
     if (demoData) {
-      const activeUtils = getActiveUtilities(demoData.utilityEvents, currentTick.tick);
+      const activeUtils = getActiveUtilities(demoData.utilityEvents, interpTick);
       for (const au of activeUtils) {
         const u = au.event;
         if (au.state === 'flying') {
-          const origin = u.throwOrigin || au.currentPos;
-          const trail = [origin, au.currentPos];
+          // Build multi-point trail for smooth arc
+          const origin = u.throwOrigin || u.position;
+          const steps = Math.max(2, Math.ceil(au.progress * 20));
+          const trail: { x: number; y: number }[] = [];
+          for (let s = 0; s <= steps; s++) {
+            const t = (s / steps) * au.progress;
+            trail.push({
+              x: origin.x + (u.position.x - origin.x) * t,
+              y: origin.y + (u.position.y - origin.y) * t,
+            });
+          }
           drawUtility(ctx, {
             type: u.type,
             position: au.currentPos,
@@ -172,10 +189,6 @@ export default function DemoPlayer() {
     }
 
     // Interpolate player positions between current and next tick for smooth movement
-    const floorIdx = Math.floor(currentTickIdx);
-    const frac = currentTickIdx - floorIdx;
-    const nextTick = ticks[Math.min(floorIdx + 1, ticks.length - 1)];
-
     function lerpPos(player: DemoTick['players'][0]) {
       if (!nextTick || frac === 0) return player.position;
       const match = nextTick.players.find(p => p.steamId === player.steamId);
@@ -198,21 +211,36 @@ export default function DemoPlayer() {
     });
 
     // Only show dead X for players who were alive earlier this round
+    // Track when each player died to fade out the X mark
     const seenAlive = new Set<string>();
+    const deathIdx = new Map<string, number>(); // steamId → tick index where they first appear dead
     for (let i = 0; i <= floorIdx && i < ticks.length; i++) {
       for (const p of ticks[i].players) {
-        if (p.isAlive) seenAlive.add(p.steamId);
+        if (p.isAlive) {
+          seenAlive.add(p.steamId);
+          deathIdx.delete(p.steamId); // reset if they respawn
+        } else if (seenAlive.has(p.steamId) && !deathIdx.has(p.steamId)) {
+          deathIdx.set(p.steamId, i);
+        }
       }
     }
+    const FADE_TICKS = 200; // fade over ~200 tick indices (~3.2s at 64tick/16sample)
     const deadPlayers = currentTick.players.filter(p => !p.isAlive && seenAlive.has(p.steamId));
     for (const p of deadPlayers) {
+      const dIdx = deathIdx.get(p.steamId) ?? floorIdx;
+      const ticksSinceDeath = floorIdx - dIdx;
+      const alpha = Math.max(0, 1 - ticksSinceDeath / FADE_TICKS);
+      if (alpha <= 0) continue;
+
       const pos = lerpPos(p);
       const x = pos.x * size;
       const y = pos.y * size;
       const s = size * 0.008;
 
-      // Team-colored X
-      ctx.strokeStyle = p.side === 'ct' ? 'rgba(74,158,255,0.85)' : 'rgba(255,140,0,0.85)';
+      // Team-colored X with fade
+      const ctColor = `rgba(74,158,255,${(0.85 * alpha).toFixed(2)})`;
+      const tColor = `rgba(255,140,0,${(0.85 * alpha).toFixed(2)})`;
+      ctx.strokeStyle = p.side === 'ct' ? ctColor : tColor;
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -221,7 +249,187 @@ export default function DemoPlayer() {
       ctx.stroke();
       ctx.lineCap = 'butt';
     }
-  }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo, demoData]);
+
+    // Draw bomb events
+    if (demoData?.bombEvents) {
+      const round = demoData.rounds[selectedRound];
+      if (round) {
+        const roundBombs = demoData.bombEvents.filter(
+          b => b.tick >= round.startTick && b.tick <= round.endTick
+        );
+
+        // Find current bomb state
+        let bombPlanted: DemoBombEvent | null = null;
+        let bombPlanting: DemoBombEvent | null = null;
+        let bombDefusing: DemoBombEvent | null = null;
+        let bombExploded = false;
+        let bombDefused = false;
+        let fakePlant: DemoBombEvent | null = null;
+        let fakeDefuse: DemoBombEvent | null = null;
+
+        for (const b of roundBombs) {
+          if (b.tick > interpTick) break;
+          switch (b.type) {
+            case 'plant_begin':
+              bombPlanting = b;
+              break;
+            case 'plant_fake':
+              fakePlant = b;
+              bombPlanting = null;
+              break;
+            case 'planted':
+              bombPlanted = b;
+              bombPlanting = null;
+              break;
+            case 'defuse_begin':
+              bombDefusing = b;
+              break;
+            case 'defuse_fake':
+              fakeDefuse = b;
+              bombDefusing = null;
+              break;
+            case 'defused':
+              bombDefused = true;
+              bombDefusing = null;
+              break;
+            case 'exploded':
+              bombExploded = true;
+              break;
+          }
+        }
+
+        const bombRadius = size * 0.012;
+
+        // Draw planting progress
+        if (bombPlanting && !bombPlanted && bombPlanting.position) {
+          const bx = bombPlanting.position.x * size;
+          const by = bombPlanting.position.y * size;
+          const plantDuration = 200; // ~3.1s at 64 tick
+          const progress = Math.min(1, (interpTick - bombPlanting.tick) / plantDuration);
+
+          // Pulsing circle
+          ctx.beginPath();
+          ctx.arc(bx, by, bombRadius * 1.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+          ctx.strokeStyle = 'rgba(255,80,80,0.8)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Bomb icon (small square)
+          ctx.fillStyle = 'rgba(255,80,80,0.6)';
+          ctx.fillRect(bx - bombRadius * 0.4, by - bombRadius * 0.4, bombRadius * 0.8, bombRadius * 0.8);
+        }
+
+        // Draw fake plant indicator (brief flash)
+        if (fakePlant && fakePlant.position && interpTick - fakePlant.tick < 64) {
+          const bx = fakePlant.position.x * size;
+          const by = fakePlant.position.y * size;
+          const alpha = Math.max(0, 1 - (interpTick - fakePlant.tick) / 64);
+          ctx.strokeStyle = `rgba(255,80,80,${(alpha * 0.6).toFixed(2)})`;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.arc(bx, by, bombRadius * 1.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Draw planted bomb
+        if (bombPlanted && bombPlanted.position && !bombExploded && !bombDefused) {
+          const bx = bombPlanted.position.x * size;
+          const by = bombPlanted.position.y * size;
+
+          // Pulsing glow
+          const pulse = 0.7 + 0.3 * Math.sin(Date.now() * 0.005);
+          ctx.beginPath();
+          ctx.arc(bx, by, bombRadius * 1.2 * pulse, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,50,50,${(0.15 * pulse).toFixed(2)})`;
+          ctx.fill();
+
+          // Bomb square
+          ctx.fillStyle = 'rgba(255,50,50,0.9)';
+          ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
+
+          // "C4" label
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${Math.max(8, size * 0.01)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText('C4', bx, by + bombRadius * 0.7);
+        }
+
+        // Draw defusing progress
+        if (bombDefusing && bombPlanted && bombPlanted.position && !bombDefused) {
+          const bx = bombPlanted.position.x * size;
+          const by = bombPlanted.position.y * size;
+          const defuseTime = bombDefusing.hasKit ? 320 : 640;
+          const progress = Math.min(1, (interpTick - bombDefusing.tick) / defuseTime);
+
+          // Blue arc for defuse progress
+          ctx.beginPath();
+          ctx.arc(bx, by, bombRadius * 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+          ctx.strokeStyle = 'rgba(74,158,255,0.9)';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        // Draw fake defuse indicator
+        if (fakeDefuse && bombPlanted && bombPlanted.position && interpTick - fakeDefuse.tick < 64) {
+          const bx = bombPlanted.position.x * size;
+          const by = bombPlanted.position.y * size;
+          const alpha = Math.max(0, 1 - (interpTick - fakeDefuse.tick) / 64);
+          ctx.strokeStyle = `rgba(74,158,255,${(alpha * 0.6).toFixed(2)})`;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.arc(bx, by, bombRadius * 2, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Draw explosion
+        if (bombExploded && bombPlanted && bombPlanted.position) {
+          const bx = bombPlanted.position.x * size;
+          const by = bombPlanted.position.y * size;
+          const explodedEvt = roundBombs.find(b => b.type === 'exploded');
+          if (explodedEvt) {
+            const elapsed = interpTick - explodedEvt.tick;
+            if (elapsed < 128) {
+              const progress = elapsed / 128;
+              const radius = bombRadius * 3 * progress;
+              const alpha = 1 - progress;
+              ctx.beginPath();
+              ctx.arc(bx, by, radius, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(255,100,0,${(alpha * 0.5).toFixed(2)})`;
+              ctx.fill();
+              ctx.strokeStyle = `rgba(255,200,0,${(alpha * 0.8).toFixed(2)})`;
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Draw defused indicator
+        if (bombDefused && bombPlanted && bombPlanted.position) {
+          const bx = bombPlanted.position.x * size;
+          const by = bombPlanted.position.y * size;
+          const defusedEvt = roundBombs.find(b => b.type === 'defused');
+          if (defusedEvt) {
+            const elapsed = interpTick - defusedEvt.tick;
+            if (elapsed < 128) {
+              const alpha = Math.max(0.3, 1 - elapsed / 128);
+              ctx.fillStyle = `rgba(74,158,255,${(alpha * 0.3).toFixed(2)})`;
+              ctx.beginPath();
+              ctx.arc(bx, by, bombRadius * 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            // Defused bomb (dimmed)
+            ctx.fillStyle = 'rgba(100,100,100,0.5)';
+            ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
+          }
+        }
+      }
+    }
+  }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo, demoData, selectedRound]);
 
   // ── File upload ──
   const handleOpenDemo = async () => {

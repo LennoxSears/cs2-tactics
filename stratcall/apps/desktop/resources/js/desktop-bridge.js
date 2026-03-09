@@ -50,6 +50,7 @@
 
       var tickMap = {};
       var utilities = [];
+      var bombEvts = [];
 
       for (var i = 1; i < lines.length; i++) {
         var line = lines[i];
@@ -71,6 +72,19 @@
           if (up[9]) ue.throwX = parseFloat(up[9]);
           if (up[10]) ue.throwY = parseFloat(up[10]);
           utilities.push(ue);
+        } else if (line.charCodeAt(0) === 66) { // 'B'
+          // B\ttype\ttick\tplayer\tsteamid\tsite\tx\ty\thasKit
+          var bp = line.split('\t');
+          bombEvts.push({
+            type: bp[1],
+            tick: parseInt(bp[2], 10),
+            player: bp[3] || '',
+            steamid: bp[4] || '',
+            site: parseInt(bp[5], 10),
+            x: parseFloat(bp[6]),
+            y: parseFloat(bp[7]),
+            hasKit: bp[8] === '1',
+          });
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
           var tp = line.split('\t');
@@ -104,6 +118,7 @@
         tickRate: meta.tickRate,
         rounds: meta.rounds,
         tickData: tickData,
+        bombEvents: bombEvts,
         utilityEvents: utilities,
       };
     } catch (err) {

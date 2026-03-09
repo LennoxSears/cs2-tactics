@@ -26,6 +26,21 @@ export interface DemoUtilityEvent {
   throwOrigin?: Position;   // pixel coords of thrower at throw time
 }
 
+export type BombEventType =
+  | 'plant_begin' | 'plant_fake' | 'planted'
+  | 'defuse_begin' | 'defuse_fake' | 'defused'
+  | 'exploded' | 'dropped' | 'pickup';
+
+export interface DemoBombEvent {
+  type: BombEventType;
+  tick: number;
+  playerName: string;
+  playerSteamId: string;
+  site: number;           // 0 = unknown, site entity index
+  position?: Position;    // pixel coords (for plant/defuse/drop)
+  hasKit?: boolean;
+}
+
 export interface DemoTick {
   tick: number;
   players: DemoPlayer[];
@@ -45,6 +60,7 @@ export interface DemoData {
   rounds: DemoRound[];
   ticks: DemoTick[];
   utilityEvents: DemoUtilityEvent[];
+  bombEvents: DemoBombEvent[];
   totalTicks: number;
 }
 
@@ -152,6 +168,23 @@ export async function pickAndParseDemoFile(
     }
   }
 
+  // Process bomb events
+  const bombEvents: DemoBombEvent[] = [];
+  if (Array.isArray(data.bombEvents) && mapInfo) {
+    for (const b of data.bombEvents) {
+      const pos = (b.x && b.y) ? worldToPixel(mapInfo, b.x, b.y) : undefined;
+      bombEvents.push({
+        type: b.type as BombEventType,
+        tick: b.tick ?? 0,
+        playerName: b.player || '',
+        playerSteamId: b.steamid || '',
+        site: b.site ?? 0,
+        position: pos,
+        hasKit: b.hasKit ?? false,
+      });
+    }
+  }
+
   const totalTicks = ticks.length > 0 ? ticks[ticks.length - 1].tick : 0;
 
   onProgress?.('Done');
@@ -162,6 +195,7 @@ export async function pickAndParseDemoFile(
     rounds: data.rounds || [],
     ticks,
     utilityEvents,
+    bombEvents,
     totalTicks,
   };
 }

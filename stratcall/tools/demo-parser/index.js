@@ -152,6 +152,106 @@ try {
     }
   } catch (_) {}
 
+  // Bomb events
+  const bombEvents = [];
+  try {
+    const beginPlants = parseEvent(buf, 'bomb_beginplant', ['X', 'Y']) || [];
+    const planted = parseEvent(buf, 'bomb_planted', ['X', 'Y']) || [];
+    const beginDefuses = parseEvent(buf, 'bomb_begindefuse', ['X', 'Y']) || [];
+    const defused = parseEvent(buf, 'bomb_defused') || [];
+    const exploded = parseEvent(buf, 'bomb_exploded') || [];
+    const dropped = parseEvent(buf, 'bomb_dropped', ['X', 'Y']) || [];
+    const pickup = parseEvent(buf, 'bomb_pickup', ['X', 'Y']) || [];
+
+    // Detect fake plants: beginplant with no matching planted
+    for (const bp of beginPlants) {
+      const completed = planted.find(p =>
+        p.user_steamid === bp.user_steamid && p.tick > bp.tick && p.tick - bp.tick < 300
+      );
+      bombEvents.push({
+        type: completed ? 'plant_begin' : 'plant_fake',
+        tick: bp.tick,
+        player: (bp.user_name || '').replace(/\t/g, ' '),
+        steamid: (bp.user_steamid || '').replace(/\t/g, ''),
+        site: bp.site ?? 0,
+        x: bp.user_X ?? 0,
+        y: bp.user_Y ?? 0,
+      });
+    }
+
+    for (const p of planted) {
+      bombEvents.push({
+        type: 'planted',
+        tick: p.tick ?? 0,
+        player: (p.user_name || '').replace(/\t/g, ' '),
+        steamid: (p.user_steamid || '').replace(/\t/g, ''),
+        site: p.site ?? 0,
+        x: p.user_X ?? 0,
+        y: p.user_Y ?? 0,
+      });
+    }
+
+    // Detect fake defuses: begindefuse interrupted by another begindefuse or no completion
+    for (const bd of beginDefuses) {
+      const defuseTime = bd.haskit ? 320 : 640;
+      const completed = defused.find(d =>
+        d.user_steamid === bd.user_steamid && d.tick > bd.tick && d.tick - bd.tick <= defuseTime + 64
+      );
+      const interrupted = beginDefuses.find(bd2 =>
+        bd2 !== bd && bd2.user_steamid === bd.user_steamid &&
+        bd2.tick > bd.tick && bd2.tick < bd.tick + defuseTime
+      );
+      bombEvents.push({
+        type: completed ? 'defuse_begin' : (interrupted ? 'defuse_fake' : 'defuse_fake'),
+        tick: bd.tick,
+        player: (bd.user_name || '').replace(/\t/g, ' '),
+        steamid: (bd.user_steamid || '').replace(/\t/g, ''),
+        site: bd.site ?? 0,
+        x: bd.user_X ?? 0,
+        y: bd.user_Y ?? 0,
+        hasKit: bd.haskit ?? false,
+      });
+    }
+
+    for (const d of defused) {
+      bombEvents.push({
+        type: 'defused', tick: d.tick ?? 0,
+        player: (d.user_name || '').replace(/\t/g, ' '),
+        steamid: (d.user_steamid || '').replace(/\t/g, ''),
+        site: d.site ?? 0, x: 0, y: 0,
+      });
+    }
+
+    for (const e of exploded) {
+      bombEvents.push({
+        type: 'exploded', tick: e.tick ?? 0,
+        player: (e.user_name || '').replace(/\t/g, ' '),
+        steamid: (e.user_steamid || '').replace(/\t/g, ''),
+        site: e.site ?? 0, x: 0, y: 0,
+      });
+    }
+
+    for (const d of dropped) {
+      bombEvents.push({
+        type: 'dropped', tick: d.tick ?? 0,
+        player: (d.user_name || '').replace(/\t/g, ' '),
+        steamid: (d.user_steamid || '').replace(/\t/g, ''),
+        site: 0, x: d.user_X ?? 0, y: d.user_Y ?? 0,
+      });
+    }
+
+    for (const p of pickup) {
+      bombEvents.push({
+        type: 'pickup', tick: p.tick ?? 0,
+        player: (p.user_name || '').replace(/\t/g, ' '),
+        steamid: (p.user_steamid || '').replace(/\t/g, ''),
+        site: 0, x: p.user_X ?? 0, y: p.user_Y ?? 0,
+      });
+    }
+
+    bombEvents.sort((a, b) => a.tick - b.tick);
+  } catch (_) {}
+
   const tickRate = header?.tickrate
     || (header?.playback_ticks && header?.playback_time
       ? Math.round(header.playback_ticks / header.playback_time)
@@ -182,6 +282,20 @@ try {
       (u.throwTick ?? '') + '\t' +
       (u.throwX != null ? Math.round(u.throwX * 10) / 10 : '') + '\t' +
       (u.throwY != null ? Math.round(u.throwY * 10) / 10 : '') + '\n'
+    );
+  }
+
+  // Bomb event lines: B\ttype\ttick\tplayer\tsteamid\tsite\tx\ty\thasKit
+  for (const b of bombEvents) {
+    fs.writeSync(fd, 'B\t' +
+      b.type + '\t' +
+      b.tick + '\t' +
+      b.player + '\t' +
+      b.steamid + '\t' +
+      b.site + '\t' +
+      (Math.round((b.x ?? 0) * 10) / 10) + '\t' +
+      (Math.round((b.y ?? 0) * 10) / 10) + '\t' +
+      (b.hasKit ? '1' : '0') + '\n'
     );
   }
 
