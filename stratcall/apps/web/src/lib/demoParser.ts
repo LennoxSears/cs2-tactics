@@ -16,11 +16,13 @@ export interface DemoPlayer {
 
 export interface DemoUtilityEvent {
   type: 'smoke' | 'flash' | 'molotov' | 'he' | 'decoy';
-  position: Position;       // pixel coords
-  worldPos: { x: number; y: number }; // world coords (for reference)
-  tick: number;             // activation tick
-  durationTicks: number;    // how long it lasts
+  position: Position;       // pixel coords (landing)
+  worldPos: { x: number; y: number }; // world coords
+  tick: number;             // detonation tick
+  durationTicks: number;    // how long the effect lasts
   throwerName: string;
+  throwerSteamId: string;
+  throwOrigin?: Position;   // pixel coords of thrower at throw time
 }
 
 export interface DemoTick {
@@ -121,11 +123,43 @@ export async function pickAndParseDemoFile(
     }
   }
 
+  const ticks = Array.from(tickMap.values()).sort((a, b) => a.tick - b.tick);
+
   // Process utility events — convert world coords to pixel coords
+  // and find thrower position from tick data for throw animation
   const utilityEvents: DemoUtilityEvent[] = [];
   if (Array.isArray(data.utilityEvents) && mapInfo) {
+    // Build a lookup: steamId → tick → position (pixel coords)
+    // We only need positions near utility detonation ticks
+    const FLIGHT_TICKS = 96; // ~1.5s at 64 tick — approximate grenade flight time
+
     for (const u of data.utilityEvents) {
       const pos = worldToPixel(mapInfo, u.x ?? 0, u.y ?? 0);
+      const steamId = u.steamid || '';
+
+      // Find thrower position at throw time (detonation - flight time)
+      let throwOrigin: Position | undefined;
+      if (steamId) {
+        const throwTick = u.tick - FLIGHT_TICKS;
+        // Find the closest sampled tick to throwTick
+        let bestTick: DemoTick | undefined;
+        let bestDist = Infinity;
+        for (const t of ticks) {
+          const d = Math.abs(t.tick - throwTick);
+          if (d < bestDist) {
+            bestDist = d;
+            bestTick = t;
+          }
+          if (t.tick > throwTick + 32) break; // past the target, stop searching
+        }
+        if (bestTick) {
+          const thrower = bestTick.players.find(p => p.steamId === steamId);
+          if (thrower) {
+            throwOrigin = thrower.position;
+          }
+        }
+      }
+
       utilityEvents.push({
         type: u.type as DemoUtilityEvent['type'],
         position: pos,
@@ -133,11 +167,12 @@ export async function pickAndParseDemoFile(
         tick: u.tick ?? 0,
         durationTicks: u.durationTicks ?? 0,
         throwerName: u.thrower || '',
+        throwerSteamId: steamId,
+        throwOrigin,
       });
     }
   }
 
-  const ticks = Array.from(tickMap.values()).sort((a, b) => a.tick - b.tick);
   const totalTicks = ticks.length > 0 ? ticks[ticks.length - 1].tick : 0;
 
   onProgress?.('Done');
@@ -154,14 +189,70 @@ export async function pickAndParseDemoFile(
 
 // ── Convert demo tick to BoardState ──
 
-/** Get utilities active at a given tick */
+const FLIGHT_TICKS = 96; // ~1.5s at 64 tick
+
+export interface ActiveUtility {
+  event: DemoUtilityEvent;
+  state: 'flying' | 'landing' | 'active';
+  /** 0..1 progress through current state */
+  progress: number;
+  /** Current interpolated position (for flying state) */
+  currentPos: Position;
+}
+
+/** Get utilities visible at a given tick (flying, landing, or active) */
 export function getActiveUtilities(
   utilityEvents: DemoUtilityEvent[],
   currentTick: number,
-): DemoUtilityEvent[] {
-  return utilityEvents.filter(u =>
-    currentTick >= u.tick && currentTick <= u.tick + u.durationTicks
-  );
+): ActiveUtility[] {
+  const result: ActiveUtility[] = [];
+  const LANDING_TICKS = 8; // brief landing animation
+
+  for (const u of utilityEvents) {
+    const flightStart = u.tick - FLIGHT_TICKS;
+    const effectEnd = u.tick + u.durationTicks;
+
+    if (currentTick < flightStart || currentTick > effectEnd) continue;
+
+    if (currentTick < u.tick - LANDING_TICKS) {
+      // Flying phase
+      const totalFlight = FLIGHT_TICKS - LANDING_TICKS;
+      const elapsed = currentTick - flightStart;
+      const progress = Math.min(1, Math.max(0, elapsed / totalFlight));
+      const origin = u.throwOrigin || u.position;
+      result.push({
+        event: u,
+        state: 'flying',
+        progress,
+        currentPos: {
+          x: origin.x + (u.position.x - origin.x) * progress,
+          y: origin.y + (u.position.y - origin.y) * progress,
+        },
+      });
+    } else if (currentTick < u.tick) {
+      // Landing phase
+      const progress = (currentTick - (u.tick - LANDING_TICKS)) / LANDING_TICKS;
+      result.push({
+        event: u,
+        state: 'landing',
+        progress: Math.min(1, Math.max(0, progress)),
+        currentPos: u.position,
+      });
+    } else {
+      // Active effect phase
+      const progress = u.durationTicks > 0
+        ? Math.min(1, (currentTick - u.tick) / u.durationTicks)
+        : 1;
+      result.push({
+        event: u,
+        state: 'active',
+        progress,
+        currentPos: u.position,
+      });
+    }
+  }
+
+  return result;
 }
 
 export function demoTickToBoardState(

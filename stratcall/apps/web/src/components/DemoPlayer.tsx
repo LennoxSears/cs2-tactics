@@ -136,15 +136,36 @@ export default function DemoPlayer() {
       ctx.drawImage(mapImgRef.current, 0, 0, size, size);
     }
 
-    // Draw active utilities at current tick
+    // Draw utilities (flying, landing, active)
     if (demoData) {
       const activeUtils = getActiveUtilities(demoData.utilityEvents, currentTick.tick);
-      for (const u of activeUtils) {
-        drawUtility(ctx, {
-          type: u.type,
-          position: u.position,
-          effectState: 'active',
-        }, size);
+      for (const au of activeUtils) {
+        const u = au.event;
+        if (au.state === 'flying' && u.throwOrigin) {
+          // Build trail from origin to current interpolated position
+          const trail = [u.throwOrigin, au.currentPos];
+          drawUtility(ctx, {
+            type: u.type,
+            position: au.currentPos,
+            effectState: 'flying',
+            trail,
+          }, size);
+        } else if (au.state === 'landing') {
+          drawUtility(ctx, {
+            type: u.type,
+            position: u.position,
+            effectState: 'landing',
+          }, size);
+        } else {
+          // Fade out near end of duration
+          const opacity = au.progress > 0.85 ? 1 - ((au.progress - 0.85) / 0.15) : 1;
+          drawUtility(ctx, {
+            type: u.type,
+            position: u.position,
+            effectState: 'active',
+            opacity: Math.max(0.1, opacity),
+          }, size);
+        }
       }
     }
 
@@ -174,19 +195,29 @@ export default function DemoPlayer() {
       drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
     });
 
-    // Draw dead players as X marks
+    // Draw dead players as skull X marks
     const deadPlayers = currentTick.players.filter(p => !p.isAlive);
     for (const p of deadPlayers) {
       const pos = lerpPos(p);
       const x = pos.x * size;
       const y = pos.y * size;
-      const s = size * 0.006;
-      ctx.strokeStyle = p.side === 'ct' ? 'rgba(74,158,255,0.3)' : 'rgba(255,140,0,0.3)';
-      ctx.lineWidth = 1.5;
+      const s = size * 0.012;
+
+      // Dark background circle
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.arc(x, y, s * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Team-colored X
+      ctx.strokeStyle = p.side === 'ct' ? 'rgba(74,158,255,0.85)' : 'rgba(255,140,0,0.85)';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
       ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
       ctx.stroke();
+      ctx.lineCap = 'butt';
     }
   }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo, demoData]);
 
@@ -226,7 +257,7 @@ export default function DemoPlayer() {
   const capturePhase = () => {
     if (!currentTick || !mapInfo) return;
     const activeUtils = demoData ? getActiveUtilities(demoData.utilityEvents, currentTick.tick) : [];
-    const boardState = demoTickToBoardState(currentTick, mapInfo, activeUtils);
+    const boardState = demoTickToBoardState(currentTick, mapInfo, activeUtils.map(a => a.event));
     const roundLabel = demoData?.rounds[selectedRound]
       ? `R${demoData.rounds[selectedRound].roundNum}`
       : '';

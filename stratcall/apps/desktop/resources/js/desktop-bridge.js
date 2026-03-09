@@ -56,7 +56,7 @@
         if (!line) continue;
 
         if (line.charCodeAt(0) === 85) { // 'U'
-          // U\ttype\tx\ty\ttick\tdurationTicks\tthrower
+          // U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid
           var up = line.split('\t');
           utilities.push({
             type: up[1],
@@ -65,6 +65,7 @@
             tick: parseInt(up[4], 10),
             durationTicks: parseInt(up[5], 10),
             thrower: up[6] || '',
+            steamid: up[7] || '',
           });
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty

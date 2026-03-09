@@ -76,6 +76,7 @@ try {
           tick: e.tick ?? 0,
           durationTicks: Math.round((durationMs / 1000) * (header?.tickrate || 64)),
           thrower: (e.player_name || e.userid_name || '').replace(/\t/g, ' '),
+          steamid: (e.player_steamid || e.userid_steamid || e.steamid || '').replace(/\t/g, ''),
         });
       }
     } catch (_) {}
@@ -117,7 +118,7 @@ try {
   };
   fs.writeSync(fd, JSON.stringify(meta) + '\n');
 
-  // Utility event lines: U\ttype\tx\ty\ttick\tdurationTicks\tthrower
+  // Utility event lines: U\ttype\tx\ty\ttick\tdurationTicks\tthrower\tsteamid
   for (const u of utilityEvents) {
     fs.writeSync(fd, 'U\t' +
       u.type + '\t' +
@@ -125,7 +126,8 @@ try {
       (Math.round(u.y * 10) / 10) + '\t' +
       u.tick + '\t' +
       u.durationTicks + '\t' +
-      u.thrower + '\n'
+      u.thrower + '\t' +
+      u.steamid + '\n'
     );
   }
 
