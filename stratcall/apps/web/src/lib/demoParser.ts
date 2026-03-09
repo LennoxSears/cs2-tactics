@@ -56,6 +56,13 @@ export interface DemoKillEvent {
   assisterPos?: Position;   // pixel coords
 }
 
+export interface DemoGunFireEvent {
+  tick: number;
+  playerSteamId: string;
+  position: Position;     // pixel coords
+  yaw: number;            // degrees, CS2 convention
+}
+
 export interface DemoTick {
   tick: number;
   players: DemoPlayer[];
@@ -77,6 +84,7 @@ export interface DemoData {
   utilityEvents: DemoUtilityEvent[];
   bombEvents: DemoBombEvent[];
   killEvents: DemoKillEvent[];
+  gunFireEvents: DemoGunFireEvent[];
   totalTicks: number;
 }
 
@@ -227,6 +235,19 @@ export async function pickAndParseDemoFile(
     }
   }
 
+  // Process gun fire events
+  const gunFireEvents: DemoGunFireEvent[] = [];
+  if (Array.isArray(data.gunFireEvents) && mapInfo) {
+    for (const f of data.gunFireEvents) {
+      gunFireEvents.push({
+        tick: f.tick ?? 0,
+        playerSteamId: f.steamid || '',
+        position: worldToPixel(mapInfo, f.x ?? 0, f.y ?? 0),
+        yaw: f.yaw ?? 0,
+      });
+    }
+  }
+
   const totalTicks = ticks.length > 0 ? ticks[ticks.length - 1].tick : 0;
 
   onProgress?.('Done');
@@ -239,6 +260,7 @@ export async function pickAndParseDemoFile(
     utilityEvents,
     bombEvents,
     killEvents,
+    gunFireEvents,
     totalTicks,
   };
 }

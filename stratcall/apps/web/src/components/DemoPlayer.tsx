@@ -217,35 +217,38 @@ export default function DemoPlayer() {
 
     // Draw player names + HP above tokens
     const tokenR = size * 0.014;
+    const hpGap = Math.max(4, size * 0.005);
     for (const p of allAlive) {
       const pos = lerpPos(p);
       const px = pos.x * size;
       const py = pos.y * size;
+      const labelY = py - tokenR - 2;
+
+      // Measure name width with name font
+      ctx.font = nameFont;
+      const nameW = ctx.measureText(p.name).width;
 
       // Name
-      ctx.font = nameFont;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillText(p.name, px + 1, py - tokenR - 1);
+      ctx.fillText(p.name, px + 1, labelY + 1);
       ctx.fillStyle = '#fff';
-      ctx.fillText(p.name, px, py - tokenR - 2);
+      ctx.fillText(p.name, px, labelY);
 
-      // HP (below name, color-coded)
-      if (p.health < 100) {
-        ctx.font = hpFont;
-        const hpY = py - tokenR - 2;
-        const nameW = ctx.measureText(p.name).width;
-        const hpText = ` ${p.health}`;
-        const hpColor = p.health > 50 ? 'rgba(100,255,100,0.85)'
-          : p.health > 25 ? 'rgba(255,200,50,0.85)'
-          : 'rgba(255,80,80,0.85)';
-        ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillText(hpText, px + nameW / 2 + 1, hpY);
-        ctx.fillStyle = hpColor;
-        ctx.fillText(hpText, px + nameW / 2, hpY - 1);
-      }
+      // HP (always shown, to the right of name with gap)
+      ctx.font = hpFont;
+      const hpText = `${p.health}`;
+      const hpColor = p.health > 50 ? 'rgba(100,255,100,0.85)'
+        : p.health > 25 ? 'rgba(255,200,50,0.85)'
+        : 'rgba(255,80,80,0.85)';
+      const hpX = px + nameW / 2 + hpGap;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(hpText, hpX + 1, labelY + 1);
+      ctx.fillStyle = hpColor;
+      ctx.fillText(hpText, hpX, labelY);
     }
 
     // Only show dead X for players who were alive earlier this round
@@ -355,14 +358,8 @@ export default function DemoPlayer() {
         if (!bombPlanted && bombGroundPos) {
           const bx = bombGroundPos.x * size;
           const by = bombGroundPos.y * size;
-          // Red square bomb icon on ground
-          const sq = bombIconSize;
-          ctx.fillStyle = 'rgba(255,50,50,0.85)';
-          ctx.fillRect(bx - sq, by - sq, sq * 2, sq * 2);
-          ctx.strokeStyle = 'rgba(180,30,30,0.9)';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(bx - sq, by - sq, sq * 2, sq * 2);
-          // "C4" label
+          ctx.fillStyle = 'rgba(255,50,50,0.9)';
+          ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
           ctx.fillStyle = '#fff';
           ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
           ctx.textAlign = 'center';
@@ -432,16 +429,14 @@ export default function DemoPlayer() {
           ctx.fillStyle = `rgba(255,50,50,${(0.15 * pulse).toFixed(2)})`;
           ctx.fill();
 
-          // Bomb square
+          // Bomb square with C4 inside
           ctx.fillStyle = 'rgba(255,50,50,0.9)';
           ctx.fillRect(bx - bombRadius * 0.5, by - bombRadius * 0.5, bombRadius, bombRadius);
-
-          // "C4" label
           ctx.fillStyle = '#fff';
-          ctx.font = `bold ${Math.max(8, size * 0.01)}px sans-serif`;
+          ctx.font = `bold ${Math.max(7, size * 0.008)}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-          ctx.fillText('C4', bx, by + bombRadius * 0.7);
+          ctx.textBaseline = 'middle';
+          ctx.fillText('C4', bx, by);
         }
 
         // Draw defusing progress
@@ -517,6 +512,45 @@ export default function DemoPlayer() {
       }
     }
 
+    // Draw gun fire muzzle flash
+    if (demoData?.gunFireEvents) {
+      const round = demoData.rounds[selectedRound];
+      if (round) {
+        const FLASH_FADE = 12; // very brief flash ~0.2s
+        const flashLen = size * 0.018;
+        // gunFireEvents sorted by tick — only check nearby window
+        for (const f of demoData.gunFireEvents) {
+          if (f.tick > interpTick) break;
+          if (f.tick < interpTick - FLASH_FADE) continue;
+          if (f.tick < round.freezeEndTick || f.tick > round.endTick) continue;
+          const elapsed = interpTick - f.tick;
+          const alpha = 1 - elapsed / FLASH_FADE;
+
+          const fx = f.position.x * size;
+          const fy = f.position.y * size;
+          // CS2 yaw: 0=east, 90=north. Canvas: 0=right, positive=clockwise.
+          // Map y is flipped (north=up=lower y), so angle = -yaw * deg2rad
+          const angle = -f.yaw * (Math.PI / 180);
+          const ex = fx + Math.cos(angle) * flashLen;
+          const ey = fy + Math.sin(angle) * flashLen;
+
+          // Muzzle flash line
+          ctx.beginPath();
+          ctx.moveTo(fx, fy);
+          ctx.lineTo(ex, ey);
+          ctx.strokeStyle = `rgba(255,220,100,${(alpha * 0.7).toFixed(2)})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Small flash dot at tip
+          ctx.beginPath();
+          ctx.arc(ex, ey, size * 0.003, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,200,${(alpha * 0.8).toFixed(2)})`;
+          ctx.fill();
+        }
+      }
+    }
+
     // Draw kill events: red line from attacker to victim + kill feed
     if (demoData?.killEvents) {
       const round = demoData.rounds[selectedRound];
@@ -554,20 +588,6 @@ export default function DemoPlayer() {
           ctx.setLineDash([4, 4]);
           ctx.stroke();
           ctx.setLineDash([]);
-          }
-
-          // Assist line (assister → victim)
-          if (!isSelfKill && k.assisterPos) {
-            const asx = k.assisterPos.x * size;
-            const asy = k.assisterPos.y * size;
-            ctx.beginPath();
-            ctx.moveTo(asx, asy);
-            ctx.lineTo(vx, vy);
-            ctx.strokeStyle = `rgba(255,160,100,${(alpha * 0.35).toFixed(2)})`;
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
           }
 
           // Skull marker at victim position

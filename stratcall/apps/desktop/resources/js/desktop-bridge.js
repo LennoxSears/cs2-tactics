@@ -52,6 +52,7 @@
       var utilities = [];
       var bombEvts = [];
       var killEvts = [];
+      var gunFires = [];
 
       for (var i = 1; i < lines.length; i++) {
         var line = lines[i];
@@ -109,6 +110,16 @@
             if (kp[15]) ke.assisterY = parseFloat(kp[15]);
           }
           killEvts.push(ke);
+        } else if (line.charCodeAt(0) === 70) { // 'F'
+          // F\ttick\tsteamid\tx\ty\tyaw
+          var fp = line.split('\t');
+          gunFires.push({
+            tick: parseInt(fp[1], 10),
+            steamid: fp[2] || '',
+            x: parseFloat(fp[3]),
+            y: parseFloat(fp[4]),
+            yaw: parseFloat(fp[5]),
+          });
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
           var tp = line.split('\t');
@@ -144,6 +155,7 @@
         tickData: tickData,
         bombEvents: bombEvts,
         killEvents: killEvts,
+        gunFireEvents: gunFires,
         utilityEvents: utilities,
       };
     } catch (err) {

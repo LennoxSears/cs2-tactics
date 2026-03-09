@@ -286,6 +286,26 @@ try {
     }
   } catch (_) {}
 
+  // Gun fire events (for muzzle flash direction animation)
+  const gunFireEvents = [];
+  try {
+    // Reuse the weapon_fire data already parsed (fires variable from above)
+    for (const f of fires) {
+      const w = f.weapon || '';
+      // Skip grenades, knives, C4, taser
+      if (w.includes('smoke') || w.includes('flash') || w.includes('hegrenade') ||
+          w.includes('molotov') || w.includes('incgrenade') || w.includes('decoy') ||
+          w.includes('knife') || w === 'weapon_c4' || w === 'weapon_taser') continue;
+      gunFireEvents.push({
+        tick: f.tick ?? 0,
+        steamid: (f.user_steamid || '').replace(/\t/g, ''),
+        x: f.user_X ?? 0,
+        y: f.user_Y ?? 0,
+        yaw: f.user_yaw ?? 0,
+      });
+    }
+  } catch (_) {}
+
   const tickRate = header?.tickrate
     || (header?.playback_ticks && header?.playback_time
       ? Math.round(header.playback_ticks / header.playback_time)
@@ -351,6 +371,17 @@ try {
       k.assisterSteamid + '\t' +
       (k.assisterX ? Math.round(k.assisterX * 10) / 10 : '') + '\t' +
       (k.assisterY ? Math.round(k.assisterY * 10) / 10 : '') + '\n'
+    );
+  }
+
+  // Gun fire lines: F\ttick\tsteamid\tx\ty\tyaw
+  for (const f of gunFireEvents) {
+    fs.writeSync(fd, 'F\t' +
+      f.tick + '\t' +
+      f.steamid + '\t' +
+      (Math.round(f.x * 10) / 10) + '\t' +
+      (Math.round(f.y * 10) / 10) + '\t' +
+      (Math.round(f.yaw * 100) / 100) + '\n'
     );
   }
 
