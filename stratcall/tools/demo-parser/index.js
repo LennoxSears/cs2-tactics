@@ -75,8 +75,8 @@ try {
           y: e.y ?? e.Y ?? 0,
           tick: e.tick ?? 0,
           durationTicks: Math.round((durationMs / 1000) * (header?.tickrate || 64)),
-          thrower: (e.player_name || e.userid_name || '').replace(/\t/g, ' '),
-          steamid: (e.player_steamid || e.userid_steamid || e.steamid || '').replace(/\t/g, ''),
+          thrower: (e.user_name || e.player_name || '').replace(/\t/g, ' '),
+          steamid: (e.user_steamid || e.player_steamid || '').replace(/\t/g, ''),
         });
       }
     } catch (_) {}
@@ -98,15 +98,15 @@ try {
     // Collect grenade throws: { type, tick, steamid, x, y }
     const throws = [];
     for (const f of fires) {
-      const weapon = f.weapon || f.weapon_name || '';
+      const weapon = f.weapon || '';
       const utilType = WEAPON_TO_UTIL[weapon];
       if (!utilType) continue;
       throws.push({
         type: utilType,
         tick: f.tick ?? 0,
-        steamid: (f.player_steamid || f.userid_steamid || f.steamid || '').replace(/\t/g, ''),
-        x: f.X ?? f.x ?? 0,
-        y: f.Y ?? f.y ?? 0,
+        steamid: (f.user_steamid || '').replace(/\t/g, ''),
+        x: f.user_X ?? 0,
+        y: f.user_Y ?? 0,
       });
     }
 
@@ -118,7 +118,7 @@ try {
         if (t.type !== u.type) continue;
         if (t.steamid !== u.steamid) continue;
         const d = u.tick - t.tick;
-        if (d < 0 || d > 256) continue; // throw must be before detonation, within ~4s
+        if (d < 0 || d > 1024) continue; // throw must be before detonation, within ~16s
         if (d < bestDist) {
           bestDist = d;
           best = t;
@@ -152,9 +152,10 @@ try {
     }
   } catch (_) {}
 
-  const tickRate = header?.tickrate || header?.playback_ticks
-    ? Math.round((header.playback_ticks || 0) / (header.playback_time || 1))
-    : 64;
+  const tickRate = header?.tickrate
+    || (header?.playback_ticks && header?.playback_time
+      ? Math.round(header.playback_ticks / header.playback_time)
+      : 64);
 
   // Write to temp file
   const outPath = path.join(os.tmpdir(), `stratcall-demo-${Date.now()}.tsv`);
