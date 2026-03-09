@@ -661,6 +661,9 @@ export default function DemoPlayer() {
         setLoading(false);
         return;
       }
+      // Ensure utility sprites are decoded before first render
+      const { preloadSprites } = await import('../assets/utilitySprites');
+      await preloadSprites();
       setDemoData(data);
       setPlaying(false);
     } catch (err: any) {

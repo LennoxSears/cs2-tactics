@@ -157,3 +157,9 @@ getSmokeSprite();
 getFlashSprite();
 getMolotovSprite();
 getHeSprite();
+
+/** Ensure all sprites are fully decoded before rendering */
+export async function preloadSprites(): Promise<void> {
+  const sprites = [getSmokeSprite(), getFlashSprite(), getMolotovSprite(), getHeSprite()];
+  await Promise.all(sprites.map(img => img.decode().catch(() => {})));
+}

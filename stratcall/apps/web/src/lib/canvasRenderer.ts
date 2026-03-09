@@ -144,7 +144,13 @@ function drawUtilityLanding(
   } else {
     ctx.beginPath();
     ctx.arc(x, y, spriteSize / 2, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(200,200,200,${progress * 0.5})`;
+    const colors: Record<string, string> = {
+      smoke: `rgba(180,180,180,${progress * 0.5})`,
+      flash: `rgba(255,255,200,${progress * 0.5})`,
+      molotov: `rgba(255,120,20,${progress * 0.4})`,
+      he: `rgba(255,240,100,${progress * 0.5})`,
+    };
+    ctx.fillStyle = colors[u.type] || `rgba(200,200,200,${progress * 0.5})`;
     ctx.fill();
   }
 }
@@ -166,9 +172,16 @@ function drawUtilityActive(
   if (sprite && sprite.complete && sprite.naturalWidth > 0) {
     ctx.drawImage(sprite, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
   } else {
+    // Fallback: type-colored circle while sprite loads
     ctx.beginPath();
     ctx.arc(x, y, drawSize / 2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(200,200,200,0.4)';
+    const colors: Record<string, string> = {
+      smoke: 'rgba(180,180,180,0.5)',
+      flash: 'rgba(255,255,200,0.5)',
+      molotov: 'rgba(255,120,20,0.4)',
+      he: 'rgba(255,240,100,0.5)',
+    };
+    ctx.fillStyle = colors[u.type] || 'rgba(200,200,200,0.4)';
     ctx.fill();
   }
 }
