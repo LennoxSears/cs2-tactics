@@ -141,20 +141,22 @@ export default function DemoPlayer() {
       const activeUtils = getActiveUtilities(demoData.utilityEvents, currentTick.tick);
       for (const au of activeUtils) {
         const u = au.event;
-        if (au.state === 'flying' && u.throwOrigin) {
-          // Build trail from origin to current interpolated position
-          const trail = [u.throwOrigin, au.currentPos];
+        if (au.state === 'flying') {
+          const origin = u.throwOrigin || au.currentPos;
+          const trail = [origin, au.currentPos];
           drawUtility(ctx, {
             type: u.type,
             position: au.currentPos,
             effectState: 'flying',
-            trail,
+            effectProgress: au.progress,
+            trail: u.throwOrigin ? trail : undefined,
           }, size);
         } else if (au.state === 'landing') {
           drawUtility(ctx, {
             type: u.type,
             position: u.position,
             effectState: 'landing',
+            effectProgress: au.progress,
           }, size);
         } else {
           // Fade out near end of duration
@@ -195,19 +197,19 @@ export default function DemoPlayer() {
       drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
     });
 
-    // Draw dead players as skull X marks
-    const deadPlayers = currentTick.players.filter(p => !p.isAlive);
+    // Only show dead X for players who were alive earlier this round
+    const seenAlive = new Set<string>();
+    for (let i = 0; i <= floorIdx && i < ticks.length; i++) {
+      for (const p of ticks[i].players) {
+        if (p.isAlive) seenAlive.add(p.steamId);
+      }
+    }
+    const deadPlayers = currentTick.players.filter(p => !p.isAlive && seenAlive.has(p.steamId));
     for (const p of deadPlayers) {
       const pos = lerpPos(p);
       const x = pos.x * size;
       const y = pos.y * size;
-      const s = size * 0.012;
-
-      // Dark background circle
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath();
-      ctx.arc(x, y, s * 1.2, 0, Math.PI * 2);
-      ctx.fill();
+      const s = size * 0.008;
 
       // Team-colored X
       ctx.strokeStyle = p.side === 'ct' ? 'rgba(74,158,255,0.85)' : 'rgba(255,140,0,0.85)';
