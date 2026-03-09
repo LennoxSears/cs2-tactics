@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DemoData, DemoTick } from '../lib/demoParser';
-import { pickAndParseDemoFile, demoTickToBoardState } from '../lib/demoParser';
+import { pickAndParseDemoFile, demoTickToBoardState, getActiveUtilities } from '../lib/demoParser';
 import { drawPlayer, drawUtility } from '../lib/canvasRenderer';
 import { getMapInfo } from '../maps';
 import { mapImages } from '../assets/mapImages';
@@ -136,13 +136,31 @@ export default function DemoPlayer() {
       ctx.drawImage(mapImgRef.current, 0, 0, size, size);
     }
 
-    // Draw grenades
-    for (const g of currentTick.grenades) {
-      drawUtility(ctx, {
-        type: g.type,
-        position: g.position,
-        effectState: 'active',
-      }, size);
+    // Draw active utilities at current tick
+    if (demoData) {
+      const activeUtils = getActiveUtilities(demoData.utilityEvents, currentTick.tick);
+      for (const u of activeUtils) {
+        drawUtility(ctx, {
+          type: u.type,
+          position: u.position,
+          effectState: 'active',
+        }, size);
+      }
+    }
+
+    // Interpolate player positions between current and next tick for smooth movement
+    const floorIdx = Math.floor(currentTickIdx);
+    const frac = currentTickIdx - floorIdx;
+    const nextTick = ticks[Math.min(floorIdx + 1, ticks.length - 1)];
+
+    function lerpPos(player: DemoTick['players'][0]) {
+      if (!nextTick || frac === 0) return player.position;
+      const match = nextTick.players.find(p => p.steamId === player.steamId);
+      if (!match || !match.isAlive) return player.position;
+      return {
+        x: player.position.x + (match.position.x - player.position.x) * frac,
+        y: player.position.y + (match.position.y - player.position.y) * frac,
+      };
     }
 
     // Draw players
@@ -150,17 +168,18 @@ export default function DemoPlayer() {
     const tPlayers = currentTick.players.filter(p => p.side === 't' && p.isAlive);
 
     ctPlayers.forEach((p, i) => {
-      drawPlayer(ctx, { side: 'ct', number: i + 1, position: p.position }, size);
+      drawPlayer(ctx, { side: 'ct', number: i + 1, position: lerpPos(p) }, size);
     });
     tPlayers.forEach((p, i) => {
-      drawPlayer(ctx, { side: 't', number: i + 1, position: p.position }, size);
+      drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
     });
 
     // Draw dead players as X marks
     const deadPlayers = currentTick.players.filter(p => !p.isAlive);
     for (const p of deadPlayers) {
-      const x = p.position.x * size;
-      const y = p.position.y * size;
+      const pos = lerpPos(p);
+      const x = pos.x * size;
+      const y = pos.y * size;
       const s = size * 0.006;
       ctx.strokeStyle = p.side === 'ct' ? 'rgba(74,158,255,0.3)' : 'rgba(255,140,0,0.3)';
       ctx.lineWidth = 1.5;
@@ -169,7 +188,7 @@ export default function DemoPlayer() {
       ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
       ctx.stroke();
     }
-  }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo]);
+  }, [currentTickIdx, containerSize, mapImgLoaded, currentTick, mapInfo, demoData]);
 
   // ── File upload ──
   const handleOpenDemo = async () => {
@@ -206,7 +225,8 @@ export default function DemoPlayer() {
   // ── Phase capture ──
   const capturePhase = () => {
     if (!currentTick || !mapInfo) return;
-    const boardState = demoTickToBoardState(currentTick, mapInfo);
+    const activeUtils = demoData ? getActiveUtilities(demoData.utilityEvents, currentTick.tick) : [];
+    const boardState = demoTickToBoardState(currentTick, mapInfo, activeUtils);
     const roundLabel = demoData?.rounds[selectedRound]
       ? `R${demoData.rounds[selectedRound].roundNum}`
       : '';

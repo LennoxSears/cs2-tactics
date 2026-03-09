@@ -14,16 +14,18 @@ export interface DemoPlayer {
   isAlive: boolean;
 }
 
-export interface DemoGrenade {
+export interface DemoUtilityEvent {
   type: 'smoke' | 'flash' | 'molotov' | 'he' | 'decoy';
-  position: Position;
+  position: Position;       // pixel coords
+  worldPos: { x: number; y: number }; // world coords (for reference)
+  tick: number;             // activation tick
+  durationTicks: number;    // how long it lasts
   throwerName: string;
 }
 
 export interface DemoTick {
   tick: number;
   players: DemoPlayer[];
-  grenades: DemoGrenade[];
 }
 
 export interface DemoRound {
@@ -39,6 +41,7 @@ export interface DemoData {
   tickRate: number;
   rounds: DemoRound[];
   ticks: DemoTick[];
+  utilityEvents: DemoUtilityEvent[];
   totalTicks: number;
 }
 
@@ -57,15 +60,6 @@ export function isDesktop(): boolean {
 }
 
 // ── Parsing (desktop only, via local binary) ──
-
-const GRENADE_MAP: Record<string, DemoGrenade['type']> = {
-  smokegrenade: 'smoke',
-  flashbang: 'flash',
-  molotov: 'molotov',
-  incgrenade: 'molotov',
-  hegrenade: 'he',
-  decoy: 'decoy',
-};
 
 function detectMap(mapStr: string): MapName | null {
   const lower = mapStr.toLowerCase();
@@ -98,14 +92,13 @@ export async function pickAndParseDemoFile(
   // Build tick map from raw tick data
   const tickMap = new Map<number, DemoTick>();
 
-  // Parser already downsamples to every 16th tick — no client-side filter needed
   if (Array.isArray(data.tickData)) {
     for (const row of data.tickData) {
       const tick = row.tick;
       if (tick == null) continue;
 
       if (!tickMap.has(tick)) {
-        tickMap.set(tick, { tick, players: [], grenades: [] });
+        tickMap.set(tick, { tick, players: [] });
       }
 
       const dt = tickMap.get(tick)!;
@@ -128,23 +121,18 @@ export async function pickAndParseDemoFile(
     }
   }
 
-  // Add grenades to nearest tick
-  if (Array.isArray(data.grenadeData) && mapInfo) {
-    for (const g of data.grenadeData) {
-      const gType = GRENADE_MAP[g.grenade_type];
-      if (!gType) continue;
-
-      const tick = g.destroy_tick ?? g.tick ?? 0;
-      // Snap to nearest sampled tick (interval=16)
-      const snapped = Math.round(tick / 16) * 16;
-      const dt = tickMap.get(snapped);
-      if (!dt) continue;
-
-      const pos = worldToPixel(mapInfo, g.entity_x ?? g.X ?? 0, g.entity_y ?? g.Y ?? 0);
-      dt.grenades.push({
-        type: gType,
+  // Process utility events — convert world coords to pixel coords
+  const utilityEvents: DemoUtilityEvent[] = [];
+  if (Array.isArray(data.utilityEvents) && mapInfo) {
+    for (const u of data.utilityEvents) {
+      const pos = worldToPixel(mapInfo, u.x ?? 0, u.y ?? 0);
+      utilityEvents.push({
+        type: u.type as DemoUtilityEvent['type'],
         position: pos,
-        throwerName: g.thrower_name || g.player_name || '',
+        worldPos: { x: u.x ?? 0, y: u.y ?? 0 },
+        tick: u.tick ?? 0,
+        durationTicks: u.durationTicks ?? 0,
+        throwerName: u.thrower || '',
       });
     }
   }
@@ -159,15 +147,27 @@ export async function pickAndParseDemoFile(
     tickRate: data.tickRate || 64,
     rounds: data.rounds || [],
     ticks,
+    utilityEvents,
     totalTicks,
   };
 }
 
 // ── Convert demo tick to BoardState ──
 
+/** Get utilities active at a given tick */
+export function getActiveUtilities(
+  utilityEvents: DemoUtilityEvent[],
+  currentTick: number,
+): DemoUtilityEvent[] {
+  return utilityEvents.filter(u =>
+    currentTick >= u.tick && currentTick <= u.tick + u.durationTicks
+  );
+}
+
 export function demoTickToBoardState(
   tick: DemoTick,
   _mapInfo: MapInfo,
+  activeUtilities?: DemoUtilityEvent[],
 ): {
   players: Array<{
     id: string; side: string; number: number; role: string | null;
@@ -201,13 +201,13 @@ export function demoTickToBoardState(
     })),
   ];
 
-  const utilities = tick.grenades.map((g, i) => ({
-    id: `util-${i}`,
-    type: g.type,
-    position: g.position,
+  const utilities = (activeUtilities || []).map((u, i) => ({
+    id: `util-${u.tick}-${i}`,
+    type: u.type,
+    position: u.position,
     thrownBy: null,
     side: null,
-    label: g.throwerName,
+    label: u.throwerName,
   }));
 
   return { players, utilities, drawings: [] };

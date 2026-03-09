@@ -49,21 +49,22 @@
       var meta = JSON.parse(lines[0]);
 
       var tickMap = {};
-      var grenades = [];
+      var utilities = [];
 
       for (var i = 1; i < lines.length; i++) {
         var line = lines[i];
         if (!line) continue;
 
-        if (line.charCodeAt(0) === 71) { // 'G'
-          // G\ttype\tx\ty\ttick\tthrower
-          var gp = line.split('\t');
-          grenades.push({
-            grenade_type: gp[1],
-            entity_x: parseFloat(gp[2]),
-            entity_y: parseFloat(gp[3]),
-            destroy_tick: parseInt(gp[4], 10),
-            thrower_name: gp[5] || '',
+        if (line.charCodeAt(0) === 85) { // 'U'
+          // U\ttype\tx\ty\ttick\tdurationTicks\tthrower
+          var up = line.split('\t');
+          utilities.push({
+            type: up[1],
+            x: parseFloat(up[2]),
+            y: parseFloat(up[3]),
+            tick: parseInt(up[4], 10),
+            durationTicks: parseInt(up[5], 10),
+            thrower: up[6] || '',
           });
         } else if (line.charCodeAt(0) === 84) { // 'T'
           // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
@@ -98,7 +99,7 @@
         tickRate: meta.tickRate,
         rounds: meta.rounds,
         tickData: tickData,
-        grenadeData: grenades,
+        utilityEvents: utilities,
       };
     } catch (err) {
       if (err.message) throw err;

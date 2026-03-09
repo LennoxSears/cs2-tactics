@@ -4,7 +4,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { parseHeader, parseEvent, parseTicks, parseGrenades } = require('@laihoe/demoparser2');
+const { parseHeader, parseEvent, parseTicks } = require('@laihoe/demoparser2');
 
 // Usage: stratcall-demo-parser <path-to-demo.dem>
 // Writes parsed data to a temp file, outputs the file path to stdout.
@@ -54,22 +54,56 @@ try {
     'X', 'Y', 'health', 'team_num', 'is_alive', 'player_name', 'player_steamid',
   ]);
 
-  // Grenades
-  let grenadeData = [];
+  // Utility events — parse detonation/activation events for each grenade type
+  const utilityEvents = [];
+
+  const UTIL_EVENT_MAP = [
+    ['smokegrenade_detonate', 'smoke', 18000],   // smoke lasts ~18s (18000ms)
+    ['flashbang_detonate', 'flash', 2500],        // flash effect ~2.5s
+    ['hegrenade_detonate', 'he', 1000],           // HE instant, show 1s
+    ['inferno_startburn', 'molotov', 7000],       // molotov lasts ~7s
+    ['decoy_started', 'decoy', 5000],             // decoy ~5s
+  ];
+
+  for (const [eventName, utilType, durationMs] of UTIL_EVENT_MAP) {
+    try {
+      const events = parseEvent(buf, eventName) || [];
+      for (const e of events) {
+        utilityEvents.push({
+          type: utilType,
+          x: e.x ?? e.X ?? 0,
+          y: e.y ?? e.Y ?? 0,
+          tick: e.tick ?? 0,
+          durationTicks: Math.round((durationMs / 1000) * (header?.tickrate || 64)),
+          thrower: (e.player_name || e.userid_name || '').replace(/\t/g, ' '),
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Also parse inferno_expire to get accurate molotov end times
   try {
-    grenadeData = parseGrenades(buf) || [];
+    const infernoExpires = parseEvent(buf, 'inferno_expire') || [];
+    // Match expires to starts by proximity
+    const molotovStarts = utilityEvents.filter(u => u.type === 'molotov');
+    for (const expire of infernoExpires) {
+      const expTick = expire.tick ?? 0;
+      // Find the closest molotov start before this expire
+      let best = null;
+      for (const m of molotovStarts) {
+        if (m.tick < expTick && (!best || m.tick > best.tick)) {
+          best = m;
+        }
+      }
+      if (best) {
+        best.durationTicks = expTick - best.tick;
+      }
+    }
   } catch (_) {}
 
   const tickRate = header?.tickrate || header?.playback_ticks
     ? Math.round((header.playback_ticks || 0) / (header.playback_time || 1))
     : 64;
-
-  // Normalize grenade type names (parser may return *_projectile suffix)
-  function normalizeGrenadeType(t) {
-    if (!t) return '';
-    t = t.replace(/_projectile$/, '');
-    return t;
-  }
 
   // Write to temp file
   const outPath = path.join(os.tmpdir(), `stratcall-demo-${Date.now()}.tsv`);
@@ -83,19 +117,16 @@ try {
   };
   fs.writeSync(fd, JSON.stringify(meta) + '\n');
 
-  // Grenade lines: G\ttype\tx\ty\ttick\tthrower
-  if (Array.isArray(grenadeData)) {
-    for (const g of grenadeData) {
-      const gtype = normalizeGrenadeType(g.grenade_type);
-      if (!gtype) continue;
-      fs.writeSync(fd, 'G\t' +
-        gtype + '\t' +
-        (Math.round((g.entity_x ?? g.X ?? 0) * 10) / 10) + '\t' +
-        (Math.round((g.entity_y ?? g.Y ?? 0) * 10) / 10) + '\t' +
-        (g.destroy_tick ?? g.tick ?? 0) + '\t' +
-        ((g.thrower_name || g.player_name || '').replace(/\t/g, ' ')) + '\n'
-      );
-    }
+  // Utility event lines: U\ttype\tx\ty\ttick\tdurationTicks\tthrower
+  for (const u of utilityEvents) {
+    fs.writeSync(fd, 'U\t' +
+      u.type + '\t' +
+      (Math.round(u.x * 10) / 10) + '\t' +
+      (Math.round(u.y * 10) / 10) + '\t' +
+      u.tick + '\t' +
+      u.durationTicks + '\t' +
+      u.thrower + '\n'
+    );
   }
 
   // Tick data lines: T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
