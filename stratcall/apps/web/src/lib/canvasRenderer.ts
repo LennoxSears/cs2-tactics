@@ -60,8 +60,8 @@ export function drawPlayer(ctx: CanvasRenderingContext2D, p: DrawablePlayer, siz
   ctx.fillText(String(p.number), x, y);
 }
 
-/** Draw a water-drop shaped directional player token.
- *  Round body with a pointed tip in the facing direction. */
+/** Draw a map-pin shaped directional player token.
+ *  Round head with a smooth taper to a pointed tip (facing direction). */
 export function drawPlayerDirectional(
   ctx: CanvasRenderingContext2D,
   p: DrawablePlayer,
@@ -84,16 +84,17 @@ export function drawPlayerDirectional(
   ctx.shadowColor = color;
   ctx.shadowBlur = 6;
 
-  // Water drop: the tip points RIGHT (+x direction) before rotation.
-  // Arc covers ~240° of the back, then two lines meet at the sharp tip.
-  const tipDist = r * 2.0;       // how far the tip extends from center
-  const halfGap = Math.PI * 0.6; // half the open angle facing the tip (~108°)
+  // Pin shape: tip points RIGHT (+x). Circle head + two bezier curves to tip.
+  const tipX = r * 2.2;
+  const gapHalf = Math.PI * 0.42; // ~75° half-gap → ~210° arc for the head
 
   ctx.beginPath();
-  // Arc: the round back of the drop (from upper-right gap edge, around the back, to lower-right gap edge)
-  ctx.arc(0, 0, r, -halfGap, halfGap, false);
-  // Line to tip
-  ctx.lineTo(tipDist, 0);
+  // Round head: arc from bottom-right edge, around the back, to top-right edge
+  ctx.arc(0, 0, r, gapHalf, -gapHalf, true);
+  // Top curve to tip
+  ctx.bezierCurveTo(r * 0.95, -r * 0.35, tipX * 0.55, -r * 0.1, tipX, 0);
+  // Bottom curve back from tip
+  ctx.bezierCurveTo(tipX * 0.55, r * 0.1, r * 0.95, r * 0.35, r * Math.cos(gapHalf), r * Math.sin(gapHalf));
   ctx.closePath();
 
   ctx.fillStyle = fill;
@@ -104,7 +105,7 @@ export function drawPlayerDirectional(
 
   ctx.shadowBlur = 0;
 
-  // Player number (upright text centered in the round body)
+  // Player number (upright text centered in the round head)
   ctx.rotate(-angle);
   ctx.fillStyle = color;
   ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`;

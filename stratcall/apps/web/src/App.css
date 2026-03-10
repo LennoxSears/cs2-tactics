@@ -214,18 +214,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-size: 0.55rem;
+  width: 22px;
+  height: 28px;
+  clip-path: polygon(83.9% 49.3%, 85% 57.2%, 84.3% 65.1%, 81.8% 72.7%, 77.7% 79.5%, 72.1% 85.1%, 65.4% 89.4%, 57.9% 92.1%, 50% 93%, 42.1% 92.1%, 34.6% 89.4%, 27.9% 85.1%, 22.3% 79.5%, 18.2% 72.7%, 15.7% 65.1%, 15% 57.2%, 16.1% 49.3%, 33.1% 48.7%, 50% 8%, 66.9% 48.7%);
+  font-size: 0.5rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  border: 2px solid currentColor;
+  padding-top: 6px;
   line-height: 1;
 }
 
-.ct-badge { color: #4a9eff; background: rgba(74, 158, 255, 0.15); }
-.t-badge { color: #ff8c00; background: rgba(255, 140, 0, 0.15); }
+.ct-badge { color: #fff; background: #4a9eff; }
+.t-badge { color: #fff; background: #ff8c00; }
 .tool-btn.active .ct-badge { background: rgba(74, 158, 255, 0.3); }
 .tool-btn.active .t-badge { background: rgba(255, 140, 0, 0.3); }
 
@@ -288,13 +288,13 @@
 .player-token {
   position: absolute;
   width: 24px;
-  height: 30px;
-  /* Water-drop: round bottom, pointed tip at top (tip = facing direction) */
-  clip-path: polygon(86% 67%, 84% 72%, 81% 77%, 77% 82%, 72% 86%, 67% 89%, 62% 91%, 56% 93%, 50% 93%, 44% 93%, 38% 91%, 33% 89%, 28% 86%, 23% 82%, 19% 77%, 16% 72%, 14% 67%, 50% 5%);
+  height: 32px;
+  /* Map pin: round head at bottom, pointed tip at top (tip = facing direction) */
+  clip-path: polygon(83.9% 49.3%, 85% 57.2%, 84.3% 65.1%, 81.8% 72.7%, 77.7% 79.5%, 72.1% 85.1%, 65.4% 89.4%, 57.9% 92.1%, 50% 93%, 42.1% 92.1%, 34.6% 89.4%, 27.9% 85.1%, 22.3% 79.5%, 18.2% 72.7%, 15.7% 65.1%, 15% 57.2%, 16.1% 49.3%, 33.1% 48.7%, 50% 8%, 66.9% 48.7%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 6px;
+  padding-top: 8px;
   font-size: 0.55rem;
   font-weight: 700;
   cursor: grab;
@@ -466,6 +466,6 @@
 }
 
 @media (min-width: 768px) {
-  .player-token { width: 28px; height: 34px; font-size: 0.6rem; padding-top: 5px; }
+  .player-token { width: 28px; height: 36px; font-size: 0.6rem; padding-top: 9px; }
   .utility-marker { width: 24px; height: 24px; font-size: 0.7rem; border-width: 2px; }
 }

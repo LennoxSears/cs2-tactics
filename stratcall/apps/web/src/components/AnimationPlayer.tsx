@@ -12,7 +12,7 @@ import {
   faRotateRight, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
-import { drawPlayer, drawPlayerDirectional, drawUtility, drawDrawings } from '../lib/canvasRenderer';
+import { drawPlayerDirectional, drawUtility, drawDrawings } from '../lib/canvasRenderer';
 
 interface Props {
   mapName: MapName;
@@ -151,13 +151,9 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
       drawUtility(ctx, u, size);
     }
 
-    // Draw players — use directional tokens if yaw is set
+    // Draw players — always use pin-shaped directional tokens
     for (const p of frame.players) {
-      if (p.yaw != null) {
-        drawPlayerDirectional(ctx, p, size);
-      } else {
-        drawPlayer(ctx, p, size);
-      }
+      drawPlayerDirectional(ctx, p, size);
     }
   }, [currentFrame, containerSize, timeline, mapImgLoaded]);
 
