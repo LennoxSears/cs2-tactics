@@ -289,7 +289,8 @@
   position: absolute;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  /* Teardrop: round bottom-left, bottom-right, top-left; pointed top-right */
+  border-radius: 50% 50% 50% 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,27 +298,13 @@
   font-weight: 700;
   cursor: grab;
   z-index: 10;
-  transform: translate(-50%, -50%);
+  /* Default rotation: point faces up (north). Inline style overrides for yaw. */
+  transform: translate(-50%, -50%) rotate(-45deg);
   border: 2px solid;
   user-select: none;
   touch-action: none;
   transition: box-shadow 0.15s;
   box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 1px 6px rgba(0, 0, 0, 0.5);
-}
-/* Direction indicator — pointed nose extending from the token */
-.player-token::after {
-  content: '';
-  position: absolute;
-  right: -7px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 7px solid;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-left-color: inherit;
-  opacity: 0.9;
 }
 
 .player-token:active { cursor: grabbing; }

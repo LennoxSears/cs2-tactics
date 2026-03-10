@@ -60,8 +60,8 @@ export function drawPlayer(ctx: CanvasRenderingContext2D, p: DrawablePlayer, siz
   ctx.fillText(String(p.number), x, y);
 }
 
-/** Draw a directional player token — circle body with a pointed nose
- *  indicating facing direction. Used by DemoPlayer. */
+/** Draw a teardrop-shaped directional player token.
+ *  Round body with a pointed tip in the facing direction. */
 export function drawPlayerDirectional(
   ctx: CanvasRenderingContext2D,
   p: DrawablePlayer,
@@ -69,32 +69,26 @@ export function drawPlayerDirectional(
 ) {
   const x = p.position.x * size;
   const y = p.position.y * size;
-  const radius = size * 0.012;
+  const r = size * 0.012;
   const isCT = p.side === 'ct';
   const color = isCT ? CT_COLOR : T_COLOR;
   const fill = isCT ? CT_FILL : T_FILL;
 
   // CS2 yaw: 0=east, 90=north. Canvas: 0=right, positive=clockwise.
-  // Map y is flipped, so angle = -yaw * deg2rad
   const angle = -(p.yaw ?? 0) * (Math.PI / 180);
 
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
 
-  // Glow
   ctx.shadowColor = color;
   ctx.shadowBlur = 6;
 
-  // Main body: circle with a pointed nose (triangle extending from front)
-  const noseLen = radius * 0.7;
-  const noseWidth = radius * 0.55;
-
+  // Teardrop: circle body + quadratic curves tapering to a point
+  const tipX = r * 1.6; // tip extends beyond the circle
   ctx.beginPath();
-  // Draw the circle body, leaving a gap at the front for the nose
-  ctx.arc(0, 0, radius, Math.atan2(noseWidth, noseLen * 0.3), -Math.atan2(noseWidth, noseLen * 0.3), true);
-  // Nose point
-  ctx.lineTo(radius + noseLen, 0);
+  ctx.arc(0, 0, r, Math.PI * 0.38, -Math.PI * 0.38, true);
+  ctx.quadraticCurveTo(r * 1.1, 0, tipX, 0);
   ctx.closePath();
 
   ctx.fillStyle = fill;
@@ -105,10 +99,10 @@ export function drawPlayerDirectional(
 
   ctx.shadowBlur = 0;
 
-  // Player number (centered in circle body)
-  ctx.rotate(-angle); // un-rotate for upright text
+  // Player number (upright text centered in the round body)
+  ctx.rotate(-angle);
   ctx.fillStyle = color;
-  ctx.font = `bold ${Math.round(radius * 1.1)}px sans-serif`;
+  ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(p.number), 0, 0);

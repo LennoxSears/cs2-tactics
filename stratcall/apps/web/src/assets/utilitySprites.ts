@@ -158,46 +158,133 @@ getFlashSprite();
 getMolotovSprite();
 getHeSprite();
 
-/** Pre-rasterized sprite canvases for instant drawing.
- *  SVG filters (feTurbulence) can fail or render async in some webviews.
- *  We bake each sprite into a bitmap canvas once during preload. */
+/** Canvas-drawn sprite cache — no SVG filter dependency.
+ *  Each sprite is drawn procedurally using canvas gradients
+ *  and compositing, guaranteed to work in all webviews. */
 const rasterCache = new Map<string, HTMLCanvasElement>();
+
+function buildSmokeCanvas(sz: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = sz; c.height = sz;
+  const ctx = c.getContext('2d')!;
+  const cx = sz / 2, cy = sz / 2, r = sz * 0.44;
+
+  // Base radial gradient
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, 'rgba(190,190,195,0.85)');
+  g.addColorStop(0.35, 'rgba(170,170,175,0.7)');
+  g.addColorStop(0.65, 'rgba(145,145,150,0.45)');
+  g.addColorStop(0.85, 'rgba(120,120,125,0.15)');
+  g.addColorStop(1, 'rgba(100,100,105,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, sz, sz);
+
+  // Overlapping blobs for organic shape
+  const blobs = [
+    [0.38, 0.42, 0.20], [0.58, 0.44, 0.18], [0.46, 0.56, 0.19],
+    [0.54, 0.38, 0.14], [0.42, 0.52, 0.16], [0.50, 0.50, 0.22],
+  ];
+  for (const [bx, by, br] of blobs) {
+    const bg = ctx.createRadialGradient(bx * sz, by * sz, 0, bx * sz, by * sz, br * sz);
+    bg.addColorStop(0, 'rgba(180,180,185,0.3)');
+    bg.addColorStop(1, 'rgba(160,160,165,0)');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(bx * sz, by * sz, br * sz, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return c;
+}
+
+function buildFlashCanvas(sz: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = sz; c.height = sz;
+  const ctx = c.getContext('2d')!;
+  const cx = sz / 2, cy = sz / 2;
+
+  // Bright radial glow
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz * 0.45);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)');
+  g.addColorStop(0.2, 'rgba(255,255,230,0.8)');
+  g.addColorStop(0.5, 'rgba(255,255,180,0.4)');
+  g.addColorStop(1, 'rgba(255,255,150,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, sz, sz);
+
+  // Star rays
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.5;
+  for (let i = 0; i < 8; i++) {
+    ctx.rotate(Math.PI / 4);
+    ctx.beginPath();
+    ctx.moveTo(-1.5, 0);
+    ctx.lineTo(0, -sz * 0.42);
+    ctx.lineTo(1.5, 0);
+    ctx.fillStyle = 'rgba(255,255,220,0.6)';
+    ctx.fill();
+  }
+  ctx.restore();
+  return c;
+}
+
+function buildMolotovCanvas(sz: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = sz; c.height = sz;
+  const ctx = c.getContext('2d')!;
+  const cx = sz / 2, cy = sz / 2;
+
+  // Fire gradient
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz * 0.44);
+  g.addColorStop(0, 'rgba(255,200,50,0.8)');
+  g.addColorStop(0.3, 'rgba(255,120,20,0.6)');
+  g.addColorStop(0.6, 'rgba(220,60,10,0.35)');
+  g.addColorStop(1, 'rgba(180,30,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, sz, sz);
+
+  // Flame blobs
+  const blobs = [
+    [0.35, 0.40, 0.16], [0.60, 0.42, 0.14], [0.48, 0.55, 0.17],
+    [0.55, 0.35, 0.12], [0.40, 0.50, 0.15],
+  ];
+  for (const [bx, by, br] of blobs) {
+    const bg = ctx.createRadialGradient(bx * sz, by * sz, 0, bx * sz, by * sz, br * sz);
+    bg.addColorStop(0, 'rgba(255,160,30,0.4)');
+    bg.addColorStop(1, 'rgba(255,80,10,0)');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(bx * sz, by * sz, br * sz, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return c;
+}
+
+function buildHeCanvas(sz: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = sz; c.height = sz;
+  const ctx = c.getContext('2d')!;
+  const cx = sz / 2, cy = sz / 2;
+
+  // Explosion flash
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz * 0.44);
+  g.addColorStop(0, 'rgba(255,255,200,0.9)');
+  g.addColorStop(0.25, 'rgba(255,220,80,0.6)');
+  g.addColorStop(0.5, 'rgba(255,160,40,0.3)');
+  g.addColorStop(1, 'rgba(200,100,20,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, sz, sz);
+  return c;
+}
 
 export function getRasterizedSprite(type: string): HTMLCanvasElement | null {
   return rasterCache.get(type) || null;
 }
 
 export async function preloadSprites(): Promise<void> {
-  const types = ['smoke', 'flash', 'molotov', 'he'] as const;
-  const sprites = [getSmokeSprite(), getFlashSprite(), getMolotovSprite(), getHeSprite()];
-  await Promise.all(sprites.map(img => img.decode().catch(() => {})));
-
-  // Bake each SVG sprite into a bitmap canvas
-  const rasterSize = 128;
-  for (let i = 0; i < types.length; i++) {
-    const img = sprites[i];
-    const canvas = document.createElement('canvas');
-    canvas.width = rasterSize;
-    canvas.height = rasterSize;
-    const ctx = canvas.getContext('2d');
-    if (ctx && img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, 0, 0, rasterSize, rasterSize);
-      rasterCache.set(types[i], canvas);
-    }
-  }
-
-  // Second pass: some browsers need a frame to finish SVG filter rasterization
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  for (let i = 0; i < types.length; i++) {
-    if (rasterCache.has(types[i])) continue;
-    const img = sprites[i];
-    const canvas = document.createElement('canvas');
-    canvas.width = rasterSize;
-    canvas.height = rasterSize;
-    const ctx = canvas.getContext('2d');
-    if (ctx && img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, 0, 0, rasterSize, rasterSize);
-      rasterCache.set(types[i], canvas);
-    }
-  }
+  const sz = 128;
+  if (!rasterCache.has('smoke')) rasterCache.set('smoke', buildSmokeCanvas(sz));
+  if (!rasterCache.has('flash')) rasterCache.set('flash', buildFlashCanvas(sz));
+  if (!rasterCache.has('molotov')) rasterCache.set('molotov', buildMolotovCanvas(sz));
+  if (!rasterCache.has('he')) rasterCache.set('he', buildHeCanvas(sz));
 }

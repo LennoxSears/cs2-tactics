@@ -524,89 +524,59 @@ export default function DemoPlayer() {
       }
     }
 
-    // Draw gun fire muzzle flash — animated fire burst
+    // Draw gun fire — tiny flame at shooter position
     if (demoData?.gunFireEvents) {
       const round = demoData.rounds[selectedRound];
       if (round) {
-        const FLASH_DURATION = 18; // ~0.28s at 64 tick
+        const FLAME_TICKS = 14; // ~0.22s at 64 tick
         for (const f of demoData.gunFireEvents) {
           if (f.tick > interpTick) break;
-          if (f.tick < interpTick - FLASH_DURATION) continue;
+          if (f.tick < interpTick - FLAME_TICKS) continue;
           if (f.tick < round.freezeEndTick || f.tick > round.endTick) continue;
 
-          const t = (interpTick - f.tick) / FLASH_DURATION; // 0→1 progress
-          const alpha = t < 0.3 ? 1 : 1 - (t - 0.3) / 0.7; // hold then fade
+          const t = (interpTick - f.tick) / FLAME_TICKS; // 0→1
+          const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8; // quick rise, slow fade
 
           const fx = f.position.x * size;
           const fy = f.position.y * size;
           const angle = -f.yaw * (Math.PI / 180);
-          const baseLen = size * 0.016;
 
-          // Expanding fire cone — 3 layers from bright core to dim outer
+          // Offset flame slightly in front of player
+          const offset = size * 0.014;
+          const cx = fx + Math.cos(angle) * offset;
+          const cy = fy + Math.sin(angle) * offset;
+
+          // Flame size — flickers using deterministic seed
+          const seed = ((f.tick * 13) % 97) / 97;
+          const flicker = 0.8 + 0.4 * Math.sin(t * 12 + seed * 6);
+          const h = size * 0.012 * flicker * (1 - t * 0.5);
+          const w = h * 0.55;
+
+          if (h < 0.5) continue;
+
           ctx.save();
-          ctx.translate(fx, fy);
+          ctx.translate(cx, cy);
           ctx.rotate(angle);
 
-          // Outer glow cone (orange-red, wide spread)
-          const outerLen = baseLen * (0.6 + t * 1.2);
-          const outerSpread = size * 0.006 * (0.5 + t);
+          // Outer flame (orange-red)
           ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(outerLen, -outerSpread);
-          ctx.lineTo(outerLen * 1.1, 0);
-          ctx.lineTo(outerLen, outerSpread);
+          ctx.moveTo(0, w);
+          ctx.quadraticCurveTo(h * 0.6, w * 0.5, h, 0);
+          ctx.quadraticCurveTo(h * 0.6, -w * 0.5, 0, -w);
           ctx.closePath();
-          ctx.fillStyle = `rgba(255,80,20,${(alpha * 0.35).toFixed(2)})`;
+          ctx.fillStyle = `rgba(255,100,20,${(alpha * 0.7).toFixed(2)})`;
           ctx.fill();
 
-          // Mid cone (orange, medium)
-          const midLen = baseLen * (0.5 + t * 0.8);
-          const midSpread = size * 0.004 * (0.4 + t * 0.6);
+          // Inner flame (yellow-white, smaller)
+          const ih = h * 0.55;
+          const iw = w * 0.45;
           ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(midLen, -midSpread);
-          ctx.lineTo(midLen * 1.05, 0);
-          ctx.lineTo(midLen, midSpread);
+          ctx.moveTo(0, iw);
+          ctx.quadraticCurveTo(ih * 0.6, iw * 0.4, ih, 0);
+          ctx.quadraticCurveTo(ih * 0.6, -iw * 0.4, 0, -iw);
           ctx.closePath();
-          ctx.fillStyle = `rgba(255,160,40,${(alpha * 0.5).toFixed(2)})`;
+          ctx.fillStyle = `rgba(255,230,120,${(alpha * 0.9).toFixed(2)})`;
           ctx.fill();
-
-          // Bright core (yellow-white, narrow)
-          const coreLen = baseLen * (0.4 + t * 0.5);
-          const coreSpread = size * 0.002 * (0.3 + t * 0.4);
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(coreLen, -coreSpread);
-          ctx.lineTo(coreLen * 1.05, 0);
-          ctx.lineTo(coreLen, coreSpread);
-          ctx.closePath();
-          ctx.fillStyle = `rgba(255,240,150,${(alpha * 0.7).toFixed(2)})`;
-          ctx.fill();
-
-          // Spark particles — 3 sparks flying outward
-          const sparkBase = baseLen * 0.8;
-          for (let i = 0; i < 3; i++) {
-            // Deterministic pseudo-random offset per spark using tick+index
-            const seed = (f.tick * 7 + i * 31) % 100 / 100;
-            const sparkAngle = (seed - 0.5) * 0.6; // spread ±0.3 rad from center
-            const sparkDist = sparkBase * (0.3 + t * (1.0 + seed * 0.5));
-            const sparkSize = size * 0.002 * (1 - t * 0.7);
-            const sx = Math.cos(sparkAngle) * sparkDist;
-            const sy = Math.sin(sparkAngle) * sparkDist;
-            ctx.beginPath();
-            ctx.arc(sx, sy, Math.max(0.5, sparkSize), 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,${180 + Math.round(seed * 60)},50,${(alpha * 0.8 * (1 - t * 0.5)).toFixed(2)})`;
-            ctx.fill();
-          }
-
-          // Central flash glow at muzzle (bright, shrinks quickly)
-          const glowR = size * 0.005 * (1 - t * 0.8);
-          if (glowR > 0.5) {
-            ctx.beginPath();
-            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,255,200,${(alpha * 0.4).toFixed(2)})`;
-            ctx.fill();
-          }
 
           ctx.restore();
         }
