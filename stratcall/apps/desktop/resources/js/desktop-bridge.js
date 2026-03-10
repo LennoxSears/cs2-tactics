@@ -121,7 +121,7 @@
             yaw: parseFloat(fp[5]),
           });
         } else if (line.charCodeAt(0) === 84) { // 'T'
-          // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
+          // T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty\tyaw
           var tp = line.split('\t');
           var tick = parseInt(tp[1], 10);
           if (!tickMap[tick]) tickMap[tick] = [];
@@ -133,6 +133,7 @@
             is_alive: tp[6] === '1',
             X: parseFloat(tp[7]),
             Y: parseFloat(tp[8]),
+            yaw: parseFloat(tp[9] || '0'),
           });
         }
       }

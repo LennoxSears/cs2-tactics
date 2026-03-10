@@ -21,6 +21,7 @@ export interface PlayerToken {
   role: PlayerRole | null;
   position: Position;
   label?: string;
+  yaw?: number;   // facing direction in degrees (0=east, 90=north), optional for backwards compat
 }
 
 export interface UtilityMarker {

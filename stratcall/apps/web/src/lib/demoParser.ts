@@ -12,6 +12,7 @@ export interface DemoPlayer {
   position: Position;
   health: number;
   isAlive: boolean;
+  yaw: number;        // facing direction in degrees (CS2: 0=east, 90=north)
 }
 
 export interface DemoUtilityEvent {
@@ -160,6 +161,7 @@ export async function pickAndParseDemoFile(
         position: pos,
         health: row.health ?? 0,
         isAlive: row.is_alive ?? false,
+        yaw: row.yaw ?? 0,
       });
     }
   }

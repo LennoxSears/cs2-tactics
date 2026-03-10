@@ -655,7 +655,11 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
               <div
                 key={p.id}
                 className={`player-token ${p.side}${dragTarget?.id === p.id ? ' dragging' : ''}${dragTarget?.id === p.id && dragOutOfBounds ? ' deleting' : ''}${utilDragLink ? ' link-target' : ''}`}
-                style={{ left: `${p.position.x * 100}%`, top: `${p.position.y * 100}%` }}
+                style={{
+                  left: `${p.position.x * 100}%`,
+                  top: `${p.position.y * 100}%`,
+                  transform: `translate(-50%, -50%) rotate(${-(p.yaw ?? 90)}deg)`,
+                }}
                 onMouseDown={e => { if (e.button === 2) return; startPlayerDrag(p.id, e); }}
                 onTouchStart={e => {
                   longPressFired.current = false;
@@ -667,9 +671,16 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                 }}
                 onTouchMove={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
                 onTouchEnd={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                onWheel={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const step = e.deltaY > 0 ? -15 : 15;
+                  const newYaw = ((p.yaw ?? 90) + step + 360) % 360;
+                  setPlayers(prev => prev.map(pl => pl.id === p.id ? { ...pl, yaw: newYaw } : pl));
+                }}
                 onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setNoteTarget({ type: 'player', id: p.id }); }}
               >
-                {p.number}
+                <span style={{ transform: `rotate(${(p.yaw ?? 90)}deg)` }}>{p.number}</span>
                 {p.label && <span className="token-has-note" />}
               </div>
             ))}

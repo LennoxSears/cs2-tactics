@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DemoData, DemoTick, DemoBombEvent } from '../lib/demoParser';
 import type { Position } from '../types';
 import { pickAndParseDemoFile, demoTickToBoardState, getActiveUtilities } from '../lib/demoParser';
-import { drawPlayer, drawUtility } from '../lib/canvasRenderer';
+import { drawPlayerDirectional, drawUtility } from '../lib/canvasRenderer';
 import { getMapInfo } from '../maps';
 import { mapImages } from '../assets/mapImages';
 import { api } from '../lib/api';
@@ -208,11 +208,23 @@ export default function DemoPlayer() {
     const hpFont = `${Math.max(8, Math.round(size * 0.011))}px sans-serif`;
     const allAlive = [...ctPlayers, ...tPlayers];
 
+    // Interpolate yaw between ticks for smooth rotation
+    function lerpYaw(player: DemoTick['players'][0]): number {
+      if (!nextTick || frac === 0) return player.yaw;
+      const match = nextTick.players.find(p => p.steamId === player.steamId);
+      if (!match || !match.isAlive) return player.yaw;
+      // Shortest-path angle interpolation (handle 180/-180 wrap)
+      let diff = match.yaw - player.yaw;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      return player.yaw + diff * frac;
+    }
+
     ctPlayers.forEach((p, i) => {
-      drawPlayer(ctx, { side: 'ct', number: i + 1, position: lerpPos(p) }, size);
+      drawPlayerDirectional(ctx, { side: 'ct', number: i + 1, position: lerpPos(p), yaw: lerpYaw(p) }, size);
     });
     tPlayers.forEach((p, i) => {
-      drawPlayer(ctx, { side: 't', number: i + 1, position: lerpPos(p) }, size);
+      drawPlayerDirectional(ctx, { side: 't', number: i + 1, position: lerpPos(p), yaw: lerpYaw(p) }, size);
     });
 
     // Draw player names + HP above tokens
@@ -512,41 +524,91 @@ export default function DemoPlayer() {
       }
     }
 
-    // Draw gun fire muzzle flash
+    // Draw gun fire muzzle flash — animated fire burst
     if (demoData?.gunFireEvents) {
       const round = demoData.rounds[selectedRound];
       if (round) {
-        const FLASH_FADE = 12; // very brief flash ~0.2s
-        const flashLen = size * 0.018;
-        // gunFireEvents sorted by tick — only check nearby window
+        const FLASH_DURATION = 18; // ~0.28s at 64 tick
         for (const f of demoData.gunFireEvents) {
           if (f.tick > interpTick) break;
-          if (f.tick < interpTick - FLASH_FADE) continue;
+          if (f.tick < interpTick - FLASH_DURATION) continue;
           if (f.tick < round.freezeEndTick || f.tick > round.endTick) continue;
-          const elapsed = interpTick - f.tick;
-          const alpha = 1 - elapsed / FLASH_FADE;
+
+          const t = (interpTick - f.tick) / FLASH_DURATION; // 0→1 progress
+          const alpha = t < 0.3 ? 1 : 1 - (t - 0.3) / 0.7; // hold then fade
 
           const fx = f.position.x * size;
           const fy = f.position.y * size;
-          // CS2 yaw: 0=east, 90=north. Canvas: 0=right, positive=clockwise.
-          // Map y is flipped (north=up=lower y), so angle = -yaw * deg2rad
           const angle = -f.yaw * (Math.PI / 180);
-          const ex = fx + Math.cos(angle) * flashLen;
-          const ey = fy + Math.sin(angle) * flashLen;
+          const baseLen = size * 0.016;
 
-          // Muzzle flash line
-          ctx.beginPath();
-          ctx.moveTo(fx, fy);
-          ctx.lineTo(ex, ey);
-          ctx.strokeStyle = `rgba(255,220,100,${(alpha * 0.7).toFixed(2)})`;
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          // Expanding fire cone — 3 layers from bright core to dim outer
+          ctx.save();
+          ctx.translate(fx, fy);
+          ctx.rotate(angle);
 
-          // Small flash dot at tip
+          // Outer glow cone (orange-red, wide spread)
+          const outerLen = baseLen * (0.6 + t * 1.2);
+          const outerSpread = size * 0.006 * (0.5 + t);
           ctx.beginPath();
-          ctx.arc(ex, ey, size * 0.003, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,255,200,${(alpha * 0.8).toFixed(2)})`;
+          ctx.moveTo(0, 0);
+          ctx.lineTo(outerLen, -outerSpread);
+          ctx.lineTo(outerLen * 1.1, 0);
+          ctx.lineTo(outerLen, outerSpread);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(255,80,20,${(alpha * 0.35).toFixed(2)})`;
           ctx.fill();
+
+          // Mid cone (orange, medium)
+          const midLen = baseLen * (0.5 + t * 0.8);
+          const midSpread = size * 0.004 * (0.4 + t * 0.6);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(midLen, -midSpread);
+          ctx.lineTo(midLen * 1.05, 0);
+          ctx.lineTo(midLen, midSpread);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(255,160,40,${(alpha * 0.5).toFixed(2)})`;
+          ctx.fill();
+
+          // Bright core (yellow-white, narrow)
+          const coreLen = baseLen * (0.4 + t * 0.5);
+          const coreSpread = size * 0.002 * (0.3 + t * 0.4);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(coreLen, -coreSpread);
+          ctx.lineTo(coreLen * 1.05, 0);
+          ctx.lineTo(coreLen, coreSpread);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(255,240,150,${(alpha * 0.7).toFixed(2)})`;
+          ctx.fill();
+
+          // Spark particles — 3 sparks flying outward
+          const sparkBase = baseLen * 0.8;
+          for (let i = 0; i < 3; i++) {
+            // Deterministic pseudo-random offset per spark using tick+index
+            const seed = (f.tick * 7 + i * 31) % 100 / 100;
+            const sparkAngle = (seed - 0.5) * 0.6; // spread ±0.3 rad from center
+            const sparkDist = sparkBase * (0.3 + t * (1.0 + seed * 0.5));
+            const sparkSize = size * 0.002 * (1 - t * 0.7);
+            const sx = Math.cos(sparkAngle) * sparkDist;
+            const sy = Math.sin(sparkAngle) * sparkDist;
+            ctx.beginPath();
+            ctx.arc(sx, sy, Math.max(0.5, sparkSize), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,${180 + Math.round(seed * 60)},50,${(alpha * 0.8 * (1 - t * 0.5)).toFixed(2)})`;
+            ctx.fill();
+          }
+
+          // Central flash glow at muzzle (bright, shrinks quickly)
+          const glowR = size * 0.005 * (1 - t * 0.8);
+          if (glowR > 0.5) {
+            ctx.beginPath();
+            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,255,200,${(alpha * 0.4).toFixed(2)})`;
+            ctx.fill();
+          }
+
+          ctx.restore();
         }
       }
     }

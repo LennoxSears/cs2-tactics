@@ -158,23 +158,46 @@ getFlashSprite();
 getMolotovSprite();
 getHeSprite();
 
-/** Ensure all sprites are fully rasterized before rendering.
- *  decode() alone isn't enough for SVG filter pipelines —
- *  drawing to an offscreen canvas forces the browser to
- *  fully rasterize the feTurbulence/feDisplacementMap filters. */
+/** Pre-rasterized sprite canvases for instant drawing.
+ *  SVG filters (feTurbulence) can fail or render async in some webviews.
+ *  We bake each sprite into a bitmap canvas once during preload. */
+const rasterCache = new Map<string, HTMLCanvasElement>();
+
+export function getRasterizedSprite(type: string): HTMLCanvasElement | null {
+  return rasterCache.get(type) || null;
+}
+
 export async function preloadSprites(): Promise<void> {
+  const types = ['smoke', 'flash', 'molotov', 'he'] as const;
   const sprites = [getSmokeSprite(), getFlashSprite(), getMolotovSprite(), getHeSprite()];
   await Promise.all(sprites.map(img => img.decode().catch(() => {})));
-  // Force rasterization by drawing each sprite to a throwaway canvas
-  const offscreen = document.createElement('canvas');
-  offscreen.width = 100;
-  offscreen.height = 100;
-  const ctx = offscreen.getContext('2d');
-  if (ctx) {
-    for (const img of sprites) {
-      if (img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, 0, 0, 100, 100);
-      }
+
+  // Bake each SVG sprite into a bitmap canvas
+  const rasterSize = 128;
+  for (let i = 0; i < types.length; i++) {
+    const img = sprites[i];
+    const canvas = document.createElement('canvas');
+    canvas.width = rasterSize;
+    canvas.height = rasterSize;
+    const ctx = canvas.getContext('2d');
+    if (ctx && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, rasterSize, rasterSize);
+      rasterCache.set(types[i], canvas);
+    }
+  }
+
+  // Second pass: some browsers need a frame to finish SVG filter rasterization
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  for (let i = 0; i < types.length; i++) {
+    if (rasterCache.has(types[i])) continue;
+    const img = sprites[i];
+    const canvas = document.createElement('canvas');
+    canvas.width = rasterSize;
+    canvas.height = rasterSize;
+    const ctx = canvas.getContext('2d');
+    if (ctx && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, rasterSize, rasterSize);
+      rasterCache.set(types[i], canvas);
     }
   }
 }

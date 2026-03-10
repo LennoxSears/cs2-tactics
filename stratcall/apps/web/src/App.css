@@ -301,15 +301,30 @@
   border: 2px solid;
   user-select: none;
   touch-action: none;
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: box-shadow 0.15s;
   box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+/* Direction indicator — pointed nose extending from the token */
+.player-token::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left-color: inherit;
+  opacity: 0.9;
 }
 
 .player-token:active { cursor: grabbing; }
 .player-token.ct { background: rgba(10, 20, 40, 0.9); border-color: var(--accent-ct); color: var(--accent-ct); }
 .player-token.t { background: rgba(40, 20, 5, 0.9); border-color: var(--accent-t); color: var(--accent-t); }
-.player-token:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(74, 158, 255, 0.6); transform: translate(-50%, -50%) scale(1.1); }
-.player-token.t:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 140, 0, 0.6); transform: translate(-50%, -50%) scale(1.1); }
+.player-token:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(74, 158, 255, 0.6); }
+.player-token.t:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 140, 0, 0.6); }
 .player-token.dragging { opacity: 0.85; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 12px rgba(74, 158, 255, 0.7); }
 .player-token.deleting, .utility-marker.deleting { opacity: 0.35; transform: translate(-50%, -50%) scale(0.7); transition: opacity 0.15s, transform 0.15s; }
 

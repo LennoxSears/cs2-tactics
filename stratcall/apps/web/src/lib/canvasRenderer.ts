@@ -4,7 +4,7 @@
  */
 
 import type { Position } from '../types';
-import { getUtilitySprite } from '../assets/utilitySprites';
+import { getUtilitySprite, getRasterizedSprite } from '../assets/utilitySprites';
 
 // ── Color constants ──
 
@@ -27,6 +27,7 @@ export interface DrawablePlayer {
   number: number;
   position: Position;
   label?: string;
+  yaw?: number;  // facing direction in degrees (CS2: 0=east, 90=north)
 }
 
 export function drawPlayer(ctx: CanvasRenderingContext2D, p: DrawablePlayer, size: number) {
@@ -57,6 +58,62 @@ export function drawPlayer(ctx: CanvasRenderingContext2D, p: DrawablePlayer, siz
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(p.number), x, y);
+}
+
+/** Draw a directional player token — circle body with a pointed nose
+ *  indicating facing direction. Used by DemoPlayer. */
+export function drawPlayerDirectional(
+  ctx: CanvasRenderingContext2D,
+  p: DrawablePlayer,
+  size: number,
+) {
+  const x = p.position.x * size;
+  const y = p.position.y * size;
+  const radius = size * 0.012;
+  const isCT = p.side === 'ct';
+  const color = isCT ? CT_COLOR : T_COLOR;
+  const fill = isCT ? CT_FILL : T_FILL;
+
+  // CS2 yaw: 0=east, 90=north. Canvas: 0=right, positive=clockwise.
+  // Map y is flipped, so angle = -yaw * deg2rad
+  const angle = -(p.yaw ?? 0) * (Math.PI / 180);
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+
+  // Main body: circle with a pointed nose (triangle extending from front)
+  const noseLen = radius * 0.7;
+  const noseWidth = radius * 0.55;
+
+  ctx.beginPath();
+  // Draw the circle body, leaving a gap at the front for the nose
+  ctx.arc(0, 0, radius, Math.atan2(noseWidth, noseLen * 0.3), -Math.atan2(noseWidth, noseLen * 0.3), true);
+  // Nose point
+  ctx.lineTo(radius + noseLen, 0);
+  ctx.closePath();
+
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+
+  // Player number (centered in circle body)
+  ctx.rotate(-angle); // un-rotate for upright text
+  ctx.fillStyle = color;
+  ctx.font = `bold ${Math.round(radius * 1.1)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(p.number), 0, 0);
+
+  ctx.restore();
 }
 
 // ── Utility drawing ──
@@ -134,9 +191,10 @@ function drawUtilityLanding(
   if (progress < 0.01) return;
 
   const spriteSize = getSpriteSize(u.type, size) * progress;
-  const sprite = getUtilitySprite(u.type);
+  const raster = getRasterizedSprite(u.type);
+  const sprite = raster || getUtilitySprite(u.type);
 
-  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+  if (sprite && (raster || (sprite as HTMLImageElement).complete && (sprite as HTMLImageElement).naturalWidth > 0)) {
     ctx.save();
     ctx.globalAlpha = Math.min(progress * 2, 1) * (ctx.globalAlpha || 1);
     ctx.drawImage(sprite, x - spriteSize / 2, y - spriteSize / 2, spriteSize, spriteSize);
@@ -162,14 +220,15 @@ function drawUtilityActive(
   size: number,
 ) {
   const spriteSize = getSpriteSize(u.type, size);
-  const sprite = getUtilitySprite(u.type);
+  const raster = getRasterizedSprite(u.type);
+  const sprite = raster || getUtilitySprite(u.type);
 
   const scale = u.type === 'molotov'
     ? 0.9 + 0.1 * Math.sin(Date.now() * 0.008)
     : 1;
   const drawSize = spriteSize * scale;
 
-  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+  if (sprite && (raster || (sprite as HTMLImageElement).complete && (sprite as HTMLImageElement).naturalWidth > 0)) {
     ctx.drawImage(sprite, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
   } else {
     // Fallback: type-colored circle while sprite loads

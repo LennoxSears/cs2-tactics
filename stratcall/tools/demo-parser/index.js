@@ -51,7 +51,7 @@ try {
 
   // Player positions
   const tickData = parseTicks(buf, [
-    'X', 'Y', 'health', 'team_num', 'is_alive', 'player_name', 'player_steamid',
+    'X', 'Y', 'yaw', 'health', 'team_num', 'is_alive', 'player_name', 'player_steamid',
   ]);
 
   // Utility events — parse detonation/activation events for each grenade type
@@ -387,7 +387,7 @@ try {
     );
   }
 
-  // Tick data lines: T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty
+  // Tick data lines: T\ttick\tsteamid\tname\tteam\thealth\talive\tx\ty\tyaw
   if (Array.isArray(tickData)) {
     for (const row of tickData) {
       const tick = row.tick;
@@ -402,7 +402,8 @@ try {
         (row.health ?? 0) + '\t' +
         (row.is_alive ? 1 : 0) + '\t' +
         (Math.round((row.X ?? 0) * 10) / 10) + '\t' +
-        (Math.round((row.Y ?? 0) * 10) / 10) + '\n'
+        (Math.round((row.Y ?? 0) * 10) / 10) + '\t' +
+        (Math.round((row.yaw ?? 0) * 100) / 100) + '\n'
       );
     }
   }

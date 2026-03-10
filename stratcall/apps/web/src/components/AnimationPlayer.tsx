@@ -12,7 +12,7 @@ import {
   faRotateRight, faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocale } from '../lib/i18n';
-import { drawPlayer, drawUtility, drawDrawings } from '../lib/canvasRenderer';
+import { drawPlayer, drawPlayerDirectional, drawUtility, drawDrawings } from '../lib/canvasRenderer';
 
 interface Props {
   mapName: MapName;
@@ -151,9 +151,13 @@ export default function AnimationPlayer({ mapName, phases, onClose }: Props) {
       drawUtility(ctx, u, size);
     }
 
-    // Draw players
+    // Draw players — use directional tokens if yaw is set
     for (const p of frame.players) {
-      drawPlayer(ctx, p, size);
+      if (p.yaw != null) {
+        drawPlayerDirectional(ctx, p, size);
+      } else {
+        drawPlayer(ctx, p, size);
+      }
     }
   }, [currentFrame, containerSize, timeline, mapImgLoaded]);
 

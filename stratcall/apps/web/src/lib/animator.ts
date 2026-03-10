@@ -11,6 +11,7 @@ export interface AnimFramePlayer {
   number: number;
   role: string | null;
   position: Position;
+  yaw?: number;
 }
 
 export interface AnimFrameUtility {
@@ -135,6 +136,7 @@ function matchUtilities(from: UtilityMarker[], to: UtilityMarker[]) {
 }
 
 interface PlayerAnim {
+  from: PlayerToken;
   to: PlayerToken;
   path: Position[];
   frames: number;
@@ -194,7 +196,7 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
       const frames = Math.max(MIN_TRANSITION_FRAMES, Math.round((wDist / PLAYER_SPEED) * FPS));
       const path = interpolatePath(raw, frames);
       maxPlayerFrames = Math.max(maxPlayerFrames, frames);
-      return { to: m.to, path, frames };
+      return { from: m.from, to: m.to, path, frames };
     });
 
     const utilMatch = matchUtilities(fromState.utilities, toState.utilities);
@@ -248,7 +250,7 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
         const bs = phases[i].boardState;
         return {
           time: 0,
-          players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position })),
+          players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position, yaw: p.yaw })),
           utilities: bs.utilities.map(u => ({
             id: u.id, type: u.type, position: u.position, opacity: 1,
             effectState: 'active' as UtilityEffectState,
@@ -277,14 +279,22 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
               const easedProgress = easeInOutCubic(rawProgress);
               const rawIdx = easedProgress * (a.path.length - 1);
               const position = samplePathSmooth(a.path, rawIdx);
-              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position });
+              // Interpolate yaw (shortest path)
+              let yaw = a.to.yaw;
+              if (a.from.yaw != null && a.to.yaw != null) {
+                let diff = a.to.yaw - a.from.yaw;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+                yaw = a.from.yaw + diff * easedProgress;
+              }
+              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position, yaw });
             } else {
-              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position: a.to.position });
+              players.push({ id: a.to.id, side: a.to.side, number: a.to.number, role: a.to.role, position: a.to.position, yaw: a.to.yaw });
             }
           }
 
-          for (const p of trans.disappearingPlayers) { if (t < 0.3) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position }); }
-          for (const p of trans.appearingPlayers) { if (t > 0.7) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position }); }
+          for (const p of trans.disappearingPlayers) { if (t < 0.3) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position, yaw: p.yaw }); }
+          for (const p of trans.appearingPlayers) { if (t > 0.7) players.push({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position, yaw: p.yaw }); }
 
           // --- Utilities with effect states ---
           const utilities: AnimFrameUtility[] = [];
@@ -364,7 +374,7 @@ export function buildTimeline(phases: Phase[], navMesh: NavMesh | null, map: Map
     const bs = phases[phases.length - 1].boardState;
     return {
       time: 1,
-      players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position })),
+      players: bs.players.map(p => ({ id: p.id, side: p.side, number: p.number, role: p.role, position: p.position, yaw: p.yaw })),
       utilities: bs.utilities.map(u => ({
         id: u.id, type: u.type, position: u.position, opacity: 1,
         effectState: 'active' as UtilityEffectState,
