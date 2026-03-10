@@ -287,32 +287,31 @@
 /* ===== PLAYER TOKENS ===== */
 .player-token {
   position: absolute;
-  width: 22px;
-  height: 22px;
-  /* Teardrop: round bottom-left, bottom-right, top-left; pointed top-right */
-  border-radius: 50% 50% 50% 0;
+  width: 24px;
+  height: 30px;
+  /* Water-drop: round bottom, pointed tip at top (tip = facing direction) */
+  clip-path: polygon(86% 67%, 84% 72%, 81% 77%, 77% 82%, 72% 86%, 67% 89%, 62% 91%, 56% 93%, 50% 93%, 44% 93%, 38% 91%, 33% 89%, 28% 86%, 23% 82%, 19% 77%, 16% 72%, 14% 67%, 50% 5%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 6px;
   font-size: 0.55rem;
   font-weight: 700;
   cursor: grab;
   z-index: 10;
-  /* Default rotation: point faces up (north). Inline style overrides for yaw. */
-  transform: translate(-50%, -50%) rotate(-45deg);
-  border: 2px solid;
+  transform: translate(-50%, -50%);
   user-select: none;
   touch-action: none;
-  transition: box-shadow 0.15s;
-  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 1px 6px rgba(0, 0, 0, 0.5);
+  transition: filter 0.15s;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
 }
 
 .player-token:active { cursor: grabbing; }
-.player-token.ct { background: rgba(10, 20, 40, 0.9); border-color: var(--accent-ct); color: var(--accent-ct); }
-.player-token.t { background: rgba(40, 20, 5, 0.9); border-color: var(--accent-t); color: var(--accent-t); }
-.player-token:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(74, 158, 255, 0.6); }
-.player-token.t:hover { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 140, 0, 0.6); }
-.player-token.dragging { opacity: 0.85; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.6), 0 0 12px rgba(74, 158, 255, 0.7); }
+.player-token.ct { background: var(--accent-ct); color: #fff; }
+.player-token.t { background: var(--accent-t); color: #fff; }
+.player-token:hover { filter: drop-shadow(0 0 6px rgba(74, 158, 255, 0.7)) drop-shadow(0 1px 3px rgba(0,0,0,0.7)); }
+.player-token.t:hover { filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7)) drop-shadow(0 1px 3px rgba(0,0,0,0.7)); }
+.player-token.dragging { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(74, 158, 255, 0.8)); }
 .player-token.deleting, .utility-marker.deleting { opacity: 0.35; transform: translate(-50%, -50%) scale(0.7); transition: opacity 0.15s, transform 0.15s; }
 
 /* ===== UTILITY MARKERS ===== */
@@ -467,6 +466,6 @@
 }
 
 @media (min-width: 768px) {
-  .player-token { width: 26px; height: 26px; font-size: 0.6rem; border-width: 2.5px; }
+  .player-token { width: 28px; height: 34px; font-size: 0.6rem; padding-top: 5px; }
   .utility-marker { width: 24px; height: 24px; font-size: 0.7rem; border-width: 2px; }
 }

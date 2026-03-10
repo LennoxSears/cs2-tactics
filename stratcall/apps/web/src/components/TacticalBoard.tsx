@@ -658,7 +658,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                 style={{
                   left: `${p.position.x * 100}%`,
                   top: `${p.position.y * 100}%`,
-                  transform: `translate(-50%, -50%) rotate(${45 - (p.yaw ?? 90)}deg)`,
+                  transform: `translate(-50%, -50%) rotate(${90 - (p.yaw ?? 90)}deg)`,
                 }}
                 onMouseDown={e => { if (e.button === 2) return; startPlayerDrag(p.id, e); }}
                 onTouchStart={e => {
@@ -680,7 +680,7 @@ export default function TacticalBoard({ strategy, onBack, onSave }: Props) {
                 }}
                 onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setNoteTarget({ type: 'player', id: p.id }); }}
               >
-                <span style={{ transform: `rotate(${(p.yaw ?? 90) - 45}deg)` }}>{p.number}</span>
+                <span style={{ transform: `rotate(${(p.yaw ?? 90) - 90}deg)` }}>{p.number}</span>
                 {p.label && <span className="token-has-note" />}
               </div>
             ))}

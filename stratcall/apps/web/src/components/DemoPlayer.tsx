@@ -524,35 +524,35 @@ export default function DemoPlayer() {
       }
     }
 
-    // Draw gun fire — tiny flame at shooter position
+    // Draw gun fire — flame at shooter position
     if (demoData?.gunFireEvents) {
       const round = demoData.rounds[selectedRound];
       if (round) {
-        const FLAME_TICKS = 14; // ~0.22s at 64 tick
+        const FLAME_TICKS = 20; // ~0.31s at 64 tick
         for (const f of demoData.gunFireEvents) {
           if (f.tick > interpTick) break;
           if (f.tick < interpTick - FLAME_TICKS) continue;
           if (f.tick < round.freezeEndTick || f.tick > round.endTick) continue;
 
           const t = (interpTick - f.tick) / FLAME_TICKS; // 0→1
-          const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8; // quick rise, slow fade
+          const alpha = t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85;
 
           const fx = f.position.x * size;
           const fy = f.position.y * size;
           const angle = -f.yaw * (Math.PI / 180);
 
-          // Offset flame slightly in front of player
-          const offset = size * 0.014;
+          // Offset flame in front of player
+          const offset = size * 0.016;
           const cx = fx + Math.cos(angle) * offset;
           const cy = fy + Math.sin(angle) * offset;
 
-          // Flame size — flickers using deterministic seed
+          // Flame size — flickers
           const seed = ((f.tick * 13) % 97) / 97;
-          const flicker = 0.8 + 0.4 * Math.sin(t * 12 + seed * 6);
-          const h = size * 0.012 * flicker * (1 - t * 0.5);
-          const w = h * 0.55;
+          const flicker = 0.8 + 0.4 * Math.sin(t * 14 + seed * 6);
+          const h = size * 0.028 * flicker * (1 - t * 0.4);
+          const w = h * 0.5;
 
-          if (h < 0.5) continue;
+          if (h < 1) continue;
 
           ctx.save();
           ctx.translate(cx, cy);
@@ -561,21 +561,32 @@ export default function DemoPlayer() {
           // Outer flame (orange-red)
           ctx.beginPath();
           ctx.moveTo(0, w);
-          ctx.quadraticCurveTo(h * 0.6, w * 0.5, h, 0);
-          ctx.quadraticCurveTo(h * 0.6, -w * 0.5, 0, -w);
+          ctx.quadraticCurveTo(h * 0.5, w * 0.4, h, 0);
+          ctx.quadraticCurveTo(h * 0.5, -w * 0.4, 0, -w);
           ctx.closePath();
-          ctx.fillStyle = `rgba(255,100,20,${(alpha * 0.7).toFixed(2)})`;
+          ctx.fillStyle = `rgba(255,80,10,${(alpha * 0.8).toFixed(2)})`;
           ctx.fill();
 
-          // Inner flame (yellow-white, smaller)
-          const ih = h * 0.55;
-          const iw = w * 0.45;
+          // Mid flame (orange)
+          const mh = h * 0.7;
+          const mw = w * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(0, mw);
+          ctx.quadraticCurveTo(mh * 0.5, mw * 0.3, mh, 0);
+          ctx.quadraticCurveTo(mh * 0.5, -mw * 0.3, 0, -mw);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(255,160,30,${(alpha * 0.9).toFixed(2)})`;
+          ctx.fill();
+
+          // Inner flame (yellow-white core)
+          const ih = h * 0.4;
+          const iw = w * 0.35;
           ctx.beginPath();
           ctx.moveTo(0, iw);
-          ctx.quadraticCurveTo(ih * 0.6, iw * 0.4, ih, 0);
-          ctx.quadraticCurveTo(ih * 0.6, -iw * 0.4, 0, -iw);
+          ctx.quadraticCurveTo(ih * 0.5, iw * 0.3, ih, 0);
+          ctx.quadraticCurveTo(ih * 0.5, -iw * 0.3, 0, -iw);
           ctx.closePath();
-          ctx.fillStyle = `rgba(255,230,120,${(alpha * 0.9).toFixed(2)})`;
+          ctx.fillStyle = `rgba(255,240,150,${(alpha * 0.95).toFixed(2)})`;
           ctx.fill();
 
           ctx.restore();

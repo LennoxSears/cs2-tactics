@@ -60,7 +60,7 @@ export function drawPlayer(ctx: CanvasRenderingContext2D, p: DrawablePlayer, siz
   ctx.fillText(String(p.number), x, y);
 }
 
-/** Draw a teardrop-shaped directional player token.
+/** Draw a water-drop shaped directional player token.
  *  Round body with a pointed tip in the facing direction. */
 export function drawPlayerDirectional(
   ctx: CanvasRenderingContext2D,
@@ -69,7 +69,7 @@ export function drawPlayerDirectional(
 ) {
   const x = p.position.x * size;
   const y = p.position.y * size;
-  const r = size * 0.012;
+  const r = size * 0.011;
   const isCT = p.side === 'ct';
   const color = isCT ? CT_COLOR : T_COLOR;
   const fill = isCT ? CT_FILL : T_FILL;
@@ -84,11 +84,16 @@ export function drawPlayerDirectional(
   ctx.shadowColor = color;
   ctx.shadowBlur = 6;
 
-  // Teardrop: circle body + quadratic curves tapering to a point
-  const tipX = r * 1.6; // tip extends beyond the circle
+  // Water drop: the tip points RIGHT (+x direction) before rotation.
+  // Arc covers ~240° of the back, then two lines meet at the sharp tip.
+  const tipDist = r * 2.0;       // how far the tip extends from center
+  const halfGap = Math.PI * 0.6; // half the open angle facing the tip (~108°)
+
   ctx.beginPath();
-  ctx.arc(0, 0, r, Math.PI * 0.38, -Math.PI * 0.38, true);
-  ctx.quadraticCurveTo(r * 1.1, 0, tipX, 0);
+  // Arc: the round back of the drop (from upper-right gap edge, around the back, to lower-right gap edge)
+  ctx.arc(0, 0, r, -halfGap, halfGap, false);
+  // Line to tip
+  ctx.lineTo(tipDist, 0);
   ctx.closePath();
 
   ctx.fillStyle = fill;
@@ -175,6 +180,8 @@ function drawUtilityFlying(
   ctx.fill();
 }
 
+const _landingDebugDone = new Set<string>();
+
 function drawUtilityLanding(
   ctx: CanvasRenderingContext2D,
   u: DrawableUtility,
@@ -187,6 +194,13 @@ function drawUtilityLanding(
   const spriteSize = getSpriteSize(u.type, size) * progress;
   const raster = getRasterizedSprite(u.type);
   const sprite = raster || getUtilitySprite(u.type);
+
+  // Debug: log once per type to help diagnose grey circle issue
+  if (!_landingDebugDone.has(u.type)) {
+    _landingDebugDone.add(u.type);
+    const svgSprite = getUtilitySprite(u.type) as HTMLImageElement | null;
+    console.log(`[SPRITE DEBUG] type=${u.type} raster=${!!raster} rasterSize=${raster?.width ?? 'N/A'}x${raster?.height ?? 'N/A'} svgComplete=${svgSprite?.complete} svgNatW=${svgSprite?.naturalWidth} spriteSize=${spriteSize.toFixed(1)} progress=${progress.toFixed(3)} usingRaster=${!!raster} fallback=${!sprite || (!raster && !(svgSprite?.complete && (svgSprite?.naturalWidth ?? 0) > 0))}`);
+  }
 
   if (sprite && (raster || (sprite as HTMLImageElement).complete && (sprite as HTMLImageElement).naturalWidth > 0)) {
     ctx.save();
